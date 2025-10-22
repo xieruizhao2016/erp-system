@@ -1,54 +1,41 @@
-######################################################################
-# Build Tools
+# 敏感文件
+*.env*
+*secret*
+*key*
+*token*
+*password*
+*credential*
 
-.gradle
-/build/
-!gradle/wrapper/gradle-wrapper.jar
+# 环境配置文件
+.env
+.env.local
+.env.dev
+.env.prod
+.env.stage
+.env.test
 
-target/
-!.mvn/wrapper/maven-wrapper.jar
-
-.flattened-pom.xml
-
-######################################################################
-# IDE
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-nbproject/private/
-build/*
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
-
-######################################################################
-# Others
+# 日志文件
 *.log
-*.xml.versionsBackup
+logs/
+
+# 临时文件
+*.tmp
+*.temp
+
+# IDE文件
+.vscode/
+.idea/
 *.swp
+*.swo
 
-!*/build/*.java
-!*/build/*.html
-!*/build/*.xml
+# 操作系统文件
+.DS_Store
+Thumbs.db
 
-### JRebel ###
-rebel.xml
+# 依赖目录
+node_modules/
+target/
 
-application-my.yaml
-
-/yudao-ui-app/unpackage/
-**/.DS_Store
+# 构建产物
+dist/
+build/
