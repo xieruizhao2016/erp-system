@@ -9,7 +9,7 @@ import java.math.RoundingMode;
 /**
  * 金额工具类
  *
- * @author 芋道源码
+ * @author X-ERP源码
  */
 public class MoneyUtils {
 

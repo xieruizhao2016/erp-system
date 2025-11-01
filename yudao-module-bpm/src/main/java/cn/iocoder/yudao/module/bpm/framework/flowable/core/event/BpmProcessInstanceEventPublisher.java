@@ -10,7 +10,7 @@ import javax.validation.Valid;
 /**
  * {@link BpmProcessInstanceStatusEvent} 的生产者
  *
- * @author 芋道源码
+ * @author X-ERP源码
  */
 @AllArgsConstructor
 @Validated

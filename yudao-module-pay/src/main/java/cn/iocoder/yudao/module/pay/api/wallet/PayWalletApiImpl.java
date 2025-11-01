@@ -14,7 +14,7 @@ import javax.annotation.Resource;
 /**
  * 钱包 API 实现类
  *
- * @author 芋道源码
+ * @author X-ERP源码
  */
 @Service
 public class PayWalletApiImpl implements PayWalletApi {

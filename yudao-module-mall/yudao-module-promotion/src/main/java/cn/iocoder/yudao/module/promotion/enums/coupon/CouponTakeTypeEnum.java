@@ -10,7 +10,7 @@ import java.util.Objects;
 /**
  * 优惠劵领取方式
  *
- * @author 芋道源码
+ * @author X-ERP源码
  */
 @AllArgsConstructor
 @Getter

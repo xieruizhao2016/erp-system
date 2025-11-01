@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 /**
  * HTTP API 加解密配置
  *
- * @author 芋道源码
+ * @author X-ERP源码
  */
 @ConfigurationProperties(prefix = "yudao.api-encrypt")
 @Validated

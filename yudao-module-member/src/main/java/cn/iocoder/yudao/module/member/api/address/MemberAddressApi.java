@@ -5,7 +5,7 @@ import cn.iocoder.yudao.module.member.api.address.dto.MemberAddressRespDTO;
 /**
  * 用户收件地址 API 接口
  *
- * @author 芋道源码
+ * @author X-ERP源码
  */
 public interface MemberAddressApi {
 

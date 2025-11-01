@@ -52,3 +52,15 @@ application-my.yaml
 
 /yudao-ui-app/unpackage/
 **/.DS_Store
+
+# 备份目录
+backup-new-ui/
+
+# Vite 缓存
+yudao-ui/yudao-ui-admin-vue3/.vite/
+yudao-ui/yudao-ui-admin-vue3/node_modules/
+
+# Maven 手动下载
+apache-maven-*.tar.gz
+apache-maven-*/
+original-yudao-ui/
