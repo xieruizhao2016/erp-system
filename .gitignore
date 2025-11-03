@@ -39,3 +39,15 @@ target/
 # 构建产物
 dist/
 build/
+
+# Maven生成的文件
+.flattened-pom.xml
+**/.flattened-pom.xml
+
+# 运行时文件
+nohup.out
+*.pid
+
+# Vite缓存
+.vite/
+**/.vite/
