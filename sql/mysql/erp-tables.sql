@@ -686,6 +686,8 @@ CREATE TABLE `erp_stock_in` (
 DROP TABLE IF EXISTS `erp_stock`;
 CREATE TABLE `erp_stock` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `warehouse_id` bigint NULL COMMENT '仓库编号',
   `count` decimal(20,2) NULL COMMENT '库存数量',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
