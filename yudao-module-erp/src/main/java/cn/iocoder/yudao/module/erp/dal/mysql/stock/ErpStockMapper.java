@@ -53,8 +53,7 @@ public interface ErpStockMapper extends BaseMapperX<ErpStockDO> {
         // SQL sum 查询
         List<Map<String, Object>> result = selectMaps(new QueryWrapper<ErpStockDO>()
                 .select("SUM(count) AS sumCount")
-                .eq("product_id", productId)
-                .eq("deleted", false));
+                .eq("product_id", productId));
         // 获得数量
         if (CollUtil.isEmpty(result)) {
             return BigDecimal.ZERO;
