@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://www.flowable.org/processdef">
+
+  <process id="oa_leave" name="请假审批流程" isExecutable="true">
+
+    <!-- 开始节点 -->
+    <startEvent id="startEvent1" name="开始申请">
+      <extensionElements>
+        <flowable:formProperty id="type" name="请假类型" type="enum" required="true"/>
+        <flowable:formProperty id="startTime" name="开始时间" type="date" required="true"/>
+        <flowable:formProperty id="endTime" name="结束时间" type="date" required="true"/>
+        <flowable:formProperty id="day" name="请假天数" type="double" required="true"/>
+        <flowable:formProperty id="reason" name="请假原因" type="string" required="true"/>
+      </extensionElements>
+    </startEvent>
+
+    <!-- 部门主管审批 -->
+    <userTask id="managerApproval" name="部门主管审批" flowable:assignee="${manager}">
+      <extensionElements>
+        <flowable:taskListener event="create" class="cn.iocoder.yudao.module.bpm.service.task.BpmTaskApproveListener"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- 条件网关：根据请假天数判断是否需要HR审批 -->
+    <exclusiveGateway id="gateway1" name="天数判断"/>
+
+    <!-- HR审批（超过3天） -->
+    <userTask id="hrApproval" name="HR审批" flowable:candidateGroups="hr_manager">
+      <extensionElements>
+        <flowable:taskListener event="create" class="cn.iocoder.yudao.module.bpm.service.task.BpmTaskApproveListener"/>
+      </extensionElements>
+    </userTask>
+
+    <!-- 结束节点 -->
+    <endEvent id="endEvent1" name="审批完成"/>
+
+    <!-- 流程流转 -->
+    <sequenceFlow sourceRef="startEvent1" targetRef="managerApproval"/>
+    <sequenceFlow sourceRef="managerApproval" targetRef="gateway1"/>
+    <sequenceFlow sourceRef="gateway1" targetRef="hrApproval">
+      <conditionExpression xsi:type="tFormalExpression">${day > 3}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow sourceRef="gateway1" targetRef="endEvent1">
+      <conditionExpression xsi:type="tFormalExpression">${day <= 3}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow sourceRef="hrApproval" targetRef="endEvent1"/>
+
+  </process>
+
+</definitions>
