@@ -51,3 +51,5 @@ nohup.out
 # Vite缓存
 .vite/
 **/.vite/
+# 前端代码（不忽略）
+!original-yudao-ui/
