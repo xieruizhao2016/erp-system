@@ -7,14 +7,21 @@
 *credential*
 # 但前端的 ForgetPasswordForm.vue 是源代码，不应该被忽略
 !original-yudao-ui/src/views/Login/components/ForgetPasswordForm.vue
+# 前端的 .env 文件需要提交到仓库（不包含敏感信息）
+!original-yudao-ui/.env
+!original-yudao-ui/.env.local
+!original-yudao-ui/.env.dev
+!original-yudao-ui/.env.prod
+!original-yudao-ui/.env.stage
+!original-yudao-ui/.env.test
 
-# 环境配置文件
-.env
-.env.local
-.env.dev
-.env.prod
-.env.stage
-.env.test
+# 环境配置文件（已在上面的例外规则中处理）
+# .env
+# .env.local
+# .env.dev
+# .env.prod
+# .env.stage
+# .env.test
 
 # 日志文件
 *.log
