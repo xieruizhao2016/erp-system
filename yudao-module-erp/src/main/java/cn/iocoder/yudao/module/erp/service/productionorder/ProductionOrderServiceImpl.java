@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.productionorder.ProductionOrderMapper;
+import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -32,10 +33,27 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     @Resource
     private ProductionOrderMapper productionOrderMapper;
 
+    @Resource
+    private ErpNoRedisDAO noRedisDAO;
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Long createProductionOrder(ProductionOrderSaveReqVO createReqVO) {
-        // 插入
+        // 1. 生成订单号，并校验唯一性
+        String no = noRedisDAO.generate(ErpNoRedisDAO.PRODUCTION_ORDER_NO_PREFIX);
+        if (productionOrderMapper.selectByNo(no) != null) {
+            throw exception(PRODUCTION_ORDER_NO_EXISTS);
+        }
+
+        // 2. 插入订单
         ProductionOrderDO productionOrder = BeanUtils.toBean(createReqVO, ProductionOrderDO.class);
+        // 新增时，设置订单号、默认状态为"待开始"（1），实际开始时间和实际结束时间为空
+        productionOrder.setNo(no);
+        if (productionOrder.getStatus() == null) {
+            productionOrder.setStatus(1); // 1-待开始
+        }
+        productionOrder.setActualStartTime(null);
+        productionOrder.setActualEndTime(null);
         productionOrderMapper.insert(productionOrder);
 
         // 返回

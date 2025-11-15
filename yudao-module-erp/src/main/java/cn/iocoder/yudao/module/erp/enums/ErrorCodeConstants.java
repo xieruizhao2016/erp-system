@@ -167,5 +167,6 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
 
     // ========== ERP 生产订单（1-030-700-000） ==========
     ErrorCode PRODUCTION_ORDER_NOT_EXISTS = new ErrorCode(1_030_700_000, "生产订单不存在");
+    ErrorCode PRODUCTION_ORDER_NO_EXISTS = new ErrorCode(1_030_700_001, "生成生产订单号失败，请重新提交");
 
 }

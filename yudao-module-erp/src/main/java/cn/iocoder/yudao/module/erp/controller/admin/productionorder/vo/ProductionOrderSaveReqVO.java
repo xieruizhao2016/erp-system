@@ -15,8 +15,7 @@ public class ProductionOrderSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11691")
     private Long id;
 
-    @Schema(description = "生产订单号", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty(message = "生产订单号不能为空")
+    @Schema(description = "生产订单号")
     private String no;
 
     @Schema(description = "客户ID（关联销售订单）", example = "22489")
@@ -55,8 +54,7 @@ public class ProductionOrderSaveReqVO {
     @Schema(description = "实际完成时间")
     private LocalDateTime actualEndTime;
 
-    @Schema(description = "状态：1-待开始，2-进行中，3-已暂停，4-已完成，5-已取消", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
-    @NotNull(message = "状态：1-待开始，2-进行中，3-已暂停，4-已完成，5-已取消不能为空")
+    @Schema(description = "状态：1-待开始，2-进行中，3-已暂停，4-已完成，5-已取消", example = "2")
     private Integer status;
 
     @Schema(description = "优先级：1-紧急，2-高，3-中，4-低")

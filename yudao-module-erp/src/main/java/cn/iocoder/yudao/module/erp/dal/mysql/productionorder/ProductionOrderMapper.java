@@ -41,4 +41,8 @@ public interface ProductionOrderMapper extends BaseMapperX<ProductionOrderDO> {
                 .orderByDesc(ProductionOrderDO::getId));
     }
 
+    default ProductionOrderDO selectByNo(String no) {
+        return selectOne(ProductionOrderDO::getNo, no);
+    }
+
 }

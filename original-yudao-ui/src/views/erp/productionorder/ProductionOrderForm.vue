@@ -8,7 +8,7 @@
       v-loading="formLoading"
     >
       <el-form-item label="生产订单号" prop="no">
-        <el-input v-model="formData.no" placeholder="请输入生产订单号" />
+        <el-input v-model="formData.no" disabled placeholder="保存时自动生成" />
       </el-form-item>
       <el-form-item label="客户" prop="customerId">
         <el-select
@@ -74,7 +74,7 @@
           placeholder="选择计划完成时间"
         />
       </el-form-item>
-      <el-form-item label="实际开始时间" prop="actualStartTime">
+      <el-form-item v-if="formType === 'update'" label="实际开始时间" prop="actualStartTime">
         <el-date-picker
           v-model="formData.actualStartTime"
           type="date"
@@ -82,7 +82,7 @@
           placeholder="选择实际开始时间"
         />
       </el-form-item>
-      <el-form-item label="实际完成时间" prop="actualEndTime">
+      <el-form-item v-if="formType === 'update'" label="实际完成时间" prop="actualEndTime">
         <el-date-picker
           v-model="formData.actualEndTime"
           type="date"
@@ -90,7 +90,7 @@
           placeholder="选择实际完成时间"
         />
       </el-form-item>
-      <el-form-item label="状态" prop="status">
+      <el-form-item v-if="formType === 'update'" label="状态" prop="status">
         <el-radio-group v-model="formData.status">
           <el-radio
             v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_STATUS)"
@@ -175,10 +175,8 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  no: [{ required: true, message: '生产订单号不能为空', trigger: 'blur' }],
   productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
-  quantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }],
-  status: [{ required: true, message: '状态不能为空', trigger: 'change' }]
+  quantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
 const customerList = ref<CustomerVO[]>([]) // 客户列表
@@ -241,7 +239,9 @@ const submitForm = async () => {
   try {
     const data = formData.value as unknown as ProductionOrder
     if (formType.value === 'create') {
-      await ProductionOrderApi.createProductionOrder(data)
+      // 新增时，不发送订单号、实际开始时间、实际结束时间和状态字段（订单号由后端自动生成）
+      const { no, actualStartTime, actualEndTime, status, ...createData } = data
+      await ProductionOrderApi.createProductionOrder(createData as ProductionOrder)
       message.success(t('common.createSuccess'))
     } else {
       await ProductionOrderApi.updateProductionOrder(data)
