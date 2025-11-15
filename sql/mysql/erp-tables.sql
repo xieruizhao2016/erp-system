@@ -205,6 +205,7 @@ DROP TABLE IF EXISTS `erp_product_category`;
 CREATE TABLE `erp_product_category` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
   `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `status` int NULL COMMENT '开启状态',
   `parent_id` bigint NULL COMMENT '父分类编号',
   `name` varchar(100) NULL DEFAULT '' COMMENT '分类名称',
   `code` varchar(50) NULL DEFAULT '' COMMENT '分类编码',
@@ -243,6 +244,7 @@ DROP TABLE IF EXISTS `erp_product`;
 CREATE TABLE `erp_product` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
   `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
+  `status` int NULL COMMENT '产品状态',
   `name` varchar(100) NULL DEFAULT '' COMMENT '产品名称',
   `bar_code` varchar(50) NULL DEFAULT '' COMMENT '产品条码',
   `standard` varchar(255) NULL DEFAULT '' COMMENT '产品规格',
