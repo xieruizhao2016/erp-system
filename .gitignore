@@ -5,6 +5,8 @@
 *token*
 *password*
 *credential*
+# 但前端的 ForgetPasswordForm.vue 是源代码，不应该被忽略
+!original-yudao-ui/src/views/Login/components/ForgetPasswordForm.vue
 
 # 环境配置文件
 .env
