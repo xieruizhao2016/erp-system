@@ -39,6 +39,8 @@ target/
 # 构建产物
 dist/
 build/
+# 但前端的 build 目录是源代码，不应该被忽略
+!original-yudao-ui/build/
 
 # Maven生成的文件
 .flattened-pom.xml
