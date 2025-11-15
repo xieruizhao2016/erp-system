@@ -7,10 +7,16 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `erp_sale_return_items`;
 CREATE TABLE `erp_sale_return_items` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `return_id` bigint NULL COMMENT '销售退货编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单位单价，单位：元',
   `count` decimal(20,2) NULL COMMENT '数量',
   `tax_percent` decimal(20,2) NULL COMMENT '税率，百分比',
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
+  `total_price` decimal(20,2) NULL COMMENT '总价，单位：元',
+  `tax_price` decimal(20,2) NULL COMMENT '税额，单位：元',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -26,6 +32,7 @@ CREATE TABLE `erp_sale_return_items` (
 DROP TABLE IF EXISTS `erp_customer`;
 CREATE TABLE `erp_customer` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `name` varchar(100) NULL DEFAULT '' COMMENT '客户名称',
   `contact` varchar(255) NULL DEFAULT '' COMMENT '联系人',
   `mobile` varchar(20) NULL DEFAULT '' COMMENT '手机号码',
@@ -54,6 +61,11 @@ CREATE TABLE `erp_customer` (
 DROP TABLE IF EXISTS `erp_sale_order`;
 CREATE TABLE `erp_sale_order` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `sale_user_id` bigint NULL COMMENT '销售员编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `customer_id` bigint NULL COMMENT '客户编号',
+  `status` int NULL COMMENT '销售状态',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '销售订单号',
   `order_time` datetime NULL COMMENT '下单时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -65,6 +77,8 @@ CREATE TABLE `erp_sale_order` (
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
   `out_count` decimal(20,2) NULL COMMENT '销售出库数量',
   `return_count` decimal(20,2) NULL COMMENT '销售退货数量',
+  `total_price` decimal(20,2) NULL COMMENT '最终合计价格，单位：元',
+  `discount_price` decimal(20,2) NULL COMMENT '优惠金额，单位：元',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -80,6 +94,11 @@ CREATE TABLE `erp_sale_order` (
 DROP TABLE IF EXISTS `erp_sale_return`;
 CREATE TABLE `erp_sale_return` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `sale_user_id` bigint NULL COMMENT '销售员编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `customer_id` bigint NULL COMMENT '客户编号',
+  `order_id` bigint NULL COMMENT '销售订单编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '销售退货单号',
   `return_time` datetime NULL COMMENT '退货时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -104,12 +123,18 @@ CREATE TABLE `erp_sale_return` (
 DROP TABLE IF EXISTS `erp_sale_order_items`;
 CREATE TABLE `erp_sale_order_items` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `order_id` bigint NULL COMMENT '销售订单编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单位单价，单位：元',
   `count` decimal(20,2) NULL COMMENT '数量',
   `tax_percent` decimal(20,2) NULL COMMENT '税率，百分比',
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
   `out_count` decimal(20,2) NULL COMMENT '销售出库数量',
   `return_count` decimal(20,2) NULL COMMENT '销售退货数量',
+  `total_price` decimal(20,2) NULL COMMENT '总价，单位：元',
+  `tax_price` decimal(20,2) NULL COMMENT '税额，单位：元',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -125,6 +150,11 @@ CREATE TABLE `erp_sale_order_items` (
 DROP TABLE IF EXISTS `erp_sale_out`;
 CREATE TABLE `erp_sale_out` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `sale_user_id` bigint NULL COMMENT '销售员编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `customer_id` bigint NULL COMMENT '客户编号',
+  `order_id` bigint NULL COMMENT '销售订单编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '销售出库单号',
   `out_time` datetime NULL COMMENT '出库时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -149,10 +179,16 @@ CREATE TABLE `erp_sale_out` (
 DROP TABLE IF EXISTS `erp_sale_out_items`;
 CREATE TABLE `erp_sale_out_items` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `out_id` bigint NULL COMMENT '销售出库编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单位单价，单位：元',
   `count` decimal(20,2) NULL COMMENT '数量',
   `tax_percent` decimal(20,2) NULL COMMENT '税率，百分比',
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
+  `total_price` decimal(20,2) NULL COMMENT '总价，单位：元',
+  `tax_price` decimal(20,2) NULL COMMENT '税额，单位：元',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -168,6 +204,7 @@ CREATE TABLE `erp_sale_out_items` (
 DROP TABLE IF EXISTS `erp_product_category`;
 CREATE TABLE `erp_product_category` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `parent_id` bigint NULL COMMENT '父分类编号',
   `name` varchar(100) NULL DEFAULT '' COMMENT '分类名称',
   `code` varchar(50) NULL DEFAULT '' COMMENT '分类编码',
@@ -187,6 +224,7 @@ CREATE TABLE `erp_product_category` (
 DROP TABLE IF EXISTS `erp_product_unit`;
 CREATE TABLE `erp_product_unit` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `name` varchar(100) NULL DEFAULT '' COMMENT '单位名字',
   `status` int NULL COMMENT '单位状态',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -204,6 +242,7 @@ CREATE TABLE `erp_product_unit` (
 DROP TABLE IF EXISTS `erp_product`;
 CREATE TABLE `erp_product` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `name` varchar(100) NULL DEFAULT '' COMMENT '产品名称',
   `bar_code` varchar(50) NULL DEFAULT '' COMMENT '产品条码',
   `standard` varchar(255) NULL DEFAULT '' COMMENT '产品规格',
@@ -228,6 +267,10 @@ CREATE TABLE `erp_product` (
 DROP TABLE IF EXISTS `erp_purchase_in`;
 CREATE TABLE `erp_purchase_in` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `supplier_id` bigint NULL COMMENT '供应商编号',
+  `order_id` bigint NULL COMMENT '采购订单编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '采购入库单号',
   `in_time` datetime NULL COMMENT '入库时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -252,6 +295,7 @@ CREATE TABLE `erp_purchase_in` (
 DROP TABLE IF EXISTS `erp_supplier`;
 CREATE TABLE `erp_supplier` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `name` varchar(100) NULL DEFAULT '' COMMENT '供应商名称',
   `contact` varchar(255) NULL DEFAULT '' COMMENT '联系人',
   `mobile` varchar(20) NULL DEFAULT '' COMMENT '手机号码',
@@ -280,6 +324,10 @@ CREATE TABLE `erp_supplier` (
 DROP TABLE IF EXISTS `erp_purchase_order`;
 CREATE TABLE `erp_purchase_order` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `supplier_id` bigint NULL COMMENT '供应商编号',
+  `status` int NULL COMMENT '采购状态',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '采购订单号',
   `order_time` datetime NULL COMMENT '下单时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -291,6 +339,8 @@ CREATE TABLE `erp_purchase_order` (
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
   `in_count` decimal(20,2) NULL COMMENT '采购入库数量',
   `return_count` decimal(20,2) NULL COMMENT '采购退货数量',
+  `total_price` decimal(20,2) NULL COMMENT '最终合计价格，单位：元',
+  `discount_price` decimal(20,2) NULL COMMENT '优惠金额，单位：元',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -306,10 +356,16 @@ CREATE TABLE `erp_purchase_order` (
 DROP TABLE IF EXISTS `erp_purchase_return_items`;
 CREATE TABLE `erp_purchase_return_items` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `return_id` bigint NULL COMMENT '采购退货编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单位单价，单位：元',
   `count` decimal(20,2) NULL COMMENT '数量',
   `tax_percent` decimal(20,2) NULL COMMENT '税率，百分比',
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
+  `total_price` decimal(20,2) NULL COMMENT '总价，单位：元',
+  `tax_price` decimal(20,2) NULL COMMENT '税额，单位：元',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -325,10 +381,16 @@ CREATE TABLE `erp_purchase_return_items` (
 DROP TABLE IF EXISTS `erp_purchase_in_items`;
 CREATE TABLE `erp_purchase_in_items` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `in_id` bigint NULL COMMENT '采购入库编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单位单价，单位：元',
   `count` decimal(20,2) NULL COMMENT '数量',
   `tax_percent` decimal(20,2) NULL COMMENT '税率，百分比',
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
+  `total_price` decimal(20,2) NULL COMMENT '总价，单位：元',
+  `tax_price` decimal(20,2) NULL COMMENT '税额，单位：元',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -344,6 +406,10 @@ CREATE TABLE `erp_purchase_in_items` (
 DROP TABLE IF EXISTS `erp_purchase_return`;
 CREATE TABLE `erp_purchase_return` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `supplier_id` bigint NULL COMMENT '供应商编号',
+  `order_id` bigint NULL COMMENT '采购订单编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '采购退货单号',
   `return_time` datetime NULL COMMENT '退货时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -368,12 +434,18 @@ CREATE TABLE `erp_purchase_return` (
 DROP TABLE IF EXISTS `erp_purchase_order_items`;
 CREATE TABLE `erp_purchase_order_items` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `order_id` bigint NULL COMMENT '采购订单编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单位单价，单位：元',
   `count` decimal(20,2) NULL COMMENT '数量',
   `tax_percent` decimal(20,2) NULL COMMENT '税率，百分比',
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
   `in_count` decimal(20,2) NULL COMMENT '采购入库数量',
   `return_count` decimal(20,2) NULL COMMENT '采购退货数量',
+  `total_price` decimal(20,2) NULL COMMENT '总价，单位：元',
+  `tax_price` decimal(20,2) NULL COMMENT '税额，单位：元',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -389,6 +461,7 @@ CREATE TABLE `erp_purchase_order_items` (
 DROP TABLE IF EXISTS `erp_account`;
 CREATE TABLE `erp_account` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `name` varchar(100) NULL DEFAULT '' COMMENT '账户名称',
   `no` varchar(50) NULL DEFAULT '' COMMENT '账户编码',
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
@@ -409,6 +482,10 @@ CREATE TABLE `erp_account` (
 DROP TABLE IF EXISTS `erp_finance_payment_item`;
 CREATE TABLE `erp_finance_payment_item` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `biz_type` int NULL COMMENT '业务类型',
+  `biz_id` bigint NULL COMMENT '业务单据编号',
+  `payment_id` bigint NULL COMMENT '付款单编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `total_price` decimal(20,2) NULL COMMENT '应付金额，单位：分',
   `paid_price` decimal(20,2) NULL COMMENT '已付金额，单位：分',
   `payment_price` decimal(20,2) NULL COMMENT '本次付款，单位：分',
@@ -428,6 +505,9 @@ CREATE TABLE `erp_finance_payment_item` (
 DROP TABLE IF EXISTS `erp_finance_receipt`;
 CREATE TABLE `erp_finance_receipt` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `customer_id` bigint NULL COMMENT '客户编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '收款单号',
   `receipt_time` datetime NULL COMMENT '收款时间',
   `total_price` decimal(20,2) NULL COMMENT '合计价格，单位：元',
@@ -448,6 +528,9 @@ CREATE TABLE `erp_finance_receipt` (
 DROP TABLE IF EXISTS `erp_finance_payment`;
 CREATE TABLE `erp_finance_payment` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `supplier_id` bigint NULL COMMENT '供应商编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '付款单号',
   `payment_time` datetime NULL COMMENT '付款时间',
   `total_price` decimal(20,2) NULL COMMENT '合计价格，单位：元',
@@ -468,6 +551,10 @@ CREATE TABLE `erp_finance_payment` (
 DROP TABLE IF EXISTS `erp_finance_receipt_item`;
 CREATE TABLE `erp_finance_receipt_item` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `biz_type` int NULL COMMENT '业务类型',
+  `biz_id` bigint NULL COMMENT '业务单据编号',
+  `receipt_id` bigint NULL COMMENT '收款单编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `total_price` decimal(20,2) NULL COMMENT '应收金额，单位：分',
   `receipted_price` decimal(20,2) NULL COMMENT '已收金额，单位：分',
   `receipt_price` decimal(20,2) NULL COMMENT '本次收款，单位：分',
@@ -487,6 +574,7 @@ CREATE TABLE `erp_finance_receipt_item` (
 DROP TABLE IF EXISTS `erp_stock_record`;
 CREATE TABLE `erp_stock_record` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `creator` varchar(64) NULL DEFAULT '' COMMENT '创建者',
@@ -502,6 +590,9 @@ CREATE TABLE `erp_stock_record` (
 DROP TABLE IF EXISTS `erp_stock_move`;
 CREATE TABLE `erp_stock_move` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `to_warehouse_id` bigint NULL COMMENT '调入仓库编号',
+  `from_warehouse_id` bigint NULL COMMENT '调出仓库编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '调拨单号',
   `move_time` datetime NULL COMMENT '调拨时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -523,6 +614,8 @@ CREATE TABLE `erp_stock_move` (
 DROP TABLE IF EXISTS `erp_stock_check`;
 CREATE TABLE `erp_stock_check` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `warehouse_id` bigint NULL COMMENT '仓库编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '盘点单号',
   `check_time` datetime NULL COMMENT '盘点时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -544,6 +637,10 @@ CREATE TABLE `erp_stock_check` (
 DROP TABLE IF EXISTS `erp_stock_in_item`;
 CREATE TABLE `erp_stock_in_item` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `in_id` bigint NULL COMMENT '其它入库编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单价',
   `count` decimal(20,2) NULL COMMENT '产品数量',
   `total_price` decimal(20,2) NULL COMMENT '合计金额，单位：元',
@@ -563,6 +660,10 @@ CREATE TABLE `erp_stock_in_item` (
 DROP TABLE IF EXISTS `erp_stock_move_item`;
 CREATE TABLE `erp_stock_move_item` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `move_id` bigint NULL COMMENT '库存调拨编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单价',
   `count` decimal(20,2) NULL COMMENT '产品数量',
   `total_price` decimal(20,2) NULL COMMENT '合计金额，单位：元',
@@ -582,6 +683,7 @@ CREATE TABLE `erp_stock_move_item` (
 DROP TABLE IF EXISTS `erp_warehouse`;
 CREATE TABLE `erp_warehouse` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `name` varchar(100) NULL DEFAULT '' COMMENT '仓库名称',
   `address` varchar(500) NULL DEFAULT '' COMMENT '仓库地址',
   `sort` bigint NULL COMMENT '排序',
@@ -605,6 +707,10 @@ CREATE TABLE `erp_warehouse` (
 DROP TABLE IF EXISTS `erp_stock_check_item`;
 CREATE TABLE `erp_stock_check_item` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `check_id` bigint NULL COMMENT '库存盘点编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单价',
   `stock_count` decimal(20,2) NULL COMMENT '账面数量（当前库存）',
   `actual_count` decimal(20,2) NULL COMMENT '实际数量（实际库存）',
@@ -625,6 +731,10 @@ CREATE TABLE `erp_stock_check_item` (
 DROP TABLE IF EXISTS `erp_stock_out_item`;
 CREATE TABLE `erp_stock_out_item` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `product_unit_id` bigint NULL COMMENT '产品单位编号',
+  `product_id` bigint NULL COMMENT '产品编号',
+  `out_id` bigint NULL COMMENT '其它出库编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_price` decimal(20,2) NULL COMMENT '产品单价',
   `count` decimal(20,2) NULL COMMENT '产品数量',
   `total_price` decimal(20,2) NULL COMMENT '合计金额，单位：元',
@@ -644,6 +754,9 @@ CREATE TABLE `erp_stock_out_item` (
 DROP TABLE IF EXISTS `erp_stock_out`;
 CREATE TABLE `erp_stock_out` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `customer_id` bigint NULL COMMENT '客户编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '出库单号',
   `out_time` datetime NULL COMMENT '出库时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -665,6 +778,9 @@ CREATE TABLE `erp_stock_out` (
 DROP TABLE IF EXISTS `erp_stock_in`;
 CREATE TABLE `erp_stock_in` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `account_id` bigint NULL COMMENT '结算账户编号',
+  `supplier_id` bigint NULL COMMENT '供应商编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `no` varchar(50) NULL DEFAULT '' COMMENT '入库单号',
   `in_time` datetime NULL COMMENT '入库时间',
   `total_count` decimal(20,2) NULL COMMENT '合计数量',
@@ -686,6 +802,7 @@ CREATE TABLE `erp_stock_in` (
 DROP TABLE IF EXISTS `erp_stock`;
 CREATE TABLE `erp_stock` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `product_id` bigint NULL COMMENT '产品编号',
   `warehouse_id` bigint NULL COMMENT '仓库编号',
   `count` decimal(20,2) NULL COMMENT '库存数量',
