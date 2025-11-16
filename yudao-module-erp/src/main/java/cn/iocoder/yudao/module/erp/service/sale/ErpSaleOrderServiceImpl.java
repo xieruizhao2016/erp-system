@@ -146,11 +146,13 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
             throw exception(approve ? SALE_ORDER_APPROVE_FAIL : SALE_ORDER_PROCESS_FAIL);
         }
         // 1.3 存在销售出库单，无法反审核
-        if (!approve && saleOrder.getOutCount().compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal outCount = saleOrder.getOutCount() != null ? saleOrder.getOutCount() : BigDecimal.ZERO;
+        if (!approve && outCount.compareTo(BigDecimal.ZERO) > 0) {
             throw exception(SALE_ORDER_PROCESS_FAIL_EXISTS_OUT);
         }
         // 1.4 存在销售退货单，无法反审核
-        if (!approve && saleOrder.getReturnCount().compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal returnCount = saleOrder.getReturnCount() != null ? saleOrder.getReturnCount() : BigDecimal.ZERO;
+        if (!approve && returnCount.compareTo(BigDecimal.ZERO) > 0) {
             throw exception(SALE_ORDER_PROCESS_FAIL_EXISTS_RETURN);
         }
 
