@@ -245,6 +245,8 @@ CREATE TABLE `erp_product` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '编号',
   `tenant_id` bigint NOT NULL DEFAULT 0 COMMENT '租户ID',
   `status` int NULL COMMENT '产品状态',
+  `category_id` bigint NULL COMMENT '产品分类编号',
+  `unit_id` bigint NULL COMMENT '单位编号',
   `name` varchar(100) NULL DEFAULT '' COMMENT '产品名称',
   `bar_code` varchar(50) NULL DEFAULT '' COMMENT '产品条码',
   `standard` varchar(255) NULL DEFAULT '' COMMENT '产品规格',
