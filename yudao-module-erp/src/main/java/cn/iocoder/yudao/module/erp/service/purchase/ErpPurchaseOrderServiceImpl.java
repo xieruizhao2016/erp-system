@@ -193,7 +193,8 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
         // 1. 更新每个采购订单项
         orderItems.forEach(item -> {
             BigDecimal inCount = inCountMap.getOrDefault(item.getId(), BigDecimal.ZERO);
-            if (item.getInCount().equals(inCount)) {
+            BigDecimal currentInCount = item.getInCount() != null ? item.getInCount() : BigDecimal.ZERO;
+            if (currentInCount.equals(inCount)) {
                 return;
             }
             if (inCount.compareTo(item.getCount()) > 0) {
