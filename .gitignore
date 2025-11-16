@@ -6,21 +6,20 @@
 
 # 忽略包含真实敏感信息的配置文件（生产环境）
 # 开发/测试环境的配置文件应该被 Git 管理
-*.env.production
-*.env.prod.local
-*secret*.local
-*password*.local
+*secret*
+*key*
+*token*
+*password*
+*credential*
 
 # 但前端的 ForgetPasswordForm.vue 是源代码，不应该被忽略
 !original-yudao-ui/src/views/Login/components/ForgetPasswordForm.vue
 
-# 前端的 .env 文件需要提交到仓库（不包含敏感信息）
-!original-yudao-ui/.env
-!original-yudao-ui/.env.local
-!original-yudao-ui/.env.dev
-!original-yudao-ui/.env.prod
-!original-yudao-ui/.env.stage
-!original-yudao-ui/.env.test
+# 所有 .env 文件都需要提交到仓库（敏感信息单独管理）
+!.env
+!.env.*
+!**/.env
+!**/.env.*
 
 # ========================================
 # 配置文件管理规则

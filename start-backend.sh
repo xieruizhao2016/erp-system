@@ -103,6 +103,16 @@ if lsof -i :48080 >/dev/null 2>&1; then
     exit 0
 fi
 
+# 加载 .env 文件（如果存在）
+ENV_FILE="yudao-server/.env"
+if [ -f "$ENV_FILE" ]; then
+    echo "加载环境变量文件: $ENV_FILE"
+    # 读取 .env 文件并导出环境变量（忽略注释和空行）
+    set -a
+    source "$ENV_FILE"
+    set +a
+fi
+
 echo "正在启动后端服务..."
 echo "使用Java: $JAVA_CMD"
 $JAVA_CMD -version
