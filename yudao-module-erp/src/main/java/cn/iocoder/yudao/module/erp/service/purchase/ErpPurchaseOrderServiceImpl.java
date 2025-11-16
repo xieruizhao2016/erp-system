@@ -214,12 +214,14 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
         // 1. 更新每个采购订单项
         orderItems.forEach(item -> {
             BigDecimal returnCount = returnCountMap.getOrDefault(item.getId(), BigDecimal.ZERO);
-            if (item.getReturnCount().equals(returnCount)) {
+            BigDecimal currentReturnCount = item.getReturnCount() != null ? item.getReturnCount() : BigDecimal.ZERO;
+            if (currentReturnCount.equals(returnCount)) {
                 return;
             }
-            if (returnCount.compareTo(item.getInCount()) > 0) {
+            BigDecimal currentInCount = item.getInCount() != null ? item.getInCount() : BigDecimal.ZERO;
+            if (returnCount.compareTo(currentInCount) > 0) {
                 throw exception(PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED,
-                        productService.getProduct(item.getProductId()).getName(), item.getInCount());
+                        productService.getProduct(item.getProductId()).getName(), currentInCount);
             }
             purchaseOrderItemMapper.updateById(new ErpPurchaseOrderItemDO().setId(item.getId()).setReturnCount(returnCount));
         });
