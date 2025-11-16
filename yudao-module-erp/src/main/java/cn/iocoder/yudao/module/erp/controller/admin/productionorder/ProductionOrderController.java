@@ -29,7 +29,7 @@ import cn.iocoder.yudao.module.erp.controller.admin.productionorder.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.productionorder.ProductionOrderDO;
 import cn.iocoder.yudao.module.erp.service.productionorder.ProductionOrderService;
 
-@Tag(name = "管理后台 - ERP 生产订单 DO")
+@Tag(name = "管理后台 - ERP 生产订单")
 @RestController
 @RequestMapping("/erp/production-order")
 @Validated
@@ -39,14 +39,14 @@ public class ProductionOrderController {
     private ProductionOrderService productionOrderService;
 
     @PostMapping("/create")
-    @Operation(summary = "创建ERP 生产订单 DO")
+    @Operation(summary = "创建ERP 生产订单")
     @PreAuthorize("@ss.hasPermission('erp:production-order:create')")
     public CommonResult<Long> createProductionOrder(@Valid @RequestBody ProductionOrderSaveReqVO createReqVO) {
         return success(productionOrderService.createProductionOrder(createReqVO));
     }
 
     @PutMapping("/update")
-    @Operation(summary = "更新ERP 生产订单 DO")
+    @Operation(summary = "更新ERP 生产订单")
     @PreAuthorize("@ss.hasPermission('erp:production-order:update')")
     public CommonResult<Boolean> updateProductionOrder(@Valid @RequestBody ProductionOrderSaveReqVO updateReqVO) {
         productionOrderService.updateProductionOrder(updateReqVO);
@@ -54,7 +54,7 @@ public class ProductionOrderController {
     }
 
     @DeleteMapping("/delete")
-    @Operation(summary = "删除ERP 生产订单 DO")
+    @Operation(summary = "删除ERP 生产订单")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:production-order:delete')")
     public CommonResult<Boolean> deleteProductionOrder(@RequestParam("id") Long id) {
@@ -64,15 +64,15 @@ public class ProductionOrderController {
 
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号", required = true)
-    @Operation(summary = "批量删除ERP 生产订单 DO")
-                @PreAuthorize("@ss.hasPermission('erp:production-order:delete')")
+    @Operation(summary = "批量删除ERP 生产订单")
+    @PreAuthorize("@ss.hasPermission('erp:production-order:delete')")
     public CommonResult<Boolean> deleteProductionOrderList(@RequestParam("ids") List<Long> ids) {
         productionOrderService.deleteProductionOrderListByIds(ids);
         return success(true);
     }
 
     @GetMapping("/get")
-    @Operation(summary = "获得ERP 生产订单 DO")
+    @Operation(summary = "获得ERP 生产订单")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:production-order:query')")
     public CommonResult<ProductionOrderRespVO> getProductionOrder(@RequestParam("id") Long id) {
@@ -81,7 +81,7 @@ public class ProductionOrderController {
     }
 
     @GetMapping("/page")
-    @Operation(summary = "获得ERP 生产订单 DO分页")
+    @Operation(summary = "获得ERP 生产订单分页")
     @PreAuthorize("@ss.hasPermission('erp:production-order:query')")
     public CommonResult<PageResult<ProductionOrderRespVO>> getProductionOrderPage(@Valid ProductionOrderPageReqVO pageReqVO) {
         PageResult<ProductionOrderDO> pageResult = productionOrderService.getProductionOrderPage(pageReqVO);
@@ -89,7 +89,7 @@ public class ProductionOrderController {
     }
 
     @GetMapping("/export-excel")
-    @Operation(summary = "导出ERP 生产订单 DO Excel")
+    @Operation(summary = "导出ERP 生产订单 Excel")
     @PreAuthorize("@ss.hasPermission('erp:production-order:export')")
     @ApiAccessLog(operateType = EXPORT)
     public void exportProductionOrderExcel(@Valid ProductionOrderPageReqVO pageReqVO,
@@ -97,7 +97,7 @@ public class ProductionOrderController {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<ProductionOrderDO> list = productionOrderService.getProductionOrderPage(pageReqVO).getList();
         // 导出 Excel
-        ExcelUtils.write(response, "ERP 生产订单 DO.xls", "数据", ProductionOrderRespVO.class,
+        ExcelUtils.write(response, "ERP 生产订单.xls", "数据", ProductionOrderRespVO.class,
                         BeanUtils.toBean(list, ProductionOrderRespVO.class));
     }
 

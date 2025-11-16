@@ -10,6 +10,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Schema(description = "管理后台 - ERP 产品库存明细 Response VO")
 @Data

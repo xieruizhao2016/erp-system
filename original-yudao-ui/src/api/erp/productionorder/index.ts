@@ -1,7 +1,8 @@
 import request from '@/config/axios'
 import type { Dayjs } from 'dayjs';
 
-/** ERP 生产订单 DO信息 */
+/** ERP 生产订单 DO
+ *信息 */
 export interface ProductionOrder {
           id: number; // 编号
           no?: string; // 生产订单号
@@ -24,39 +25,39 @@ export interface ProductionOrder {
           remark: string; // 备注
   }
 
-// ERP 生产订单 DO API
+/** ERP 生产订单 API */
 export const ProductionOrderApi = {
-  // 查询ERP 生产订单 DO分页
+  /** 查询ERP 生产订单分页 */
   getProductionOrderPage: async (params: any) => {
     return await request.get({ url: `/erp/production-order/page`, params })
   },
 
-  // 查询ERP 生产订单 DO详情
+  /** 查询ERP 生产订单详情 */
   getProductionOrder: async (id: number) => {
     return await request.get({ url: `/erp/production-order/get?id=` + id })
   },
 
-  // 新增ERP 生产订单 DO
+  /** 新增ERP 生产订单 */
   createProductionOrder: async (data: ProductionOrder) => {
     return await request.post({ url: `/erp/production-order/create`, data })
   },
 
-  // 修改ERP 生产订单 DO
+  /** 修改ERP 生产订单 */
   updateProductionOrder: async (data: ProductionOrder) => {
     return await request.put({ url: `/erp/production-order/update`, data })
   },
 
-  // 删除ERP 生产订单 DO
+  /** 删除ERP 生产订单 */
   deleteProductionOrder: async (id: number) => {
     return await request.delete({ url: `/erp/production-order/delete?id=` + id })
   },
 
-  /** 批量删除ERP 生产订单 DO */
+  /** 批量删除ERP 生产订单 */
   deleteProductionOrderList: async (ids: number[]) => {
     return await request.delete({ url: `/erp/production-order/delete-list?ids=${ids.join(',')}` })
   },
 
-  // 导出ERP 生产订单 DO Excel
+  /** 导出ERP 生产订单 Excel */
   exportProductionOrder: async (params) => {
     return await request.download({ url: `/erp/production-order/export-excel`, params })
   }

@@ -169,4 +169,51 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode PRODUCTION_ORDER_NOT_EXISTS = new ErrorCode(1_030_700_000, "生产订单不存在");
     ErrorCode PRODUCTION_ORDER_NO_EXISTS = new ErrorCode(1_030_700_001, "生成生产订单号失败，请重新提交");
 
+    // ========== ERP 产品BOM（1-030-701-000） ==========
+    ErrorCode PRODUCT_BOM_NOT_EXISTS = new ErrorCode(1_030_701_000, "产品BOM不存在");
+    ErrorCode PRODUCT_BOM_ITEM_NOT_EXISTS = new ErrorCode(1_030_701_001, "产品BOM明细不存在");
+
+    // ========== ERP 工艺路线（1-030-702-000） ==========
+    ErrorCode PROCESS_ROUTE_NOT_EXISTS = new ErrorCode(1_030_702_000, "工艺路线不存在");
+    ErrorCode PROCESS_ROUTE_ITEM_NOT_EXISTS = new ErrorCode(1_030_702_001, "工艺路线明细不存在");
+
+    // ========== ERP 生产排程（1-030-703-000） ==========
+    ErrorCode PRODUCTION_SCHEDULE_NOT_EXISTS = new ErrorCode(1_030_703_000, "生产排程不存在");
+    ErrorCode PRODUCTION_SCHEDULE_ITEM_NOT_EXISTS = new ErrorCode(1_030_703_001, "生产排程明细不存在");
+
+    // ========== ERP MRP（1-030-704-000） ==========
+    ErrorCode MRP_PARAMS_NOT_EXISTS = new ErrorCode(1_030_704_000, "MRP参数不存在");
+    ErrorCode MRP_RESULT_NOT_EXISTS = new ErrorCode(1_030_704_001, "MRP运算结果不存在");
+
+    // ========== ERP 工单（1-030-705-000） ==========
+    ErrorCode WORK_ORDER_NOT_EXISTS = new ErrorCode(1_030_705_000, "工单不存在");
+    ErrorCode WORK_ORDER_PROGRESS_NOT_EXISTS = new ErrorCode(1_030_705_001, "工单进度不存在");
+
+    // ========== ERP 质量管理（1-030-706-000） ==========
+    ErrorCode QUALITY_STANDARD_NOT_EXISTS = new ErrorCode(1_030_706_000, "质检标准不存在");
+    ErrorCode QUALITY_ITEM_NOT_EXISTS = new ErrorCode(1_030_706_001, "质检项目不存在");
+    ErrorCode QUALITY_INSPECTION_NOT_EXISTS = new ErrorCode(1_030_706_002, "质检记录不存在");
+    ErrorCode QUALITY_INSPECTION_ITEM_NOT_EXISTS = new ErrorCode(1_030_706_003, "质检明细不存在");
+
+    // ========== ERP 设备管理（1-030-707-000） ==========
+    ErrorCode EQUIPMENT_NOT_EXISTS = new ErrorCode(1_030_707_000, "设备不存在");
+    ErrorCode EQUIPMENT_STATUS_NOT_EXISTS = new ErrorCode(1_030_707_001, "设备状态不存在");
+
+    // ========== ERP 成本核算（1-030-708-000） ==========
+    ErrorCode COST_STANDARD_NOT_EXISTS = new ErrorCode(1_030_708_000, "标准成本不存在");
+    ErrorCode COST_ACTUAL_NOT_EXISTS = new ErrorCode(1_030_708_001, "实际成本不存在");
+    ErrorCode COST_VARIANCE_NOT_EXISTS = new ErrorCode(1_030_708_002, "成本差异不存在");
+
+    // ========== ERP 工时统计（1-030-709-000） ==========
+    ErrorCode WORK_HOURS_NOT_EXISTS = new ErrorCode(1_030_709_000, "工时统计不存在");
+
+    // ========== ERP 生产KPI（1-030-710-000） ==========
+    ErrorCode PRODUCTION_KPI_NOT_EXISTS = new ErrorCode(1_030_710_000, "生产KPI不存在");
+
+    // ========== ERP 生产报表（1-030-711-000） ==========
+    ErrorCode PRODUCTION_REPORT_NOT_EXISTS = new ErrorCode(1_030_711_000, "生产报表不存在");
+
+    // ========== ERP 生产看板配置（1-030-712-000） ==========
+    ErrorCode PRODUCTION_DASHBOARD_CONFIG_NOT_EXISTS = new ErrorCode(1_030_712_000, "生产看板配置不存在");
+
 }

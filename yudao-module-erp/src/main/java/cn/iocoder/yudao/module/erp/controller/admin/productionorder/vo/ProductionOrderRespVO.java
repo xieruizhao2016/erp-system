@@ -7,13 +7,14 @@ import java.math.BigDecimal;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 import cn.idev.excel.annotation.*;
+import java.time.LocalDate;
 
-@Schema(description = "管理后台 - ERP 生产订单 DO Response VO")
+@Schema(description = "管理后台 - ERP 生产订单 Response VO")
 @Data
 @ExcelIgnoreUnannotated
 public class ProductionOrderRespVO {
 
-    @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11691")
+    @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "26384")
     @ExcelProperty("编号")
     private Long id;
 
@@ -21,15 +22,15 @@ public class ProductionOrderRespVO {
     @ExcelProperty("生产订单号")
     private String no;
 
-    @Schema(description = "客户ID（关联销售订单）", example = "22489")
+    @Schema(description = "客户ID（关联销售订单）", example = "3753")
     @ExcelProperty("客户ID（关联销售订单）")
     private Long customerId;
 
-    @Schema(description = "产品ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "22822")
+    @Schema(description = "产品ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "32079")
     @ExcelProperty("产品ID")
     private Long productId;
 
-    @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "张三")
+    @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋艿")
     @ExcelProperty("产品名称")
     private String productName;
 
@@ -37,7 +38,7 @@ public class ProductionOrderRespVO {
     @ExcelProperty("产品规格")
     private String productSpec;
 
-    @Schema(description = "单位ID", example = "16178")
+    @Schema(description = "单位ID", example = "16828")
     @ExcelProperty("单位ID")
     private Long unitId;
 
@@ -73,19 +74,19 @@ public class ProductionOrderRespVO {
     @ExcelProperty("优先级：1-紧急，2-高，3-中，4-低")
     private Integer priority;
 
-    @Schema(description = "来源类型：1-手动创建，2-销售订单，3-库存补充", example = "2")
+    @Schema(description = "来源类型：1-手动创建，2-销售订单，3-库存补充", example = "1")
     @ExcelProperty("来源类型：1-手动创建，2-销售订单，3-库存补充")
     private Integer sourceType;
 
-    @Schema(description = "来源单据ID", example = "9405")
+    @Schema(description = "来源单据ID", example = "10935")
     @ExcelProperty("来源单据ID")
     private Long sourceId;
 
-    @Schema(description = "生产说明", example = "你猜")
+    @Schema(description = "生产说明", example = "随便")
     @ExcelProperty("生产说明")
     private String description;
 
-    @Schema(description = "备注", example = "你猜")
+    @Schema(description = "备注", example = "随便")
     @ExcelProperty("备注")
     private String remark;
 
