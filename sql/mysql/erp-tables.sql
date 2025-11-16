@@ -530,7 +530,7 @@ CREATE TABLE `erp_finance_receipt` (
   `finance_user_id` bigint NULL COMMENT '财务人员编号',
   `total_price` decimal(20,2) NULL COMMENT '合计价格，单位：元',
   `discount_price` decimal(20,2) NULL COMMENT '优惠金额，单位：元',
-  `payment_price` decimal(20,2) NULL COMMENT '实付金额',
+  `receipt_price` decimal(20,2) NULL COMMENT '实付金额',
   `remark` varchar(500) NULL DEFAULT '' COMMENT '备注',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
