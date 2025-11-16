@@ -1,12 +1,19 @@
-# 敏感文件
-*.env*
-*secret*
-*key*
-*token*
-*password*
-*credential*
+# ========================================
+# 敏感文件配置
+# ========================================
+# 注意：配置文件（.yaml, .yml, .properties）应该被 Git 管理
+# 但包含生产环境真实密钥的配置文件应该通过环境变量或配置中心管理
+
+# 忽略包含真实敏感信息的配置文件（生产环境）
+# 开发/测试环境的配置文件应该被 Git 管理
+*.env.production
+*.env.prod.local
+*secret*.local
+*password*.local
+
 # 但前端的 ForgetPasswordForm.vue 是源代码，不应该被忽略
 !original-yudao-ui/src/views/Login/components/ForgetPasswordForm.vue
+
 # 前端的 .env 文件需要提交到仓库（不包含敏感信息）
 !original-yudao-ui/.env
 !original-yudao-ui/.env.local
@@ -15,13 +22,23 @@
 !original-yudao-ui/.env.stage
 !original-yudao-ui/.env.test
 
+# ========================================
+# 配置文件管理规则
+# ========================================
+# 以下配置文件应该被 Git 管理：
+# - application.yaml, application-*.yaml (Spring Boot 配置)
+# - docker-compose.yml (Docker 配置)
+# - *.properties (Java 属性文件)
+# - vite.config.ts, package.json 等前端配置文件
+# 
+# 如果配置文件包含生产环境敏感信息，请：
+# 1. 使用环境变量替代（推荐）
+# 2. 或创建 .env.production.local 文件（不会被 Git 跟踪）
+# 3. 或使用配置中心（如 Nacos、Apollo）
+
 # 环境配置文件（已在上面的例外规则中处理）
-# .env
-# .env.local
-# .env.dev
-# .env.prod
-# .env.stage
-# .env.test
+# 开发/测试环境的配置文件应该被 Git 管理
+# 生产环境的敏感配置应该通过环境变量或配置中心管理
 
 # 日志文件
 *.log
