@@ -35,9 +35,14 @@
           placeholder="选择失效日期"
         />
       </el-form-item>
-      <el-form-item label="BOM类型：1-生产BOM，2-设计BOM，3-工艺BOM" prop="bomType">
-        <el-select v-model="formData.bomType" placeholder="请选择BOM类型：1-生产BOM，2-设计BOM，3-工艺BOM">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="BOM类型" prop="bomType">
+        <el-select v-model="formData.bomType" placeholder="请选择BOM类型" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_BOM_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="标准成本" prop="standardCost">
@@ -46,9 +51,15 @@
       <el-form-item label="总材料成本" prop="totalMaterialCost">
         <el-input v-model="formData.totalMaterialCost" placeholder="请输入总材料成本" />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-生效，3-失效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCT_BOM_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
     </el-form>
@@ -59,6 +70,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductBomApi, ProductBom } from '@/api/erp/productbom'
 
 /** ERP BOM主 表单 */

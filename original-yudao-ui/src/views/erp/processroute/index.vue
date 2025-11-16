@@ -80,7 +80,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PROCESS_ROUTE_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
@@ -146,7 +151,11 @@
       <el-table-column label="标准周期时间（分钟）" align="center" prop="standardCycleTime" />
       <el-table-column label="标准人工成本" align="center" prop="standardLaborCost" />
       <el-table-column label="标准制造费用" align="center" prop="standardOverheadCost" />
-      <el-table-column label="状态：1-草稿，2-生效，3-失效" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PROCESS_ROUTE_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column
         label="创建时间"
         align="center"
@@ -192,6 +201,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteApi, ProcessRoute } from '@/api/erp/processroute'
 import ProcessRouteForm from './ProcessRouteForm.vue'
 

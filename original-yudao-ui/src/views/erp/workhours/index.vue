@@ -156,7 +156,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_WORK_HOURS_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -239,7 +244,11 @@
       <el-table-column label="设备时费率" align="center" prop="machineRate" />
       <el-table-column label="人工成本" align="center" prop="laborCost" />
       <el-table-column label="设备成本" align="center" prop="machineCost" />
-      <el-table-column label="状态：1-有效，2-无效" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_WORK_HOURS_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column
         label="创建时间"
@@ -286,6 +295,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkHoursApi, WorkHours } from '@/api/erp/workhours'
 import WorkHoursForm from './WorkHoursForm.vue'
 

@@ -14,9 +14,7 @@
         <el-input v-model="formData.equipmentName" placeholder="请输入设备名称" />
       </el-form-item>
       <el-form-item label="设备类型" prop="equipmentType">
-        <el-select v-model="formData.equipmentType" placeholder="请选择设备类型">
-          <el-option label="请选择字典生成" value="" />
-        </el-select>
+        <el-input v-model="formData.equipmentType" placeholder="请输入设备类型" />
       </el-form-item>
       <el-form-item label="设备型号" prop="model">
         <el-input v-model="formData.model" placeholder="请输入设备型号" />
@@ -53,9 +51,15 @@
       <el-form-item label="效率系数" prop="efficiencyRate">
         <el-input v-model="formData.efficiencyRate" placeholder="请输入效率系数" />
       </el-form-item>
-      <el-form-item label="状态：1-正常，2-维修中，3-故障，4-报废" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_EQUIPMENT_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="责任人" prop="responsiblePerson">
@@ -75,6 +79,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { EquipmentApi, Equipment } from '@/api/erp/equipment'
 
 /** ERP 设备台账 表单 */

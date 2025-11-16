@@ -13,9 +13,12 @@
       <el-form-item label="报表名称" prop="reportName">
         <el-input v-model="formData.reportName" placeholder="请输入报表名称" />
       </el-form-item>
-      <el-form-item label="报表类型：1-日报，2-周报，3-月报，4-年报" prop="reportType">
-        <el-select v-model="formData.reportType" placeholder="请选择报表类型：1-日报，2-周报，3-月报，4-年报">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="报表类型" prop="reportType">
+        <el-select v-model="formData.reportType" placeholder="请选择报表类型" clearable>
+          <el-option label="日报" value="1" />
+          <el-option label="周报" value="2" />
+          <el-option label="月报" value="3" />
+          <el-option label="年报" value="4" />
         </el-select>
       </el-form-item>
       <el-form-item label="报表期间" prop="reportPeriod">
@@ -76,9 +79,15 @@
           placeholder="选择生成时间"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-已发布" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_REPORT_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="详细数据（JSON）" prop="reportData">
@@ -92,6 +101,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionReportApi, ProductionReport } from '@/api/erp/productionreport'
 
 /** ERP 生产报表 表单 */

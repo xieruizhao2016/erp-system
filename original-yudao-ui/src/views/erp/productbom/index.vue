@@ -66,14 +66,19 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="BOM类型：1-生产BOM，2-设计BOM，3-工艺BOM" prop="bomType">
+      <el-form-item label="BOM类型" prop="bomType">
         <el-select
           v-model="queryParams.bomType"
-          placeholder="请选择BOM类型：1-生产BOM，2-设计BOM，3-工艺BOM"
+          placeholder="请选择BOM类型"
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_BOM_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="标准成本" prop="standardCost">
@@ -101,7 +106,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCT_BOM_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
@@ -178,10 +188,18 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="BOM类型：1-生产BOM，2-设计BOM，3-工艺BOM" align="center" prop="bomType" />
+      <el-table-column label="BOM类型" align="center" prop="bomType">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_BOM_TYPE" :value="scope.row.bomType" />
+        </template>
+      </el-table-column>
       <el-table-column label="标准成本" align="center" prop="standardCost" />
       <el-table-column label="总材料成本" align="center" prop="totalMaterialCost" />
-      <el-table-column label="状态：1-草稿，2-生效，3-失效" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCT_BOM_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column
         label="创建时间"
         align="center"
@@ -227,6 +245,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductBomApi, ProductBom } from '@/api/erp/productbom'
 import ProductBomForm from './ProductBomForm.vue'
 

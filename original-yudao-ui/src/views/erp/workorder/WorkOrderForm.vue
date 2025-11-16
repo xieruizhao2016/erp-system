@@ -66,9 +66,15 @@
           placeholder="选择实际结束时间"
         />
       </el-form-item>
-      <el-form-item label="状态：1-已创建，2-已下达，3-进行中，4-已暂停，5-已完成，6-已取消" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_WORK_ORDER_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="优先级" prop="priority">
@@ -88,6 +94,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
 
 /** ERP 工单主 表单 */

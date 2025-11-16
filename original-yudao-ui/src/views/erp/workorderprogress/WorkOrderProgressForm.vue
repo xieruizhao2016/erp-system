@@ -66,9 +66,15 @@
       <el-form-item label="报废数量" prop="scrapQuantity">
         <el-input v-model="formData.scrapQuantity" placeholder="请输入报废数量" />
       </el-form-item>
-      <el-form-item label="状态：1-待开始，2-进行中，3-已完成，4-异常" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_WORK_ORDER_PROGRESS_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="操作员ID" prop="operatorId">
@@ -78,24 +84,20 @@
         <el-input v-model="formData.equipmentId" placeholder="请输入设备ID" />
       </el-form-item>
       <el-form-item label="实际工时（分钟）" prop="workTime">
-        <el-date-picker
-          v-model="formData.workTime"
-          type="date"
-          value-format="x"
-          placeholder="选择实际工时（分钟）"
-        />
+        <el-input-number v-model="formData.workTime" placeholder="请输入实际工时（分钟）" :min="0" class="!w-1/1" />
       </el-form-item>
       <el-form-item label="停机时间（分钟）" prop="downtime">
-        <el-date-picker
-          v-model="formData.downtime"
-          type="date"
-          value-format="x"
-          placeholder="选择停机时间（分钟）"
-        />
+        <el-input-number v-model="formData.downtime" placeholder="请输入停机时间（分钟）" :min="0" class="!w-1/1" />
       </el-form-item>
-      <el-form-item label="质检状态：1-待检，2-合格，3-不合格" prop="qualityStatus">
+      <el-form-item label="质检状态" prop="qualityStatus">
         <el-radio-group v-model="formData.qualityStatus">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_QUALITY_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -109,6 +111,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkOrderProgressApi, WorkOrderProgress } from '@/api/erp/workorderprogress'
 
 /** ERP 工单进度 表单 */

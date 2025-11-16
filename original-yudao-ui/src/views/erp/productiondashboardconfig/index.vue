@@ -24,7 +24,9 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="大屏" value="1" />
+          <el-option label="PC端" value="2" />
+          <el-option label="移动端" value="3" />
         </el-select>
       </el-form-item>
       <el-form-item label="屏幕分辨率" prop="screenResolution">
@@ -70,17 +72,14 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item label="是否启用" prop="isActive">
-        <el-select
-          v-model="queryParams.isActive"
-          placeholder="请选择是否启用"
-          clearable
-          class="!w-240px"
-        >
-          <el-option label="请选择字典生成" value="" />
+        <el-select v-model="queryParams.isActive" placeholder="请选择是否启用" clearable class="!w-240px">
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
@@ -140,7 +139,13 @@
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="配置名称" align="center" prop="configName" />
-      <el-table-column label="配置类型：1-大屏，2-PC端，3-移动端" align="center" prop="configType" />
+      <el-table-column label="配置类型" align="center" prop="configType">
+        <template #default="scope">
+          <el-tag v-if="scope.row.configType === 1" type="primary">大屏</el-tag>
+          <el-tag v-else-if="scope.row.configType === 2" type="info">PC端</el-tag>
+          <el-tag v-else-if="scope.row.configType === 3" type="success">移动端</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="屏幕分辨率" align="center" prop="screenResolution" />
       <el-table-column label="布局配置（JSON）" align="center" prop="layoutConfig" />
       <el-table-column label="组件配置（JSON）" align="center" prop="componentConfig" />
@@ -192,6 +197,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionDashboardConfigApi, ProductionDashboardConfig } from '@/api/erp/productiondashboardconfig'
 import ProductionDashboardConfigForm from './ProductionDashboardConfigForm.vue'
 

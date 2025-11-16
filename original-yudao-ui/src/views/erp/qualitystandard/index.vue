@@ -51,7 +51,9 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="进料检验" value="1" />
+          <el-option label="过程检验" value="2" />
+          <el-option label="成品检验" value="3" />
         </el-select>
       </el-form-item>
       <el-form-item label="标准版本" prop="standardVersion">
@@ -88,7 +90,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCT_BOM_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
@@ -151,11 +158,21 @@
       <el-table-column label="标准名称" align="center" prop="standardName" />
       <el-table-column label="产品ID" align="center" prop="productId" />
       <el-table-column label="工序ID" align="center" prop="processId" />
-      <el-table-column label="检验类型：1-进料检验，2-过程检验，3-成品检验" align="center" prop="inspectionType" />
+      <el-table-column label="检验类型" align="center" prop="inspectionType">
+        <template #default="scope">
+          <el-tag v-if="scope.row.inspectionType === 1" type="primary">进料检验</el-tag>
+          <el-tag v-else-if="scope.row.inspectionType === 2" type="info">过程检验</el-tag>
+          <el-tag v-else-if="scope.row.inspectionType === 3" type="success">成品检验</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="标准版本" align="center" prop="standardVersion" />
       <el-table-column label="AQL水平" align="center" prop="aqlLevel" />
       <el-table-column label="抽样方法" align="center" prop="samplingMethod" />
-      <el-table-column label="状态：1-草稿，2-生效，3-失效" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCT_BOM_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column label="标准描述" align="center" prop="description" />
       <el-table-column
         label="创建时间"
@@ -202,6 +219,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityStandardApi, QualityStandard } from '@/api/erp/qualitystandard'
 import QualityStandardForm from './QualityStandardForm.vue'
 

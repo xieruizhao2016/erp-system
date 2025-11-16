@@ -68,9 +68,15 @@
           placeholder="选择最后调整日期"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-已计算，3-已确认" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_COST_ACTUAL_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -84,6 +90,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostActualApi, CostActual } from '@/api/erp/costactual'
 
 /** ERP 实际成本 表单 */

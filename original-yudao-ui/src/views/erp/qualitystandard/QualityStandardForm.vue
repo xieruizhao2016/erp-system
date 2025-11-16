@@ -19,9 +19,11 @@
       <el-form-item label="工序ID" prop="processId">
         <el-input v-model="formData.processId" placeholder="请输入工序ID" />
       </el-form-item>
-      <el-form-item label="检验类型：1-进料检验，2-过程检验，3-成品检验" prop="inspectionType">
-        <el-select v-model="formData.inspectionType" placeholder="请选择检验类型：1-进料检验，2-过程检验，3-成品检验">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="检验类型" prop="inspectionType">
+        <el-select v-model="formData.inspectionType" placeholder="请选择检验类型" clearable>
+          <el-option label="进料检验" value="1" />
+          <el-option label="过程检验" value="2" />
+          <el-option label="成品检验" value="3" />
         </el-select>
       </el-form-item>
       <el-form-item label="标准版本" prop="standardVersion">
@@ -33,9 +35,15 @@
       <el-form-item label="抽样方法" prop="samplingMethod">
         <el-input v-model="formData.samplingMethod" placeholder="请输入抽样方法" />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-生效，3-失效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCT_BOM_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="标准描述" prop="description">
@@ -49,6 +57,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityStandardApi, QualityStandard } from '@/api/erp/qualitystandard'
 
 /** ERP 质检标准 表单 */

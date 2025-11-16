@@ -10,9 +10,11 @@
       <el-form-item label="配置名称" prop="configName">
         <el-input v-model="formData.configName" placeholder="请输入配置名称" />
       </el-form-item>
-      <el-form-item label="配置类型：1-大屏，2-PC端，3-移动端" prop="configType">
-        <el-select v-model="formData.configType" placeholder="请选择配置类型：1-大屏，2-PC端，3-移动端">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="配置类型" prop="configType">
+        <el-select v-model="formData.configType" placeholder="请选择配置类型" clearable>
+          <el-option label="大屏" value="1" />
+          <el-option label="PC端" value="2" />
+          <el-option label="移动端" value="3" />
         </el-select>
       </el-form-item>
       <el-form-item label="屏幕分辨率" prop="screenResolution">
@@ -29,12 +31,14 @@
       </el-form-item>
       <el-form-item label="是否默认配置" prop="isDefault">
         <el-radio-group v-model="formData.isDefault">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio :value="true">是</el-radio>
+          <el-radio :value="false">否</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="是否启用" prop="isActive">
         <el-radio-group v-model="formData.isActive">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio :value="true">是</el-radio>
+          <el-radio :value="false">否</el-radio>
         </el-radio-group>
       </el-form-item>
     </el-form>
@@ -45,6 +49,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionDashboardConfigApi, ProductionDashboardConfig } from '@/api/erp/productiondashboardconfig'
 
 /** ERP 看板配置 表单 */

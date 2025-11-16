@@ -16,9 +16,14 @@
       <el-form-item label="参数值" prop="paramValue">
         <el-input v-model="formData.paramValue" placeholder="请输入参数值" />
       </el-form-item>
-      <el-form-item label="参数类型：1-字符串，2-数字，3-日期，4-布尔" prop="paramType">
-        <el-select v-model="formData.paramType" placeholder="请选择参数类型：1-字符串，2-数字，3-日期，4-布尔">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="参数类型" prop="paramType">
+        <el-select v-model="formData.paramType" placeholder="请选择参数类型" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_MRP_PARAM_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="参数描述" prop="description">
@@ -26,7 +31,8 @@
       </el-form-item>
       <el-form-item label="是否系统参数" prop="isSystem">
         <el-radio-group v-model="formData.isSystem">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio :value="true">是</el-radio>
+          <el-radio :value="false">否</el-radio>
         </el-radio-group>
       </el-form-item>
     </el-form>
@@ -37,6 +43,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { MrpParamsApi, MrpParams } from '@/api/erp/mrpparams'
 
 /** ERP MRP参数 表单 */

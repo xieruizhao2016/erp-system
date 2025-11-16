@@ -36,12 +36,14 @@
       </el-form-item>
       <el-form-item label="是否关键物料" prop="isKeyMaterial">
         <el-radio-group v-model="formData.isKeyMaterial">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio :value="true">是</el-radio>
+          <el-radio :value="false">否</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="是否替代料" prop="isAlternative">
         <el-radio-group v-model="formData.isAlternative">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio :value="true">是</el-radio>
+          <el-radio :value="false">否</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="替代料组" prop="alternativeGroup">
@@ -64,6 +66,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductBomItemApi, ProductBomItem } from '@/api/erp/productbomitem'
 
 /** ERP BOM明细 表单 */

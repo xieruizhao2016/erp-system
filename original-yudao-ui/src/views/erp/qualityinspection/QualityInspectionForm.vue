@@ -22,13 +22,18 @@
       <el-form-item label="工单ID" prop="workOrderId">
         <el-input v-model="formData.workOrderId" placeholder="请输入工单ID" />
       </el-form-item>
-      <el-form-item label="检验类型：1-进料检验，2-过程检验，3-成品检验" prop="inspectionType">
-        <el-select v-model="formData.inspectionType" placeholder="请选择检验类型：1-进料检验，2-过程检验，3-成品检验">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="检验类型" prop="inspectionType">
+        <el-select v-model="formData.inspectionType" placeholder="请选择检验类型" clearable>
+          <el-option label="进料检验" value="1" />
+          <el-option label="过程检验" value="2" />
+          <el-option label="成品检验" value="3" />
         </el-select>
       </el-form-item>
-      <el-form-item label="检验级别：1-全检，2-抽检" prop="inspectionLevel">
-        <el-input v-model="formData.inspectionLevel" placeholder="请输入检验级别：1-全检，2-抽检" />
+      <el-form-item label="检验级别" prop="inspectionLevel">
+        <el-select v-model="formData.inspectionLevel" placeholder="请选择检验级别" clearable>
+          <el-option label="全检" value="1" />
+          <el-option label="抽检" value="2" />
+        </el-select>
       </el-form-item>
       <el-form-item label="批量大小" prop="lotSize">
         <el-input v-model="formData.lotSize" placeholder="请输入批量大小" />
@@ -45,8 +50,15 @@
       <el-form-item label="报废数量" prop="scrapQuantity">
         <el-input v-model="formData.scrapQuantity" placeholder="请输入报废数量" />
       </el-form-item>
-      <el-form-item label="检验结果：1-合格，2-不合格，3-待复检" prop="inspectionResult">
-        <el-input v-model="formData.inspectionResult" placeholder="请输入检验结果：1-合格，2-不合格，3-待复检" />
+      <el-form-item label="检验结果" prop="inspectionResult">
+        <el-select v-model="formData.inspectionResult" placeholder="请选择检验结果" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_QUALITY_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="检验员ID" prop="inspectorId">
         <el-input v-model="formData.inspectorId" placeholder="请输入检验员ID" />
@@ -76,6 +88,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityInspectionApi, QualityInspection } from '@/api/erp/qualityinspection'
 
 /** ERP 质检记录 表单 */

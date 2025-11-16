@@ -16,9 +16,10 @@
       <el-form-item label="项目名称" prop="itemName">
         <el-input v-model="formData.itemName" placeholder="请输入项目名称" />
       </el-form-item>
-      <el-form-item label="项目类型：1-定性，2-定量" prop="itemType">
-        <el-select v-model="formData.itemType" placeholder="请选择项目类型：1-定性，2-定量">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="项目类型" prop="itemType">
+        <el-select v-model="formData.itemType" placeholder="请选择项目类型" clearable>
+          <el-option label="定性" value="1" />
+          <el-option label="定量" value="2" />
         </el-select>
       </el-form-item>
       <el-form-item label="检验方法" prop="testMethod">
@@ -35,7 +36,8 @@
       </el-form-item>
       <el-form-item label="是否关键项" prop="isKeyItem">
         <el-radio-group v-model="formData.isKeyItem">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio :value="true">是</el-radio>
+          <el-radio :value="false">否</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="检验序号" prop="sequence">
@@ -52,6 +54,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityItemApi, QualityItem } from '@/api/erp/qualityitem'
 
 /** ERP 质检项目 表单 */

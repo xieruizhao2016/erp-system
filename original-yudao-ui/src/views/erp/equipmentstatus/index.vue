@@ -24,7 +24,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_EQUIPMENT_STATUS_RECORD)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="状态开始时间" prop="statusStartTime">
@@ -142,7 +147,11 @@
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="设备ID" align="center" prop="equipmentId" />
-      <el-table-column label="状态：1-运行，2-待机，3-故障，4-维修，5-停机" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_EQUIPMENT_STATUS_RECORD" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column
         label="状态开始时间"
         align="center"
@@ -206,6 +215,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { EquipmentStatusApi, EquipmentStatus } from '@/api/erp/equipmentstatus'
 import EquipmentStatusForm from './EquipmentStatusForm.vue'
 

@@ -42,7 +42,8 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="定性" value="1" />
+          <el-option label="定量" value="2" />
         </el-select>
       </el-form-item>
       <el-form-item label="检验方法" prop="testMethod">
@@ -88,7 +89,8 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item label="检验序号" prop="sequence">
@@ -168,7 +170,12 @@
       <el-table-column label="标准ID" align="center" prop="standardId" />
       <el-table-column label="项目编号" align="center" prop="itemNo" />
       <el-table-column label="项目名称" align="center" prop="itemName" />
-      <el-table-column label="项目类型：1-定性，2-定量" align="center" prop="itemType" />
+      <el-table-column label="项目类型" align="center" prop="itemType">
+        <template #default="scope">
+          <el-tag v-if="scope.row.itemType === 1" type="primary">定性</el-tag>
+          <el-tag v-else-if="scope.row.itemType === 2" type="info">定量</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="检验方法" align="center" prop="testMethod" />
       <el-table-column label="标准值" align="center" prop="standardValue" />
       <el-table-column label="公差范围" align="center" prop="tolerance" />
@@ -221,6 +228,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityItemApi, QualityItem } from '@/api/erp/qualityitem'
 import QualityItemForm from './QualityItemForm.vue'
 

@@ -13,9 +13,12 @@
       <el-form-item label="KPI名称" prop="kpiName">
         <el-input v-model="formData.kpiName" placeholder="请输入KPI名称" />
       </el-form-item>
-      <el-form-item label="KPI类型：1-OEE，2-合格率，3-达成率，4-交期率" prop="kpiType">
-        <el-select v-model="formData.kpiType" placeholder="请选择KPI类型：1-OEE，2-合格率，3-达成率，4-交期率">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="KPI类型" prop="kpiType">
+        <el-select v-model="formData.kpiType" placeholder="请选择KPI类型" clearable>
+          <el-option label="OEE" value="1" />
+          <el-option label="合格率" value="2" />
+          <el-option label="达成率" value="3" />
+          <el-option label="交期率" value="4" />
         </el-select>
       </el-form-item>
       <el-form-item label="分类：1-效率，2-质量，3-交付，4-成本" prop="category">
@@ -80,6 +83,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionKpiApi, ProductionKpi } from '@/api/erp/productionkpi'
 
 /** ERP 生产KPI 表单 */

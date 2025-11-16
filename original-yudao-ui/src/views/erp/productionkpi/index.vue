@@ -33,7 +33,10 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="OEE" value="1" />
+          <el-option label="合格率" value="2" />
+          <el-option label="达成率" value="3" />
+          <el-option label="交期率" value="4" />
         </el-select>
       </el-form-item>
       <el-form-item label="分类：1-效率，2-质量，3-交付，4-成本" prop="category">
@@ -217,7 +220,14 @@
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="KPI编号" align="center" prop="kpiNo" />
       <el-table-column label="KPI名称" align="center" prop="kpiName" />
-      <el-table-column label="KPI类型：1-OEE，2-合格率，3-达成率，4-交期率" align="center" prop="kpiType" />
+      <el-table-column label="KPI类型" align="center" prop="kpiType">
+        <template #default="scope">
+          <el-tag v-if="scope.row.kpiType === 1" type="primary">OEE</el-tag>
+          <el-tag v-else-if="scope.row.kpiType === 2" type="success">合格率</el-tag>
+          <el-tag v-else-if="scope.row.kpiType === 3" type="info">达成率</el-tag>
+          <el-tag v-else-if="scope.row.kpiType === 4" type="warning">交期率</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="分类：1-效率，2-质量，3-交付，4-成本" align="center" prop="category" />
       <el-table-column label="工作中心ID" align="center" prop="workCenterId" />
       <el-table-column label="产品ID" align="center" prop="productId" />
@@ -294,6 +304,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionKpiApi, ProductionKpi } from '@/api/erp/productionkpi'
 import ProductionKpiForm from './ProductionKpiForm.vue'
 

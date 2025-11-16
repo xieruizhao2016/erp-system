@@ -42,17 +42,18 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_MRP_PARAM_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="是否系统参数" prop="isSystem">
-        <el-select
-          v-model="queryParams.isSystem"
-          placeholder="请选择是否系统参数"
-          clearable
-          class="!w-240px"
-        >
-          <el-option label="请选择字典生成" value="" />
+        <el-select v-model="queryParams.isSystem" placeholder="请选择是否系统参数" clearable class="!w-240px">
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
@@ -114,7 +115,11 @@
       <el-table-column label="参数名称" align="center" prop="paramName" />
       <el-table-column label="参数编码" align="center" prop="paramCode" />
       <el-table-column label="参数值" align="center" prop="paramValue" />
-      <el-table-column label="参数类型：1-字符串，2-数字，3-日期，4-布尔" align="center" prop="paramType" />
+      <el-table-column label="参数类型" align="center" prop="paramType">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_MRP_PARAM_TYPE" :value="scope.row.paramType" />
+        </template>
+      </el-table-column>
       <el-table-column label="参数描述" align="center" prop="description" />
       <el-table-column label="是否系统参数" align="center" prop="isSystem" />
       <el-table-column
@@ -162,6 +167,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { MrpParamsApi, MrpParams } from '@/api/erp/mrpparams'
 import MrpParamsForm from './MrpParamsForm.vue'
 

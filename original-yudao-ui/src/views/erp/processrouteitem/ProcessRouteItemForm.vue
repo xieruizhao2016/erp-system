@@ -52,12 +52,14 @@
       </el-form-item>
       <el-form-item label="是否瓶颈工序" prop="isBottleneck">
         <el-radio-group v-model="formData.isBottleneck">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio :value="true">是</el-radio>
+          <el-radio :value="false">否</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="是否需要质检" prop="qualityCheckRequired">
         <el-radio-group v-model="formData.qualityCheckRequired">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio :value="true">是</el-radio>
+          <el-radio :value="false">否</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -71,6 +73,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
 
 /** ERP 工艺路线明细 表单 */

@@ -218,6 +218,26 @@ export enum DICT_TYPE {
   ERP_PRODUCTION_ORDER_STATUS = 'erp_production_order_status', // 生产订单状态
   ERP_PRODUCTION_ORDER_PRIORITY = 'erp_production_order_priority', // 生产订单优先级
   ERP_PRODUCTION_ORDER_SOURCE_TYPE = 'erp_production_order_source_type', // 生产订单来源类型
+  // 生产管理相关
+  ERP_WORK_ORDER_STATUS = 'erp_work_order_status', // 工单状态
+  ERP_WORK_ORDER_PROGRESS_STATUS = 'erp_work_order_progress_status', // 工单进度状态
+  ERP_PRODUCT_BOM_STATUS = 'erp_product_bom_status', // 产品BOM状态
+  ERP_BOM_TYPE = 'erp_bom_type', // BOM类型
+  ERP_PROCESS_ROUTE_STATUS = 'erp_process_route_status', // 工艺路线状态
+  ERP_PRODUCTION_SCHEDULE_STATUS = 'erp_production_schedule_status', // 生产排程状态
+  ERP_PRODUCTION_SCHEDULE_ITEM_STATUS = 'erp_production_schedule_item_status', // 排程明细状态
+  ERP_MRP_ORDER_TYPE = 'erp_mrp_order_type', // MRP订单类型
+  ERP_MRP_LOT_SIZING_RULE = 'erp_mrp_lot_sizing_rule', // MRP批量规则
+  ERP_MRP_ORDER_STATUS = 'erp_mrp_order_status', // MRP订单状态
+  ERP_MRP_PARAM_TYPE = 'erp_mrp_param_type', // MRP参数类型
+  ERP_COST_STANDARD_STATUS = 'erp_cost_standard_status', // 标准成本状态
+  ERP_COST_ACTUAL_STATUS = 'erp_cost_actual_status', // 实际成本状态
+  ERP_COST_VARIANCE_TYPE = 'erp_cost_variance_type', // 成本差异类型
+  ERP_EQUIPMENT_STATUS = 'erp_equipment_status', // 设备状态
+  ERP_EQUIPMENT_STATUS_RECORD = 'erp_equipment_status_record', // 设备状态记录
+  ERP_QUALITY_STATUS = 'erp_quality_status', // 质检状态
+  ERP_WORK_HOURS_STATUS = 'erp_work_hours_status', // 工时统计状态
+  ERP_PRODUCTION_REPORT_STATUS = 'erp_production_report_status', // 生产报表状态
 
   // ========== AI - 人工智能模块  ==========
   AI_PLATFORM = 'ai_platform', // AI 平台

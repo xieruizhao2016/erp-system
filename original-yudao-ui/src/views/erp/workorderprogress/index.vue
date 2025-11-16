@@ -140,7 +140,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_WORK_ORDER_PROGRESS_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="操作员ID" prop="operatorId">
@@ -190,7 +195,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_QUALITY_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -295,12 +305,20 @@
       <el-table-column label="合格数量" align="center" prop="qualifiedQuantity" />
       <el-table-column label="不合格数量" align="center" prop="rejectedQuantity" />
       <el-table-column label="报废数量" align="center" prop="scrapQuantity" />
-      <el-table-column label="状态：1-待开始，2-进行中，3-已完成，4-异常" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_WORK_ORDER_PROGRESS_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column label="操作员ID" align="center" prop="operatorId" />
       <el-table-column label="设备ID" align="center" prop="equipmentId" />
       <el-table-column label="实际工时（分钟）" align="center" prop="workTime" />
       <el-table-column label="停机时间（分钟）" align="center" prop="downtime" />
-      <el-table-column label="质检状态：1-待检，2-合格，3-不合格" align="center" prop="qualityStatus" />
+      <el-table-column label="质检状态" align="center" prop="qualityStatus">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_QUALITY_STATUS" :value="scope.row.qualityStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column
         label="创建时间"
@@ -347,6 +365,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkOrderProgressApi, WorkOrderProgress } from '@/api/erp/workorderprogress'
 import WorkOrderProgressForm from './WorkOrderProgressForm.vue'
 

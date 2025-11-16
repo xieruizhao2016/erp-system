@@ -63,17 +63,35 @@
           placeholder="选择实际完成时间"
         />
       </el-form-item>
-      <el-form-item label="状态：1-待开始，2-进行中，3-已暂停，4-已完成，5-已取消" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="优先级：1-紧急，2-高，3-中，4-低" prop="priority">
-        <el-input v-model="formData.priority" placeholder="请输入优先级：1-紧急，2-高，3-中，4-低" />
+      <el-form-item label="优先级" prop="priority">
+        <el-select v-model="formData.priority" placeholder="请选择优先级" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_PRIORITY)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="来源类型：1-手动创建，2-销售订单，3-库存补充" prop="sourceType">
-        <el-select v-model="formData.sourceType" placeholder="请选择来源类型：1-手动创建，2-销售订单，3-库存补充">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="来源类型" prop="sourceType">
+        <el-select v-model="formData.sourceType" placeholder="请选择来源类型" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_SOURCE_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="来源单据ID" prop="sourceId">
@@ -93,6 +111,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
 
 /** ERP 生产订单 DO

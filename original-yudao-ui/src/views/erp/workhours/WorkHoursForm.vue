@@ -67,9 +67,15 @@
       <el-form-item label="设备成本" prop="machineCost">
         <el-input v-model="formData.machineCost" placeholder="请输入设备成本" />
       </el-form-item>
-      <el-form-item label="状态：1-有效，2-无效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_WORK_HOURS_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -83,6 +89,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkHoursApi, WorkHours } from '@/api/erp/workhours'
 
 /** ERP 工时统计 表单 */

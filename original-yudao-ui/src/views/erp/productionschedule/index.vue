@@ -33,7 +33,8 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="主排程" value="1" />
+          <el-option label="详细排程" value="2" />
         </el-select>
       </el-form-item>
       <el-form-item label="计划天数" prop="planningHorizonDays">
@@ -67,14 +68,19 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-已发布，3-执行中，4-已完成" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-草稿，2-已发布，3-执行中，4-已完成"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_SCHEDULE_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="总订单数" prop="totalOrders">
@@ -180,11 +186,20 @@
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="排程单号" align="center" prop="scheduleNo" />
       <el-table-column label="排程名称" align="center" prop="scheduleName" />
-      <el-table-column label="排程类型：1-主排程，2-详细排程" align="center" prop="scheduleType" />
+      <el-table-column label="排程类型" align="center" prop="scheduleType">
+        <template #default="scope">
+          <el-tag v-if="scope.row.scheduleType === 1" type="primary">主排程</el-tag>
+          <el-tag v-else-if="scope.row.scheduleType === 2" type="info">详细排程</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="计划天数" align="center" prop="planningHorizonDays" />
       <el-table-column label="计划开始日期" align="center" prop="startDate" />
       <el-table-column label="计划结束日期" align="center" prop="endDate" />
-      <el-table-column label="状态：1-草稿，2-已发布，3-执行中，4-已完成" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCTION_SCHEDULE_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column label="总订单数" align="center" prop="totalOrders" />
       <el-table-column label="总数量" align="center" prop="totalQuantity" />
       <el-table-column label="总工时" align="center" prop="totalWorkHours" />
@@ -235,6 +250,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionScheduleApi, ProductionSchedule } from '@/api/erp/productionschedule'
 import ProductionScheduleForm from './ProductionScheduleForm.vue'
 

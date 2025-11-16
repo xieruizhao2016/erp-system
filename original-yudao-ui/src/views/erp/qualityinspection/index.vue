@@ -60,10 +60,18 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="进料检验" value="1" />
+          <el-option label="过程检验" value="2" />
+          <el-option label="成品检验" value="3" />
         </el-select>
       </el-form-item>
-      <el-form-item label="检验级别：1-全检，2-抽检" prop="inspectionLevel">
+      <el-form-item label="检验级别" prop="inspectionLevel">
+        <el-select v-model="queryParams.inspectionLevel" placeholder="请选择检验级别" clearable class="!w-240px">
+          <el-option label="全检" value="1" />
+          <el-option label="抽检" value="2" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="检验级别（旧）" prop="inspectionLevelOld" style="display: none;">
         <el-input
           v-model="queryParams.inspectionLevel"
           placeholder="请输入检验级别：1-全检，2-抽检"
@@ -241,7 +249,11 @@
       <el-table-column label="合格数量" align="center" prop="qualifiedQuantity" />
       <el-table-column label="不合格数量" align="center" prop="rejectedQuantity" />
       <el-table-column label="报废数量" align="center" prop="scrapQuantity" />
-      <el-table-column label="检验结果：1-合格，2-不合格，3-待复检" align="center" prop="inspectionResult" />
+      <el-table-column label="检验结果" align="center" prop="inspectionResult">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_QUALITY_STATUS" :value="scope.row.inspectionResult" />
+        </template>
+      </el-table-column>
       <el-table-column label="检验员ID" align="center" prop="inspectorId" />
       <el-table-column
         label="检验时间"
@@ -298,6 +310,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityInspectionApi, QualityInspection } from '@/api/erp/qualityinspection'
 import QualityInspectionForm from './QualityInspectionForm.vue'
 

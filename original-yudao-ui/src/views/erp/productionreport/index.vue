@@ -33,7 +33,10 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="日报" value="1" />
+          <el-option label="周报" value="2" />
+          <el-option label="月报" value="3" />
+          <el-option label="年报" value="4" />
         </el-select>
       </el-form-item>
       <el-form-item label="报表期间" prop="reportPeriod">
@@ -191,7 +194,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_REPORT_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="详细数据（JSON）" prop="reportData">
@@ -331,6 +339,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionReportApi, ProductionReport } from '@/api/erp/productionreport'
 import ProductionReportForm from './ProductionReportForm.vue'
 

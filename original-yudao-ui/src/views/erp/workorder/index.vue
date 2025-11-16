@@ -133,14 +133,19 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-已创建，2-已下达，3-进行中，4-已暂停，5-已完成，6-已取消" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-已创建，2-已下达，3-进行中，4-已暂停，5-已完成，6-已取消"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_WORK_ORDER_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="优先级" prop="priority">
@@ -263,7 +268,11 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="状态：1-已创建，2-已下达，3-进行中，4-已暂停，5-已完成，6-已取消" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_WORK_ORDER_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column label="优先级" align="center" prop="priority" />
       <el-table-column label="作业指导书" align="center" prop="instruction" />
       <el-table-column label="备注" align="center" prop="remark" />
@@ -312,6 +321,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
 import WorkOrderForm from './WorkOrderForm.vue'
 

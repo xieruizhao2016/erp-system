@@ -118,17 +118,14 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item label="是否需要质检" prop="qualityCheckRequired">
-        <el-select
-          v-model="queryParams.qualityCheckRequired"
-          placeholder="请选择是否需要质检"
-          clearable
-          class="!w-240px"
-        >
-          <el-option label="请选择字典生成" value="" />
+        <el-select v-model="queryParams.qualityCheckRequired" placeholder="请选择是否需要质检" clearable class="!w-240px">
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -255,6 +252,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
 import ProcessRouteItemForm from './ProcessRouteItemForm.vue'
 

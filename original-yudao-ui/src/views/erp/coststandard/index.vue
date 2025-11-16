@@ -129,7 +129,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_COST_STANDARD_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -227,7 +232,11 @@
       />
       <el-table-column label="关联BOM版本" align="center" prop="bomVersion" />
       <el-table-column label="关联工艺版本" align="center" prop="routeVersion" />
-      <el-table-column label="状态：1-草稿，2-生效，3-失效" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_COST_STANDARD_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column
         label="创建时间"
@@ -274,6 +283,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostStandardApi, CostStandard } from '@/api/erp/coststandard'
 import CostStandardForm from './CostStandardForm.vue'
 

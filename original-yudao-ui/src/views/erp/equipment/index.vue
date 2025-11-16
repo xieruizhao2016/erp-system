@@ -33,7 +33,7 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="全部" value="" />
         </el-select>
       </el-form-item>
       <el-form-item label="设备型号" prop="model">
@@ -135,7 +135,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_EQUIPMENT_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="责任人" prop="responsiblePerson">
@@ -234,7 +239,11 @@
       <el-table-column label="设备位置" align="center" prop="location" />
       <el-table-column label="产能（小时/天）" align="center" prop="capacity" />
       <el-table-column label="效率系数" align="center" prop="efficiencyRate" />
-      <el-table-column label="状态：1-正常，2-维修中，3-故障，4-报废" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_EQUIPMENT_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column label="责任人" align="center" prop="responsiblePerson" />
       <el-table-column label="技术规格" align="center" prop="specification" />
       <el-table-column label="备注" align="center" prop="remark" />
@@ -283,6 +292,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { EquipmentApi, Equipment } from '@/api/erp/equipment'
 import EquipmentForm from './EquipmentForm.vue'
 

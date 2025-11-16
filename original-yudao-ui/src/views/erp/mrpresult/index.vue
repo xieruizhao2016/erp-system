@@ -118,17 +118,23 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_MRP_ORDER_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
-      <el-form-item label="批量规则：1-固定批量，2-按需，3-最小-最大" prop="lotSizingRule">
-        <el-input
-          v-model="queryParams.lotSizingRule"
-          placeholder="请输入批量规则：1-固定批量，2-按需，3-最小-最大"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
+      <el-form-item label="批量规则" prop="lotSizingRule">
+        <el-select v-model="queryParams.lotSizingRule" placeholder="请选择批量规则" clearable class="!w-240px">
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_MRP_LOT_SIZING_RULE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="提前期（天）" prop="leadTime">
         <el-date-picker
@@ -157,7 +163,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_MRP_ORDER_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="需求日期" prop="dueDate">
@@ -238,11 +249,23 @@
       <el-table-column label="净需求" align="center" prop="netRequirement" />
       <el-table-column label="计划订单接收量" align="center" prop="plannedOrderReceipts" />
       <el-table-column label="计划订单发放量" align="center" prop="plannedOrderReleases" />
-      <el-table-column label="订单类型：1-生产订单，2-采购订单" align="center" prop="orderType" />
-      <el-table-column label="批量规则：1-固定批量，2-按需，3-最小-最大" align="center" prop="lotSizingRule" />
+      <el-table-column label="订单类型" align="center" prop="orderType">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_MRP_ORDER_TYPE" :value="scope.row.orderType" />
+        </template>
+      </el-table-column>
+      <el-table-column label="批量规则" align="center" prop="lotSizingRule">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_MRP_LOT_SIZING_RULE" :value="scope.row.lotSizingRule" />
+        </template>
+      </el-table-column>
       <el-table-column label="提前期（天）" align="center" prop="leadTime" />
       <el-table-column label="安全库存" align="center" prop="safetyStock" />
-      <el-table-column label="订单状态：1-建议，2-确认，3-下达" align="center" prop="orderStatus" />
+      <el-table-column label="订单状态" align="center" prop="orderStatus">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_MRP_ORDER_STATUS" :value="scope.row.orderStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="需求日期" align="center" prop="dueDate" />
       <el-table-column
         label="创建时间"
@@ -289,6 +312,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { MrpResultApi, MrpResult } from '@/api/erp/mrpresult'
 import MrpResultForm from './MrpResultForm.vue'
 

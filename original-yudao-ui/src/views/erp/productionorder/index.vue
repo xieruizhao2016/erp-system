@@ -124,33 +124,49 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-待开始，2-进行中，3-已暂停，4-已完成，5-已取消" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-待开始，2-进行中，3-已暂停，4-已完成，5-已取消"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
-      <el-form-item label="优先级：1-紧急，2-高，3-中，4-低" prop="priority">
-        <el-input
-          v-model="queryParams.priority"
-          placeholder="请输入优先级：1-紧急，2-高，3-中，4-低"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="来源类型：1-手动创建，2-销售订单，3-库存补充" prop="sourceType">
+      <el-form-item label="优先级" prop="priority">
         <el-select
-          v-model="queryParams.sourceType"
-          placeholder="请选择来源类型：1-手动创建，2-销售订单，3-库存补充"
+          v-model="queryParams.priority"
+          placeholder="请选择优先级"
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_PRIORITY)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="来源类型" prop="sourceType">
+        <el-select
+          v-model="queryParams.sourceType"
+          placeholder="请选择来源类型"
+          clearable
+          class="!w-240px"
+        >
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_SOURCE_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="来源单据ID" prop="sourceId">
@@ -263,9 +279,21 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="状态：1-待开始，2-进行中，3-已暂停，4-已完成，5-已取消" align="center" prop="status" />
-      <el-table-column label="优先级：1-紧急，2-高，3-中，4-低" align="center" prop="priority" />
-      <el-table-column label="来源类型：1-手动创建，2-销售订单，3-库存补充" align="center" prop="sourceType" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCTION_ORDER_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="优先级" align="center" prop="priority">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCTION_ORDER_PRIORITY" :value="scope.row.priority" />
+        </template>
+      </el-table-column>
+      <el-table-column label="来源类型" align="center" prop="sourceType">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCTION_ORDER_SOURCE_TYPE" :value="scope.row.sourceType" />
+        </template>
+      </el-table-column>
       <el-table-column label="来源单据ID" align="center" prop="sourceId" />
       <el-table-column label="生产说明" align="center" prop="description" />
       <el-table-column label="备注" align="center" prop="remark" />
@@ -314,6 +342,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
 import ProductionOrderForm from './ProductionOrderForm.vue'
 

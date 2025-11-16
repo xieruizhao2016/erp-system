@@ -46,9 +46,14 @@
       <el-form-item label="制造费用差异率" prop="overheadVarianceRate">
         <el-input v-model="formData.overheadVarianceRate" placeholder="请输入制造费用差异率" />
       </el-form-item>
-      <el-form-item label="差异类型：1-有利，2-不利" prop="varianceType">
-        <el-select v-model="formData.varianceType" placeholder="请选择差异类型：1-有利，2-不利">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="差异类型" prop="varianceType">
+        <el-select v-model="formData.varianceType" placeholder="请选择差异类型" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_COST_VARIANCE_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="分析日期" prop="analysisDate">
@@ -73,6 +78,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostVarianceApi, CostVariance } from '@/api/erp/costvariance'
 
 /** ERP 成本差异分析 表单 */

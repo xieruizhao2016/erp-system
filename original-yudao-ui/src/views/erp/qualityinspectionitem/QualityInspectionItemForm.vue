@@ -22,13 +22,18 @@
       <el-form-item label="实际数值" prop="actualValue">
         <el-input v-model="formData.actualValue" placeholder="请输入实际数值" />
       </el-form-item>
-      <el-form-item label="检验结果：1-合格，2-不合格，3-超差" prop="testResult">
-        <el-input v-model="formData.testResult" placeholder="请输入检验结果：1-合格，2-不合格，3-超差" />
+      <el-form-item label="检验结果" prop="testResult">
+        <el-select v-model="formData.testResult" placeholder="请选择检验结果" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_QUALITY_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="缺陷类型" prop="defectType">
-        <el-select v-model="formData.defectType" placeholder="请选择缺陷类型">
-          <el-option label="请选择字典生成" value="" />
-        </el-select>
+        <el-input v-model="formData.defectType" placeholder="请输入缺陷类型" />
       </el-form-item>
       <el-form-item label="缺陷描述" prop="defectDescription">
         <Editor v-model="formData.defectDescription" height="150px" />
@@ -58,6 +63,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityInspectionItemApi, QualityInspectionItem } from '@/api/erp/qualityinspectionitem'
 
 /** ERP 质检明细 表单 */

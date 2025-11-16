@@ -142,7 +142,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_SCHEDULE_ITEM_STATUS)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="实际开始时间" prop="actualStartTime">
@@ -266,7 +271,11 @@
       <el-table-column label="准备时间" align="center" prop="setupTime" />
       <el-table-column label="运行时间" align="center" prop="runTime" />
       <el-table-column label="等待时间" align="center" prop="waitTime" />
-      <el-table-column label="状态：1-已计划，2-已下达，3-进行中，4-已完成，5-已延迟" align="center" prop="status" />
+      <el-table-column label="状态" align="center" prop="status">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCTION_SCHEDULE_ITEM_STATUS" :value="scope.row.status" />
+        </template>
+      </el-table-column>
       <el-table-column
         label="实际开始时间"
         align="center"
@@ -328,6 +337,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionScheduleItemApi, ProductionScheduleItem } from '@/api/erp/productionscheduleitem'
 import ProductionScheduleItemForm from './ProductionScheduleItemForm.vue'
 

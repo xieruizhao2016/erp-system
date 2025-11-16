@@ -69,7 +69,7 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="全部" value="" />
         </el-select>
       </el-form-item>
       <el-form-item label="缺陷图片URLs" prop="imageUrls">
@@ -229,6 +229,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityInspectionItemApi, QualityInspectionItem } from '@/api/erp/qualityinspectionitem'
 import QualityInspectionItemForm from './QualityInspectionItemForm.vue'
 

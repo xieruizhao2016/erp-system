@@ -10,9 +10,15 @@
       <el-form-item label="设备ID" prop="equipmentId">
         <el-input v-model="formData.equipmentId" placeholder="请输入设备ID" />
       </el-form-item>
-      <el-form-item label="状态：1-运行，2-待机，3-故障，4-维修，5-停机" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_EQUIPMENT_STATUS_RECORD)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="状态开始时间" prop="statusStartTime">
@@ -51,6 +57,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { EquipmentStatusApi, EquipmentStatus } from '@/api/erp/equipmentstatus'
 
 /** ERP 设备状态记录 表单 */

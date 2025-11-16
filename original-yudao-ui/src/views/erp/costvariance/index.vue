@@ -132,7 +132,12 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_COST_VARIANCE_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="分析日期" prop="analysisDate">
@@ -233,7 +238,11 @@
       <el-table-column label="人工差异率" align="center" prop="laborVarianceRate" />
       <el-table-column label="制造费用差异" align="center" prop="overheadVariance" />
       <el-table-column label="制造费用差异率" align="center" prop="overheadVarianceRate" />
-      <el-table-column label="差异类型：1-有利，2-不利" align="center" prop="varianceType" />
+      <el-table-column label="差异类型" align="center" prop="varianceType">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_COST_VARIANCE_TYPE" :value="scope.row.varianceType" />
+        </template>
+      </el-table-column>
       <el-table-column
         label="分析日期"
         align="center"
@@ -288,6 +297,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostVarianceApi, CostVariance } from '@/api/erp/costvariance'
 import CostVarianceForm from './CostVarianceForm.vue'
 

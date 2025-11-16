@@ -96,17 +96,14 @@
           clearable
           class="!w-240px"
         >
-          <el-option label="请选择字典生成" value="" />
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item label="是否替代料" prop="isAlternative">
-        <el-select
-          v-model="queryParams.isAlternative"
-          placeholder="请选择是否替代料"
-          clearable
-          class="!w-240px"
-        >
-          <el-option label="请选择字典生成" value="" />
+        <el-select v-model="queryParams.isAlternative" placeholder="请选择是否替代料" clearable class="!w-240px">
+          <el-option label="是" :value="true" />
+          <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item label="替代料组" prop="alternativeGroup">
@@ -261,6 +258,7 @@
 import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductBomItemApi, ProductBomItem } from '@/api/erp/productbomitem'
 import ProductBomItemForm from './ProductBomItemForm.vue'
 

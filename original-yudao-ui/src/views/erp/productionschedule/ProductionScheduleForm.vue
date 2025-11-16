@@ -13,9 +13,10 @@
       <el-form-item label="排程名称" prop="scheduleName">
         <el-input v-model="formData.scheduleName" placeholder="请输入排程名称" />
       </el-form-item>
-      <el-form-item label="排程类型：1-主排程，2-详细排程" prop="scheduleType">
-        <el-select v-model="formData.scheduleType" placeholder="请选择排程类型：1-主排程，2-详细排程">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="排程类型" prop="scheduleType">
+        <el-select v-model="formData.scheduleType" placeholder="请选择排程类型" clearable>
+          <el-option label="主排程" value="1" />
+          <el-option label="详细排程" value="2" />
         </el-select>
       </el-form-item>
       <el-form-item label="计划天数" prop="planningHorizonDays">
@@ -37,9 +38,15 @@
           placeholder="选择计划结束日期"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-已发布，3-执行中，4-已完成" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_SCHEDULE_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="总订单数" prop="totalOrders">
@@ -65,6 +72,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionScheduleApi, ProductionSchedule } from '@/api/erp/productionschedule'
 
 /** ERP 生产排程主 表单 */

@@ -58,9 +58,15 @@
       <el-form-item label="关联工艺版本" prop="routeVersion">
         <el-input v-model="formData.routeVersion" placeholder="请输入关联工艺版本" />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-生效，3-失效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_COST_STANDARD_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -74,6 +80,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostStandardApi, CostStandard } from '@/api/erp/coststandard'
 
 /** ERP 标准成本 表单 */

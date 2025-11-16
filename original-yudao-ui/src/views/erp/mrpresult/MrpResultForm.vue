@@ -50,28 +50,41 @@
       <el-form-item label="计划订单发放量" prop="plannedOrderReleases">
         <el-input v-model="formData.plannedOrderReleases" placeholder="请输入计划订单发放量" />
       </el-form-item>
-      <el-form-item label="订单类型：1-生产订单，2-采购订单" prop="orderType">
-        <el-select v-model="formData.orderType" placeholder="请选择订单类型：1-生产订单，2-采购订单">
-          <el-option label="请选择字典生成" value="" />
+      <el-form-item label="订单类型" prop="orderType">
+        <el-select v-model="formData.orderType" placeholder="请选择订单类型" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_MRP_ORDER_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
         </el-select>
       </el-form-item>
-      <el-form-item label="批量规则：1-固定批量，2-按需，3-最小-最大" prop="lotSizingRule">
-        <el-input v-model="formData.lotSizingRule" placeholder="请输入批量规则：1-固定批量，2-按需，3-最小-最大" />
+      <el-form-item label="批量规则" prop="lotSizingRule">
+        <el-select v-model="formData.lotSizingRule" placeholder="请选择批量规则" clearable>
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_MRP_LOT_SIZING_RULE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="提前期（天）" prop="leadTime">
-        <el-date-picker
-          v-model="formData.leadTime"
-          type="date"
-          value-format="x"
-          placeholder="选择提前期（天）"
-        />
+        <el-input-number v-model="formData.leadTime" placeholder="请输入提前期（天）" :min="0" class="!w-1/1" />
       </el-form-item>
       <el-form-item label="安全库存" prop="safetyStock">
-        <el-input v-model="formData.safetyStock" placeholder="请输入安全库存" />
+        <el-input-number v-model="formData.safetyStock" placeholder="请输入安全库存" :min="0" class="!w-1/1" />
       </el-form-item>
-      <el-form-item label="订单状态：1-建议，2-确认，3-下达" prop="orderStatus">
+      <el-form-item label="订单状态" prop="orderStatus">
         <el-radio-group v-model="formData.orderStatus">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_MRP_ORDER_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="需求日期" prop="dueDate">
@@ -90,6 +103,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { MrpResultApi, MrpResult } from '@/api/erp/mrpresult'
 
 /** ERP MRP运算结果 表单 */

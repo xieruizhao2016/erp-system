@@ -71,9 +71,15 @@
           placeholder="选择等待时间"
         />
       </el-form-item>
-      <el-form-item label="状态：1-已计划，2-已下达，3-进行中，4-已完成，5-已延迟" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_SCHEDULE_ITEM_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="实际开始时间" prop="actualStartTime">
@@ -106,6 +112,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionScheduleItemApi, ProductionScheduleItem } from '@/api/erp/productionscheduleitem'
 
 /** ERP 排程明细 表单 */

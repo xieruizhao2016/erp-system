@@ -33,9 +33,15 @@
       <el-form-item label="标准制造费用" prop="standardOverheadCost">
         <el-input v-model="formData.standardOverheadCost" placeholder="请输入标准制造费用" />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-生效，3-失效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
-          <el-radio value="1">请选择字典生成</el-radio>
+          <el-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PROCESS_ROUTE_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </el-radio>
         </el-radio-group>
       </el-form-item>
     </el-form>
@@ -46,6 +52,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteApi, ProcessRoute } from '@/api/erp/processroute'
 
 /** ERP 工艺路线主 表单 */
