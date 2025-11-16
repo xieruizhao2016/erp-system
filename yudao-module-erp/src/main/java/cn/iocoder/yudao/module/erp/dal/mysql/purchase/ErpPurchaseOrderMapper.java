@@ -48,12 +48,12 @@ public interface ErpPurchaseOrderMapper extends BaseMapperX<ErpPurchaseOrderDO> 
         // 可采购入库
         if (Boolean.TRUE.equals(reqVO.getInEnable())) {
             query.eq(ErpPurchaseOrderDO::getStatus, ErpAuditStatus.APPROVE.getStatus())
-                    .apply("t.in_count < t.total_count");
+                    .apply("(t.in_count IS NULL OR t.in_count < t.total_count)");
         }
         // 可采购退货
         if (Boolean.TRUE.equals(reqVO.getReturnEnable())) {
             query.eq(ErpPurchaseOrderDO::getStatus, ErpAuditStatus.APPROVE.getStatus())
-                    .apply("t.return_count < t.in_count");
+                    .apply("(t.in_count IS NOT NULL AND t.in_count > 0) AND (t.return_count IS NULL OR t.return_count < t.in_count)");
         }
         if (reqVO.getProductId() != null) {
             query.leftJoin(ErpPurchaseOrderItemDO.class, ErpPurchaseOrderItemDO::getOrderId, ErpPurchaseOrderDO::getId)

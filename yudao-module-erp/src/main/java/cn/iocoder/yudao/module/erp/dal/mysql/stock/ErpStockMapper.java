@@ -53,16 +53,26 @@ public interface ErpStockMapper extends BaseMapperX<ErpStockDO> {
         // SQL sum 查询
         List<Map<String, Object>> result = selectMaps(new QueryWrapper<ErpStockDO>()
                 .select("SUM(count) AS sumCount")
-                .eq("product_id", productId));
+                .eq("product_id", productId)
+                .eq("deleted", false));
         // 获得数量
         if (CollUtil.isEmpty(result)) {
             return BigDecimal.ZERO;
         }
-        Object sumCount = result.get(0).get("sumCount");
+        Map<String, Object> firstRow = result.get(0);
+        if (firstRow == null) {
+            return BigDecimal.ZERO;
+        }
+        Object sumCount = firstRow.get("sumCount");
         if (sumCount == null) {
             return BigDecimal.ZERO;
         }
-        return BigDecimal.valueOf(MapUtil.getDouble(result.get(0), "sumCount", 0D));
+        // 处理 BigDecimal 类型
+        if (sumCount instanceof BigDecimal) {
+            return (BigDecimal) sumCount;
+        }
+        // 处理其他数字类型
+        return BigDecimal.valueOf(MapUtil.getDouble(firstRow, "sumCount", 0D));
     }
 
 }

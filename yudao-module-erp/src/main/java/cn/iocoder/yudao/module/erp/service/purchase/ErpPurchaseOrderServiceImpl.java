@@ -133,12 +133,14 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
         if (purchaseOrder.getStatus().equals(status)) {
             throw exception(approve ? PURCHASE_ORDER_APPROVE_FAIL : PURCHASE_ORDER_PROCESS_FAIL);
         }
-        // 1.3 存在采购入单，无法反审核
-        if (!approve && purchaseOrder.getInCount().compareTo(BigDecimal.ZERO) > 0) {
+        // 1.3 存在采购入库单，无法反审核
+        BigDecimal inCount = purchaseOrder.getInCount() != null ? purchaseOrder.getInCount() : BigDecimal.ZERO;
+        if (!approve && inCount.compareTo(BigDecimal.ZERO) > 0) {
             throw exception(PURCHASE_ORDER_PROCESS_FAIL_EXISTS_IN);
         }
         // 1.4 存在采购退货单，无法反审核
-        if (!approve && purchaseOrder.getReturnCount().compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal returnCount = purchaseOrder.getReturnCount() != null ? purchaseOrder.getReturnCount() : BigDecimal.ZERO;
+        if (!approve && returnCount.compareTo(BigDecimal.ZERO) > 0) {
             throw exception(PURCHASE_ORDER_PROCESS_FAIL_EXISTS_RETURN);
         }
 
@@ -193,7 +195,8 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
         // 1. 更新每个采购订单项
         orderItems.forEach(item -> {
             BigDecimal inCount = inCountMap.getOrDefault(item.getId(), BigDecimal.ZERO);
-            if (item.getInCount().equals(inCount)) {
+            BigDecimal currentInCount = item.getInCount() != null ? item.getInCount() : BigDecimal.ZERO;
+            if (currentInCount.equals(inCount)) {
                 return;
             }
             if (inCount.compareTo(item.getCount()) > 0) {
@@ -213,12 +216,14 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
         // 1. 更新每个采购订单项
         orderItems.forEach(item -> {
             BigDecimal returnCount = returnCountMap.getOrDefault(item.getId(), BigDecimal.ZERO);
-            if (item.getReturnCount().equals(returnCount)) {
+            BigDecimal currentReturnCount = item.getReturnCount() != null ? item.getReturnCount() : BigDecimal.ZERO;
+            if (currentReturnCount.equals(returnCount)) {
                 return;
             }
-            if (returnCount.compareTo(item.getInCount()) > 0) {
+            BigDecimal currentInCount = item.getInCount() != null ? item.getInCount() : BigDecimal.ZERO;
+            if (returnCount.compareTo(currentInCount) > 0) {
                 throw exception(PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED,
-                        productService.getProduct(item.getProductId()).getName(), item.getInCount());
+                        productService.getProduct(item.getProductId()).getName(), currentInCount);
             }
             purchaseOrderItemMapper.updateById(new ErpPurchaseOrderItemDO().setId(item.getId()).setReturnCount(returnCount));
         });
