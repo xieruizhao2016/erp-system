@@ -2,6 +2,7 @@
 
   <div class="flex flex-col">
     <!-- 销售/采购的全局统计 -->
+    <!-- 第一行：销售统计 -->
     <el-row :gutter="16" class="row">
       <el-col :md="6" :sm="12" :xs="24" :loading="loading">
         <SummaryCard title="今日销售" :value="saleSummary?.todayPrice" />
@@ -10,16 +11,19 @@
         <SummaryCard title="昨日销售" :value="saleSummary?.yesterdayPrice" />
       </el-col>
       <el-col :md="6" :sm="12" :xs="24" :loading="loading">
-        <SummaryCard title="今日采购" :value="purchaseSummary?.todayPrice" />
-      </el-col>
-      <el-col :md="6" :sm="12" :xs="24" :loading="loading">
-        <SummaryCard title="昨日采购" :value="purchaseSummary?.yesterdayPrice" />
-      </el-col>
-      <el-col :md="6" :sm="12" :xs="24" :loading="loading">
         <SummaryCard title="本月销售" :value="saleSummary?.monthPrice" />
       </el-col>
       <el-col :md="6" :sm="12" :xs="24" :loading="loading">
         <SummaryCard title="今年销售" :value="saleSummary?.yearPrice" />
+      </el-col>
+    </el-row>
+    <!-- 第二行：采购统计 -->
+    <el-row :gutter="16" class="row">
+      <el-col :md="6" :sm="12" :xs="24" :loading="loading">
+        <SummaryCard title="今日采购" :value="purchaseSummary?.todayPrice" />
+      </el-col>
+      <el-col :md="6" :sm="12" :xs="24" :loading="loading">
+        <SummaryCard title="昨日采购" :value="purchaseSummary?.yesterdayPrice" />
       </el-col>
       <el-col :md="6" :sm="12" :xs="24" :loading="loading">
         <SummaryCard title="本月采购" :value="purchaseSummary?.monthPrice" />
