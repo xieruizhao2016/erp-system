@@ -4,7 +4,7 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="报表编号" prop="reportNo">
@@ -24,8 +24,8 @@
       <el-form-item label="报表期间" prop="reportPeriod">
         <el-input v-model="formData.reportPeriod" placeholder="请输入报表期间" />
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
-        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心ID" />
+      <el-form-item label="工作中心" prop="workCenterId">
+        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心" />
       </el-form-item>
       <el-form-item label="生产订单数" prop="productionOrders">
         <el-input v-model="formData.productionOrders" placeholder="请输入生产订单数" />
@@ -90,7 +90,7 @@
           </el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="详细数据（JSON）" prop="reportData">
+      <el-form-item label="详细数据" prop="reportData">
         <el-input v-model="formData.reportData" placeholder="请输入详细数据（JSON）" />
       </el-form-item>
     </el-form>
@@ -141,7 +141,7 @@ const formData = ref({
 const formRules = reactive({
   reportNo: [{ required: true, message: '报表编号不能为空', trigger: 'blur' }],
   reportName: [{ required: true, message: '报表名称不能为空', trigger: 'blur' }],
-  reportType: [{ required: true, message: '报表类型：1-日报，2-周报，3-月报，4-年报不能为空', trigger: 'change' }],
+  reportType: [{ required: true, message: '报表类型不能为空', trigger: 'change' }],
   reportPeriod: [{ required: true, message: '报表期间不能为空', trigger: 'blur' }],
   reportDate: [{ required: true, message: '报表日期不能为空', trigger: 'blur' }],
   generateTime: [{ required: true, message: '生成时间不能为空', trigger: 'blur' }]

@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="参数名称" prop="paramName">
         <el-input
@@ -35,10 +35,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="参数类型：1-字符串，2-数字，3-日期，4-布尔" prop="paramType">
+      <el-form-item label="参数类型" prop="paramType">
         <el-select
           v-model="queryParams.paramType"
-          placeholder="请选择参数类型：1-字符串，2-数字，3-日期，4-布尔"
+          placeholder="请选择参数类型"
           clearable
           class="!w-240px"
         >
@@ -232,7 +232,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await MrpParamsApi.deleteMrpParams(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}

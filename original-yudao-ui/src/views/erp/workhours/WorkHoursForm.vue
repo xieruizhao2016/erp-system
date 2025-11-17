@@ -4,17 +4,56 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
-      <el-form-item label="工单ID" prop="workOrderId">
-        <el-input v-model="formData.workOrderId" placeholder="请输入工单ID" />
+      <el-form-item label="工单" prop="workOrderId">
+        <el-select
+          v-model="formData.workOrderId"
+          clearable
+          filterable
+          placeholder="请选择工单"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in workOrderList"
+            :key="item.id"
+            :label="item.workOrderNo || `工单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input v-model="formData.processId" placeholder="请输入工序ID" />
+      <el-form-item label="工序" prop="processId">
+        <el-select
+          v-model="formData.processId"
+          clearable
+          filterable
+          placeholder="请选择工序"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="操作员ID" prop="operatorId">
-        <el-input v-model="formData.operatorId" placeholder="请输入操作员ID" />
+      <el-form-item label="操作员" prop="operatorId">
+        <el-select
+          v-model="formData.operatorId"
+          clearable
+          filterable
+          placeholder="请选择操作员"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="工作日期" prop="workDate">
         <el-date-picker
@@ -24,8 +63,8 @@
           placeholder="选择工作日期"
         />
       </el-form-item>
-      <el-form-item label="班次ID" prop="shiftId">
-        <el-input v-model="formData.shiftId" placeholder="请输入班次ID" />
+      <el-form-item label="班次" prop="shiftId">
+        <el-input v-model="formData.shiftId" placeholder="请输入班次" />
       </el-form-item>
       <el-form-item label="开始时间" prop="startTime">
         <el-date-picker
@@ -43,13 +82,13 @@
           placeholder="选择结束时间"
         />
       </el-form-item>
-      <el-form-item label="工作时长（分钟）" prop="duration">
+      <el-form-item label="工作时长" prop="duration">
         <el-input v-model="formData.duration" placeholder="请输入工作时长（分钟）" />
       </el-form-item>
-      <el-form-item label="标准工时（分钟）" prop="standardDuration">
+      <el-form-item label="标准工时" prop="standardDuration">
         <el-input v-model="formData.standardDuration" placeholder="请输入标准工时（分钟）" />
       </el-form-item>
-      <el-form-item label="加班时长（分钟）" prop="overtimeDuration">
+      <el-form-item label="加班时长" prop="overtimeDuration">
         <el-input v-model="formData.overtimeDuration" placeholder="请输入加班时长（分钟）" />
       </el-form-item>
       <el-form-item label="机时" prop="machineHours">
@@ -91,6 +130,10 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkHoursApi, WorkHours } from '@/api/erp/workhours'
+import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 工时统计 表单 */
 defineOptions({ name: 'WorkHoursForm' })
@@ -123,15 +166,38 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  workOrderId: [{ required: true, message: '工单ID不能为空', trigger: 'blur' }],
-  processId: [{ required: true, message: '工序ID不能为空', trigger: 'blur' }],
+  workOrderId: [{ required: true, message: '工单不能为空', trigger: 'change' }],
+  processId: [{ required: true, message: '工序不能为空', trigger: 'change' }],
   workDate: [{ required: true, message: '工作日期不能为空', trigger: 'blur' }],
   duration: [{ required: true, message: '工作时长（分钟）不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const workOrderList = ref<WorkOrder[]>([]) // 工单列表
+const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
+const userList = ref<UserVO[]>([]) // 用户列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const [workOrderData, processRouteItemData, users] = await Promise.all([
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 }),
+      UserApi.getSimpleUserList()
+    ])
+    workOrderList.value = workOrderData.list || []
+    processRouteItemList.value = processRouteItemData.list || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (workOrderList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

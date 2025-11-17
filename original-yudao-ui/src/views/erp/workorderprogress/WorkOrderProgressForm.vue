@@ -4,14 +4,40 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
-      <el-form-item label="工单ID" prop="workOrderId">
-        <el-input v-model="formData.workOrderId" placeholder="请输入工单ID" />
+      <el-form-item label="工单" prop="workOrderId">
+        <el-select
+          v-model="formData.workOrderId"
+          clearable
+          filterable
+          placeholder="请选择工单"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in workOrderList"
+            :key="item.id"
+            :label="item.workOrderNo || `工单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input v-model="formData.processId" placeholder="请输入工序ID" />
+      <el-form-item label="工序" prop="processId">
+        <el-select
+          v-model="formData.processId"
+          clearable
+          filterable
+          placeholder="请选择工序"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="工序名称" prop="processName">
         <el-input v-model="formData.processName" placeholder="请输入工序名称" />
@@ -77,16 +103,42 @@
           </el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="操作员ID" prop="operatorId">
-        <el-input v-model="formData.operatorId" placeholder="请输入操作员ID" />
+      <el-form-item label="操作员" prop="operatorId">
+        <el-select
+          v-model="formData.operatorId"
+          clearable
+          filterable
+          placeholder="请选择操作员"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="设备ID" prop="equipmentId">
-        <el-input v-model="formData.equipmentId" placeholder="请输入设备ID" />
+      <el-form-item label="设备" prop="equipmentId">
+        <el-select
+          v-model="formData.equipmentId"
+          clearable
+          filterable
+          placeholder="请选择设备"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in equipmentList"
+            :key="item.id"
+            :label="item.equipmentName || item.equipmentNo || `设备${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="实际工时（分钟）" prop="workTime">
+      <el-form-item label="实际工时" prop="workTime">
         <el-input-number v-model="formData.workTime" placeholder="请输入实际工时（分钟）" :min="0" class="!w-1/1" />
       </el-form-item>
-      <el-form-item label="停机时间（分钟）" prop="downtime">
+      <el-form-item label="停机时间" prop="downtime">
         <el-input-number v-model="formData.downtime" placeholder="请输入停机时间（分钟）" :min="0" class="!w-1/1" />
       </el-form-item>
       <el-form-item label="质检状态" prop="qualityStatus">
@@ -113,6 +165,11 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkOrderProgressApi, WorkOrderProgress } from '@/api/erp/workorderprogress'
+import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import { EquipmentApi, Equipment } from '@/api/erp/equipment'
+import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 工单进度 表单 */
 defineOptions({ name: 'WorkOrderProgressForm' })
@@ -148,15 +205,41 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  workOrderId: [{ required: true, message: '工单ID不能为空', trigger: 'blur' }],
-  processId: [{ required: true, message: '工序ID不能为空', trigger: 'blur' }],
+  workOrderId: [{ required: true, message: '工单不能为空', trigger: 'change' }],
+  processId: [{ required: true, message: '工序不能为空', trigger: 'change' }],
   processName: [{ required: true, message: '工序名称不能为空', trigger: 'blur' }],
   sequence: [{ required: true, message: '工序序号不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const workOrderList = ref<WorkOrder[]>([]) // 工单列表
+const equipmentList = ref<Equipment[]>([]) // 设备列表
+const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
+const userList = ref<UserVO[]>([]) // 用户列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const [workOrderData, equipmentData, processRouteItemData, users] = await Promise.all([
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
+      EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 }),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 }),
+      UserApi.getSimpleUserList()
+    ])
+    workOrderList.value = workOrderData.list || []
+    equipmentList.value = equipmentData.list || []
+    processRouteItemList.value = processRouteItemData.list || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (workOrderList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

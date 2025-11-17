@@ -6,25 +6,39 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="检验ID" prop="inspectionId">
-        <el-input
+      <el-form-item label="检验记录" prop="inspectionId">
+        <el-select
           v-model="queryParams.inspectionId"
-          placeholder="请输入检验ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择检验记录"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in qualityInspectionList"
+            :key="item.id"
+            :label="item.inspectionNo || `检验${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="检验项目ID" prop="itemId">
-        <el-input
+      <el-form-item label="检验项目" prop="itemId">
+        <el-select
           v-model="queryParams.itemId"
-          placeholder="请输入检验项目ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择检验项目"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in qualityItemList"
+            :key="item.id"
+            :label="item.itemName || item.itemNo || `项目${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="样本编号" prop="sampleNo">
         <el-input
@@ -53,10 +67,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="检验结果：1-合格，2-不合格，3-超差" prop="testResult">
+      <el-form-item label="检验结果" prop="testResult">
         <el-input
           v-model="queryParams.testResult"
-          placeholder="请输入检验结果：1-合格，2-不合格，3-超差"
+          placeholder="请输入检验结果"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -81,14 +95,21 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="检验员ID" prop="inspectorId">
-        <el-input
+      <el-form-item label="检验员" prop="inspectorId">
+        <el-select
           v-model="queryParams.inspectorId"
-          placeholder="请输入检验员ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择检验员"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="检验时间" prop="inspectionTime">
         <el-date-picker
@@ -166,16 +187,28 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="检验ID" align="center" prop="inspectionId" />
-      <el-table-column label="检验项目ID" align="center" prop="itemId" />
+      <el-table-column label="检验单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getQualityInspectionName(scope.row.inspectionId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="检验项目" align="center" min-width="120">
+        <template #default="scope">
+          {{ getQualityItemName(scope.row.itemId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="样本编号" align="center" prop="sampleNo" />
       <el-table-column label="测量值" align="center" prop="measuredValue" />
       <el-table-column label="实际数值" align="center" prop="actualValue" />
-      <el-table-column label="检验结果：1-合格，2-不合格，3-超差" align="center" prop="testResult" />
+      <el-table-column label="检验结果" align="center" prop="testResult" />
       <el-table-column label="缺陷类型" align="center" prop="defectType" />
       <el-table-column label="缺陷描述" align="center" prop="defectDescription" />
       <el-table-column label="缺陷图片URLs" align="center" prop="imageUrls" />
-      <el-table-column label="检验员ID" align="center" prop="inspectorId" />
+      <el-table-column label="检验员" align="center" min-width="100">
+        <template #default="scope">
+          {{ getUserName(scope.row.inspectorId) }}
+        </template>
+      </el-table-column>
       <el-table-column
         label="检验时间"
         align="center"
@@ -232,6 +265,10 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityInspectionItemApi, QualityInspectionItem } from '@/api/erp/qualityinspectionitem'
 import QualityInspectionItemForm from './QualityInspectionItemForm.vue'
+import { QualityInspectionApi, QualityInspection } from '@/api/erp/qualityinspection'
+import { QualityItemApi, QualityItem } from '@/api/erp/qualityitem'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 质检明细 列表 */
 defineOptions({ name: 'QualityInspectionItem' })
@@ -261,6 +298,9 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const qualityInspectionList = ref<QualityInspection[]>([]) // 质检记录列表
+const qualityItemList = ref<QualityItem[]>([]) // 质检项目列表
+const userList = ref<UserVO[]>([]) // 用户列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -300,7 +340,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await QualityInspectionItemApi.deleteQualityInspectionItem(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -338,8 +377,42 @@ const handleExport = async () => {
   }
 }
 
+/** 获取质检记录名称 */
+const getQualityInspectionName = (id?: number) => {
+  if (!id) return '-'
+  const inspection = qualityInspectionList.value.find(item => item.id === id)
+  return inspection?.inspectionNo || `检验${id}`
+}
+
+/** 获取质检项目名称 */
+const getQualityItemName = (id?: number) => {
+  if (!id) return '-'
+  const item = qualityItemList.value.find(item => item.id === id)
+  return item?.itemName || item?.itemNo || `项目${id}`
+}
+
+/** 获取用户名称 */
+const getUserName = (id?: number) => {
+  if (!id) return '-'
+  const user = userList.value.find(item => item.id === id)
+  return user?.nickname || `用户${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载质检记录、质检项目、用户列表
+  try {
+    const [inspectionData, itemData, users] = await Promise.all([
+      QualityInspectionApi.getQualityInspectionPage({ pageNo: 1, pageSize: 100 }),
+      QualityItemApi.getQualityItemPage({ pageNo: 1, pageSize: 100 }),
+      UserApi.getSimpleUserList()
+    ])
+    qualityInspectionList.value = inspectionData.list || []
+    qualityItemList.value = itemData.list || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

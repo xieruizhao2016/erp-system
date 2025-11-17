@@ -68,11 +68,9 @@ public class WorkOrderProgressPageReqVO extends PageParam {
     private Long equipmentId;
 
     @Schema(description = "实际工时（分钟）")
-    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private Integer[] workTime;
 
     @Schema(description = "停机时间（分钟）")
-    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private Integer[] downtime;
 
     @Schema(description = "质检状态：1-待检，2-合格，3-不合格", example = "1")

@@ -4,14 +4,40 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
-      <el-form-item label="实际成本ID" prop="costActualId">
-        <el-input v-model="formData.costActualId" placeholder="请输入实际成本ID" />
+      <el-form-item label="实际成本" prop="costActualId">
+        <el-select
+          v-model="formData.costActualId"
+          clearable
+          filterable
+          placeholder="请选择实际成本"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in costActualList"
+            :key="item.id"
+            :label="item.costNo || `成本${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="生产数量" prop="productionQuantity">
         <el-input v-model="formData.productionQuantity" placeholder="请输入生产数量" />
@@ -80,6 +106,8 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostVarianceApi, CostVariance } from '@/api/erp/costvariance'
+import { CostActualApi, CostActual } from '@/api/erp/costactual'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 成本差异分析 表单 */
 defineOptions({ name: 'CostVarianceForm' })
@@ -112,8 +140,8 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  costActualId: [{ required: true, message: '实际成本ID不能为空', trigger: 'blur' }],
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }],
+  costActualId: [{ required: true, message: '实际成本不能为空', trigger: 'change' }],
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   productionQuantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }],
   standardTotalCost: [{ required: true, message: '标准总成本不能为空', trigger: 'blur' }],
   actualTotalCost: [{ required: true, message: '实际总成本不能为空', trigger: 'blur' }],
@@ -122,9 +150,29 @@ const formRules = reactive({
   analysisDate: [{ required: true, message: '分析日期不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const costActualList = ref<CostActual[]>([]) // 实际成本列表
+const productList = ref<ProductVO[]>([]) // 产品列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const [costActualData, products] = await Promise.all([
+      CostActualApi.getCostActualPage({ pageNo: 1, pageSize: 100 }),
+      ProductApi.getProductSimpleList()
+    ])
+    costActualList.value = costActualData.list || []
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

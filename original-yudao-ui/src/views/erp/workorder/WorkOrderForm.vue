@@ -4,20 +4,43 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="工单号" prop="workOrderNo">
         <el-input v-model="formData.workOrderNo" placeholder="请输入工单号" />
       </el-form-item>
-      <el-form-item label="生产订单ID" prop="productionOrderId">
-        <el-input v-model="formData.productionOrderId" placeholder="请输入生产订单ID" />
+      <el-form-item label="生产订单" prop="productionOrderId">
+        <el-select
+          v-model="formData.productionOrderId"
+          clearable
+          filterable
+          placeholder="请选择生产订单"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productionOrderList"
+            :key="item.id"
+            :label="item.orderNo || `订单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
-      </el-form-item>
-      <el-form-item label="产品名称" prop="productName">
-        <el-input v-model="formData.productName" placeholder="请输入产品名称" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="工单数量" prop="quantity">
         <el-input v-model="formData.quantity" placeholder="请输入工单数量" />
@@ -28,11 +51,24 @@
       <el-form-item label="合格数量" prop="qualifiedQuantity">
         <el-input v-model="formData.qualifiedQuantity" placeholder="请输入合格数量" />
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
-        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心ID" />
+      <el-form-item label="工作中心" prop="workCenterId">
+        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心" />
       </el-form-item>
-      <el-form-item label="主管ID" prop="supervisorId">
-        <el-input v-model="formData.supervisorId" placeholder="请输入主管ID" />
+      <el-form-item label="主管" prop="supervisorId">
+        <el-select
+          v-model="formData.supervisorId"
+          clearable
+          filterable
+          placeholder="请选择主管"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="计划开始时间" prop="plannedStartTime">
         <el-date-picker
@@ -96,6 +132,10 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 工单主 表单 */
 defineOptions({ name: 'WorkOrderForm' })
@@ -112,7 +152,6 @@ const formData = ref({
   workOrderNo: undefined,
   productionOrderId: undefined,
   productId: undefined,
-  productName: undefined,
   quantity: undefined,
   completedQuantity: undefined,
   qualifiedQuantity: undefined,
@@ -129,18 +168,40 @@ const formData = ref({
 })
 const formRules = reactive({
   workOrderNo: [{ required: true, message: '工单号不能为空', trigger: 'blur' }],
-  productionOrderId: [{ required: true, message: '生产订单ID不能为空', trigger: 'blur' }],
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }],
-  productName: [{ required: true, message: '产品名称不能为空', trigger: 'blur' }],
+  productionOrderId: [{ required: true, message: '生产订单不能为空', trigger: 'change' }],
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   quantity: [{ required: true, message: '工单数量不能为空', trigger: 'blur' }],
-  workCenterId: [{ required: true, message: '工作中心ID不能为空', trigger: 'blur' }],
+  workCenterId: [{ required: true, message: '工作中心不能为空', trigger: 'blur' }],
   plannedStartTime: [{ required: true, message: '计划开始时间不能为空', trigger: 'blur' }],
   plannedEndTime: [{ required: true, message: '计划结束时间不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const productionOrderList = ref<ProductionOrder[]>([]) // 生产订单列表
+const productList = ref<ProductVO[]>([]) // 产品列表
+const userList = ref<UserVO[]>([]) // 用户列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const [productionOrderData, products, users] = await Promise.all([
+      ProductionOrderApi.getProductionOrderPage({ pageNo: 1, pageSize: 100 }),
+      ProductApi.getProductSimpleList(),
+      UserApi.getSimpleUserList()
+    ])
+    productionOrderList.value = productionOrderData.list || []
+    productList.value = products || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type
@@ -188,7 +249,6 @@ const resetForm = () => {
     workOrderNo: undefined,
     productionOrderId: undefined,
     productId: undefined,
-    productName: undefined,
     quantity: undefined,
     completedQuantity: undefined,
     qualifiedQuantity: undefined,

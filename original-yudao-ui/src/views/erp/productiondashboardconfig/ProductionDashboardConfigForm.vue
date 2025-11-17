@@ -4,7 +4,7 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="配置名称" prop="configName">
@@ -20,13 +20,13 @@
       <el-form-item label="屏幕分辨率" prop="screenResolution">
         <el-input v-model="formData.screenResolution" placeholder="请输入屏幕分辨率" />
       </el-form-item>
-      <el-form-item label="布局配置（JSON）" prop="layoutConfig">
+      <el-form-item label="布局配置" prop="layoutConfig">
         <el-input v-model="formData.layoutConfig" placeholder="请输入布局配置（JSON）" />
       </el-form-item>
-      <el-form-item label="组件配置（JSON）" prop="componentConfig">
+      <el-form-item label="组件配置" prop="componentConfig">
         <el-input v-model="formData.componentConfig" placeholder="请输入组件配置（JSON）" />
       </el-form-item>
-      <el-form-item label="数据刷新间隔（秒）" prop="dataRefreshInterval">
+      <el-form-item label="数据刷新间隔" prop="dataRefreshInterval">
         <el-input v-model="formData.dataRefreshInterval" placeholder="请输入数据刷新间隔（秒）" />
       </el-form-item>
       <el-form-item label="是否默认配置" prop="isDefault">

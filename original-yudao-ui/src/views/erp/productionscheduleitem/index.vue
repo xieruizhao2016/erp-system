@@ -6,43 +6,55 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="排程ID" prop="scheduleId">
-        <el-input
+      <el-form-item label="排程" prop="scheduleId">
+        <el-select
           v-model="queryParams.scheduleId"
-          placeholder="请输入排程ID"
+          placeholder="请选择排程"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productionScheduleList"
+            :key="item.id"
+            :label="item.scheduleName || item.scheduleNo || `排程${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="生产订单ID" prop="productionOrderId">
-        <el-input
+      <el-form-item label="生产订单" prop="productionOrderId">
+        <el-select
           v-model="queryParams.productionOrderId"
-          placeholder="请输入生产订单ID"
+          placeholder="请选择生产订单"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productionOrderList"
+            :key="item.id"
+            :label="item.orderNo || `生产订单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
+          placeholder="请选择产品"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
           class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="排程数量" prop="quantity">
-        <el-input
-          v-model="queryParams.quantity"
-          placeholder="请输入排程数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name || `产品${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="计划开始时间" prop="plannedStartTime">
         <el-date-picker
@@ -66,23 +78,30 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
+      <el-form-item label="工作中心" prop="workCenterId">
         <el-input
           v-model="queryParams.workCenterId"
-          placeholder="请输入工作中心ID"
+          placeholder="请输入工作中心"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="设备ID" prop="equipmentId">
-        <el-input
+      <el-form-item label="设备" prop="equipmentId">
+        <el-select
           v-model="queryParams.equipmentId"
-          placeholder="请输入设备ID"
+          placeholder="请选择设备"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in equipmentList"
+            :key="item.id"
+            :label="item.name || item.equipmentName || `设备${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="工序序号" prop="processSequence">
         <el-input
@@ -135,10 +154,10 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-已计划，2-已下达，3-进行中，4-已完成，5-已延迟" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-已计划，2-已下达，3-进行中，4-已完成，5-已延迟"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -246,9 +265,21 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="排程ID" align="center" prop="scheduleId" />
-      <el-table-column label="生产订单ID" align="center" prop="productionOrderId" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
+      <el-table-column label="排程名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductionScheduleName(scope.row.scheduleId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="生产订单单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductionOrderName(scope.row.productionOrderId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="排程数量" align="center" prop="quantity" />
       <el-table-column
         label="计划开始时间"
@@ -264,8 +295,12 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="工作中心ID" align="center" prop="workCenterId" />
-      <el-table-column label="设备ID" align="center" prop="equipmentId" />
+      <el-table-column label="工作中心" align="center" prop="workCenterId" />
+      <el-table-column label="设备名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getEquipmentName(scope.row.equipmentId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="工序序号" align="center" prop="processSequence" />
       <el-table-column label="优先级" align="center" prop="priority" />
       <el-table-column label="准备时间" align="center" prop="setupTime" />
@@ -339,6 +374,10 @@ import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionScheduleItemApi, ProductionScheduleItem } from '@/api/erp/productionscheduleitem'
+import { ProductionScheduleApi } from '@/api/erp/productionschedule'
+import { ProductionOrderApi } from '@/api/erp/productionorder'
+import { ProductApi } from '@/api/erp/product'
+import { EquipmentApi } from '@/api/erp/equipment'
 import ProductionScheduleItemForm from './ProductionScheduleItemForm.vue'
 
 /** ERP 排程明细 列表 */
@@ -356,7 +395,6 @@ const queryParams = reactive({
   scheduleId: undefined,
   productionOrderId: undefined,
   productId: undefined,
-  quantity: undefined,
   plannedStartTime: [],
   plannedEndTime: [],
   workCenterId: undefined,
@@ -375,6 +413,12 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+
+// 数据列表
+const productionScheduleList = ref<any[]>([]) // 生产排程列表
+const productionOrderList = ref<any[]>([]) // 生产订单列表
+const productList = ref<any[]>([]) // 产品列表
+const equipmentList = ref<any[]>([]) // 设备列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -414,7 +458,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductionScheduleItemApi.deleteProductionScheduleItem(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -452,8 +495,60 @@ const handleExport = async () => {
   }
 }
 
+// 加载数据列表
+const loadListData = async () => {
+  try {
+    // 加载生产排程列表
+    const productionScheduleData = await ProductionScheduleApi.getProductionSchedulePage({ pageNo: 1, pageSize: 100 })
+    productionScheduleList.value = productionScheduleData.list || []
+
+    // 加载生产订单列表
+    const productionOrderData = await ProductionOrderApi.getProductionOrderPage({ pageNo: 1, pageSize: 100 })
+    productionOrderList.value = productionOrderData.list || []
+
+    // 加载产品列表
+    const productData = await ProductApi.getProductPage({ pageNo: 1, pageSize: 100 })
+    productList.value = productData.list || []
+
+    // 加载设备列表
+    const equipmentData = await EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 })
+    equipmentList.value = equipmentData.list || []
+  } catch (error) {
+    console.error('加载数据列表失败:', error)
+  }
+}
+
+// 辅助函数：获取生产排程名称
+const getProductionScheduleName = (scheduleId: number | undefined) => {
+  if (!scheduleId) return '-'
+  const schedule = productionScheduleList.value.find(item => item.id === scheduleId)
+  return schedule ? schedule.scheduleName || schedule.scheduleNo || `排程${scheduleId}` : `排程${scheduleId}`
+}
+
+// 辅助函数：获取生产订单单号
+const getProductionOrderName = (productionOrderId: number | undefined) => {
+  if (!productionOrderId) return '-'
+  const order = productionOrderList.value.find(item => item.id === productionOrderId)
+  return order ? order.orderNo || `生产订单${productionOrderId}` : `生产订单${productionOrderId}`
+}
+
+// 辅助函数：获取产品名称
+const getProductName = (productId: number | undefined) => {
+  if (!productId) return '-'
+  const product = productList.value.find(item => item.id === productId)
+  return product ? product.name || `产品${productId}` : `产品${productId}`
+}
+
+// 辅助函数：获取设备名称
+const getEquipmentName = (equipmentId: number | undefined) => {
+  if (!equipmentId) return '-'
+  const equipment = equipmentList.value.find(item => item.id === equipmentId)
+  return equipment ? equipment.name || equipment.equipmentName || `设备${equipmentId}` : `设备${equipmentId}`
+}
+
 /** 初始化 **/
 onMounted(() => {
+  loadListData()
   getList()
 })
 </script>

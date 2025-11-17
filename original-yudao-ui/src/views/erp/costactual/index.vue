@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="成本单号" prop="costNo">
         <el-input
@@ -17,41 +17,53 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="工单ID" prop="workOrderId">
-        <el-input
+      <el-form-item label="工单" prop="workOrderId">
+        <el-select
           v-model="queryParams.workOrderId"
-          placeholder="请输入工单ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工单"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in workOrderList"
+            :key="item.id"
+            :label="item.workOrderNo || `工单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="生产订单ID" prop="productionOrderId">
-        <el-input
+      <el-form-item label="生产订单" prop="productionOrderId">
+        <el-select
           v-model="queryParams.productionOrderId"
-          placeholder="请输入生产订单ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择生产订单"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productionOrderList"
+            :key="item.id"
+            :label="item.orderNo || `订单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择产品"
           class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="生产数量" prop="productionQuantity">
-        <el-input
-          v-model="queryParams.productionQuantity"
-          placeholder="请输入生产数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="材料成本" prop="materialCost">
         <el-input
@@ -134,7 +146,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="成本期间（YYYY-MM）" prop="costPeriod">
+      <el-form-item label="成本期间" prop="costPeriod">
         <el-input
           v-model="queryParams.costPeriod"
           placeholder="请输入成本期间（YYYY-MM）"
@@ -165,10 +177,10 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-已计算，3-已确认" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-草稿，2-已计算，3-已确认"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -246,9 +258,21 @@
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="成本单号" align="center" prop="costNo" />
-      <el-table-column label="工单ID" align="center" prop="workOrderId" />
-      <el-table-column label="生产订单ID" align="center" prop="productionOrderId" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
+      <el-table-column label="工单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getWorkOrderName(scope.row.workOrderId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="生产订单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductionOrderName(scope.row.productionOrderId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="生产数量" align="center" prop="productionQuantity" />
       <el-table-column label="材料成本" align="center" prop="materialCost" />
       <el-table-column label="材料成本调整" align="center" prop="materialCostAdjust" />
@@ -259,7 +283,7 @@
       <el-table-column label="总成本" align="center" prop="totalCost" />
       <el-table-column label="单位成本" align="center" prop="unitCost" />
       <el-table-column label="成本币种" align="center" prop="costCurrency" />
-      <el-table-column label="成本期间（YYYY-MM）" align="center" prop="costPeriod" />
+      <el-table-column label="成本期间" align="center" prop="costPeriod" />
       <el-table-column
         label="计算日期"
         align="center"
@@ -328,6 +352,9 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostActualApi, CostActual } from '@/api/erp/costactual'
 import CostActualForm from './CostActualForm.vue'
+import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 实际成本 列表 */
 defineOptions({ name: 'CostActual' })
@@ -345,7 +372,6 @@ const queryParams = reactive({
   workOrderId: undefined,
   productionOrderId: undefined,
   productId: undefined,
-  productionQuantity: undefined,
   materialCost: undefined,
   materialCostAdjust: undefined,
   laborCost: undefined,
@@ -364,6 +390,9 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const workOrderList = ref<WorkOrder[]>([]) // 工单列表
+const productionOrderList = ref<ProductionOrder[]>([]) // 生产订单列表
+const productList = ref<ProductVO[]>([]) // 产品列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -403,7 +432,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await CostActualApi.deleteCostActual(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -441,8 +469,42 @@ const handleExport = async () => {
   }
 }
 
+/** 获取工单名称 */
+const getWorkOrderName = (id?: number) => {
+  if (!id) return '-'
+  const workOrder = workOrderList.value.find(item => item.id === id)
+  return workOrder?.workOrderNo || `工单${id}`
+}
+
+/** 获取生产订单名称 */
+const getProductionOrderName = (id?: number) => {
+  if (!id) return '-'
+  const order = productionOrderList.value.find(item => item.id === id)
+  return order?.orderNo || `订单${id}`
+}
+
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载工单、生产订单、产品列表
+  try {
+    const [workOrderData, productionOrderData, products] = await Promise.all([
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
+      ProductionOrderApi.getProductionOrderPage({ pageNo: 1, pageSize: 100 }),
+      ProductApi.getProductSimpleList()
+    ])
+    workOrderList.value = workOrderData.list || []
+    productionOrderList.value = productionOrderData.list || []
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

@@ -4,7 +4,7 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="标准编号" prop="standardNo">
@@ -13,11 +13,37 @@
       <el-form-item label="标准名称" prop="standardName">
         <el-input v-model="formData.standardName" placeholder="请输入标准名称" />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input v-model="formData.processId" placeholder="请输入工序ID" />
+      <el-form-item label="工序" prop="processId">
+        <el-select
+          v-model="formData.processId"
+          clearable
+          filterable
+          placeholder="请选择工序"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="检验类型" prop="inspectionType">
         <el-select v-model="formData.inspectionType" placeholder="请选择检验类型" clearable>
@@ -59,6 +85,8 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityStandardApi, QualityStandard } from '@/api/erp/qualitystandard'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
 
 /** ERP 质检标准 表单 */
 defineOptions({ name: 'QualityStandardForm' })
@@ -86,12 +114,32 @@ const formData = ref({
 const formRules = reactive({
   standardNo: [{ required: true, message: '标准编号不能为空', trigger: 'blur' }],
   standardName: [{ required: true, message: '标准名称不能为空', trigger: 'blur' }],
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }]
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }]
 })
 const formRef = ref() // 表单 Ref
+const productList = ref<ProductVO[]>([]) // 产品列表
+const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const [products, processRouteItemData] = await Promise.all([
+      ProductApi.getProductSimpleList(),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 })
+    ])
+    productList.value = products || []
+    processRouteItemList.value = processRouteItemData.list || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

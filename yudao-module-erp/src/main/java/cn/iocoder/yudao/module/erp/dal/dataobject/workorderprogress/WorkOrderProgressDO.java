@@ -1,21 +1,10 @@
 package cn.iocoder.yudao.module.erp.dal.dataobject.workorderprogress;
 
 import lombok.*;
-import java.util.*;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
-import java.math.BigDecimal;
-import java.math.BigDecimal;
-import java.math.BigDecimal;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.*;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
-import java.time.LocalDate;
 
 /**
  * ERP 工单进度 DO
@@ -37,6 +26,11 @@ public class WorkOrderProgressDO extends BaseDO {
      */
     @TableId
     private Long id;
+    /**
+     * 租户ID
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Long tenantId;
     /**
      * 工单ID
      */

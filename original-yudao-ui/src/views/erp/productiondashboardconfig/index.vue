@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="配置名称" prop="configName">
         <el-input
@@ -17,10 +17,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="配置类型：1-大屏，2-PC端，3-移动端" prop="configType">
+      <el-form-item label="配置类型" prop="configType">
         <el-select
           v-model="queryParams.configType"
-          placeholder="请选择配置类型：1-大屏，2-PC端，3-移动端"
+          placeholder="请选择配置类型"
           clearable
           class="!w-240px"
         >
@@ -38,7 +38,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="布局配置（JSON）" prop="layoutConfig">
+      <el-form-item label="布局配置" prop="layoutConfig">
         <el-input
           v-model="queryParams.layoutConfig"
           placeholder="请输入布局配置（JSON）"
@@ -47,7 +47,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="组件配置（JSON）" prop="componentConfig">
+      <el-form-item label="组件配置" prop="componentConfig">
         <el-input
           v-model="queryParams.componentConfig"
           placeholder="请输入组件配置（JSON）"
@@ -56,7 +56,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="数据刷新间隔（秒）" prop="dataRefreshInterval">
+      <el-form-item label="数据刷新间隔" prop="dataRefreshInterval">
         <el-input
           v-model="queryParams.dataRefreshInterval"
           placeholder="请输入数据刷新间隔（秒）"
@@ -147,9 +147,9 @@
         </template>
       </el-table-column>
       <el-table-column label="屏幕分辨率" align="center" prop="screenResolution" />
-      <el-table-column label="布局配置（JSON）" align="center" prop="layoutConfig" />
-      <el-table-column label="组件配置（JSON）" align="center" prop="componentConfig" />
-      <el-table-column label="数据刷新间隔（秒）" align="center" prop="dataRefreshInterval" />
+      <el-table-column label="布局配置" align="center" prop="layoutConfig" />
+      <el-table-column label="组件配置" align="center" prop="componentConfig" />
+      <el-table-column label="数据刷新间隔" align="center" prop="dataRefreshInterval" />
       <el-table-column label="是否默认配置" align="center" prop="isDefault" />
       <el-table-column label="是否启用" align="center" prop="isActive" />
       <el-table-column
@@ -264,7 +264,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductionDashboardConfigApi.deleteProductionDashboardConfig(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}

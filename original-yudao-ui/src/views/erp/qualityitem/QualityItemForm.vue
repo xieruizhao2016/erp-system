@@ -4,11 +4,24 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
-      <el-form-item label="标准ID" prop="standardId">
-        <el-input v-model="formData.standardId" placeholder="请输入标准ID" />
+      <el-form-item label="质检标准" prop="standardId">
+        <el-select
+          v-model="formData.standardId"
+          clearable
+          filterable
+          placeholder="请选择质检标准"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in qualityStandardList"
+            :key="item.id"
+            :label="item.standardName || item.standardNo || `标准${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="项目编号" prop="itemNo">
         <el-input v-model="formData.itemNo" placeholder="请输入项目编号" />
@@ -56,6 +69,7 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityItemApi, QualityItem } from '@/api/erp/qualityitem'
+import { QualityStandardApi, QualityStandard } from '@/api/erp/qualitystandard'
 
 /** ERP 质检项目 表单 */
 defineOptions({ name: 'QualityItemForm' })
@@ -82,14 +96,29 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  standardId: [{ required: true, message: '标准ID不能为空', trigger: 'blur' }],
+  standardId: [{ required: true, message: '质检标准不能为空', trigger: 'change' }],
   itemNo: [{ required: true, message: '项目编号不能为空', trigger: 'blur' }],
   itemName: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const qualityStandardList = ref<QualityStandard[]>([]) // 质检标准列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const standardData = await QualityStandardApi.getQualityStandardPage({ pageNo: 1, pageSize: 100 })
+    qualityStandardList.value = standardData.list || []
+  } catch (error) {
+    console.error('加载质检标准列表失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (qualityStandardList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

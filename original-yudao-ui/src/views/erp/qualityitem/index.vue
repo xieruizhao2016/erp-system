@@ -6,16 +6,23 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="标准ID" prop="standardId">
-        <el-input
+      <el-form-item label="质检标准" prop="standardId">
+        <el-select
           v-model="queryParams.standardId"
-          placeholder="请输入标准ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择质检标准"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in qualityStandardList"
+            :key="item.id"
+            :label="item.standardName || item.standardNo || `标准${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="项目编号" prop="itemNo">
         <el-input
@@ -35,10 +42,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="项目类型：1-定性，2-定量" prop="itemType">
+      <el-form-item label="项目类型" prop="itemType">
         <el-select
           v-model="queryParams.itemType"
-          placeholder="请选择项目类型：1-定性，2-定量"
+          placeholder="请选择项目类型"
           clearable
           class="!w-240px"
         >
@@ -167,7 +174,11 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="标准ID" align="center" prop="standardId" />
+      <el-table-column label="质检标准" align="center" min-width="120">
+        <template #default="scope">
+          {{ getQualityStandardName(scope.row.standardId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="项目编号" align="center" prop="itemNo" />
       <el-table-column label="项目名称" align="center" prop="itemName" />
       <el-table-column label="项目类型" align="center" prop="itemType">
@@ -231,6 +242,7 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityItemApi, QualityItem } from '@/api/erp/qualityitem'
 import QualityItemForm from './QualityItemForm.vue'
+import { QualityStandardApi, QualityStandard } from '@/api/erp/qualitystandard'
 
 /** ERP 质检项目 列表 */
 defineOptions({ name: 'QualityItem' })
@@ -259,6 +271,7 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const qualityStandardList = ref<QualityStandard[]>([]) // 质检标准列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -298,7 +311,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await QualityItemApi.deleteQualityItem(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -336,8 +348,22 @@ const handleExport = async () => {
   }
 }
 
+/** 获取质检标准名称 */
+const getQualityStandardName = (id?: number) => {
+  if (!id) return '-'
+  const standard = qualityStandardList.value.find(item => item.id === id)
+  return standard?.standardName || standard?.standardNo || `标准${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载质检标准列表
+  try {
+    const standardData = await QualityStandardApi.getQualityStandardPage({ pageNo: 1, pageSize: 100 })
+    qualityStandardList.value = standardData.list || []
+  } catch (error) {
+    console.error('加载质检标准列表失败:', error)
+  }
 })
 </script>

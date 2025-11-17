@@ -4,11 +4,24 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="BOM编号" prop="bomNo">
         <el-input v-model="formData.bomNo" placeholder="请输入BOM编号" />
@@ -72,6 +85,7 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductBomApi, ProductBom } from '@/api/erp/productbom'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP BOM主 表单 */
 defineOptions({ name: 'ProductBomForm' })
@@ -97,14 +111,29 @@ const formData = ref({
   status: undefined
 })
 const formRules = reactive({
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }],
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   bomNo: [{ required: true, message: 'BOM编号不能为空', trigger: 'blur' }],
   bomName: [{ required: true, message: 'BOM名称不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const productList = ref<ProductVO[]>([]) // 产品列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const products = await ProductApi.getProductSimpleList()
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载产品列表失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

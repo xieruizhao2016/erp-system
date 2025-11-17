@@ -6,25 +6,39 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="工单ID" prop="workOrderId">
-        <el-input
+      <el-form-item label="工单" prop="workOrderId">
+        <el-select
           v-model="queryParams.workOrderId"
-          placeholder="请输入工单ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工单"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in workOrderList"
+            :key="item.id"
+            :label="item.workOrderNo || `工单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input
+      <el-form-item label="工序" prop="processId">
+        <el-select
           v-model="queryParams.processId"
-          placeholder="请输入工序ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工序"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="工序名称" prop="processName">
         <el-input
@@ -88,55 +102,10 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="计划数量" prop="plannedQuantity">
-        <el-input
-          v-model="queryParams.plannedQuantity"
-          placeholder="请输入计划数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="完成数量" prop="completedQuantity">
-        <el-input
-          v-model="queryParams.completedQuantity"
-          placeholder="请输入完成数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="合格数量" prop="qualifiedQuantity">
-        <el-input
-          v-model="queryParams.qualifiedQuantity"
-          placeholder="请输入合格数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="不合格数量" prop="rejectedQuantity">
-        <el-input
-          v-model="queryParams.rejectedQuantity"
-          placeholder="请输入不合格数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="报废数量" prop="scrapQuantity">
-        <el-input
-          v-model="queryParams.scrapQuantity"
-          placeholder="请输入报废数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="状态：1-待开始，2-进行中，3-已完成，4-异常" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-待开始，2-进行中，3-已完成，4-异常"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -148,25 +117,39 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="操作员ID" prop="operatorId">
-        <el-input
+      <el-form-item label="操作员" prop="operatorId">
+        <el-select
           v-model="queryParams.operatorId"
-          placeholder="请输入操作员ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择操作员"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="设备ID" prop="equipmentId">
-        <el-input
+      <el-form-item label="设备" prop="equipmentId">
+        <el-select
           v-model="queryParams.equipmentId"
-          placeholder="请输入设备ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择设备"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in equipmentList"
+            :key="item.id"
+            :label="item.equipmentName || item.equipmentNo || `设备${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="实际工时（分钟）" prop="workTime">
+      <el-form-item label="实际工时" prop="workTime">
         <el-date-picker
           v-model="queryParams.workTime"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -177,7 +160,7 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="停机时间（分钟）" prop="downtime">
+      <el-form-item label="停机时间" prop="downtime">
         <el-date-picker
           v-model="queryParams.downtime"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -188,10 +171,10 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="质检状态：1-待检，2-合格，3-不合格" prop="qualityStatus">
+      <el-form-item label="质检状态" prop="qualityStatus">
         <el-select
           v-model="queryParams.qualityStatus"
-          placeholder="请选择质检状态：1-待检，2-合格，3-不合格"
+          placeholder="请选择质检状态"
           clearable
           class="!w-240px"
         >
@@ -268,9 +251,12 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="工单ID" align="center" prop="workOrderId" />
-      <el-table-column label="工序ID" align="center" prop="processId" />
-      <el-table-column label="工序名称" align="center" prop="processName" />
+      <el-table-column label="工单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getWorkOrderName(scope.row.workOrderId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工序名称" align="center" prop="processName" min-width="120" />
       <el-table-column label="工序序号" align="center" prop="sequence" />
       <el-table-column
         label="计划开始时间"
@@ -310,10 +296,18 @@
           <dict-tag :type="DICT_TYPE.ERP_WORK_ORDER_PROGRESS_STATUS" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="操作员ID" align="center" prop="operatorId" />
-      <el-table-column label="设备ID" align="center" prop="equipmentId" />
-      <el-table-column label="实际工时（分钟）" align="center" prop="workTime" />
-      <el-table-column label="停机时间（分钟）" align="center" prop="downtime" />
+      <el-table-column label="操作员" align="center" min-width="100">
+        <template #default="scope">
+          {{ getUserName(scope.row.operatorId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="设备名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getEquipmentName(scope.row.equipmentId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="实际工时" align="center" prop="workTime" />
+      <el-table-column label="停机时间" align="center" prop="downtime" />
       <el-table-column label="质检状态" align="center" prop="qualityStatus">
         <template #default="scope">
           <dict-tag :type="DICT_TYPE.ERP_QUALITY_STATUS" :value="scope.row.qualityStatus" />
@@ -368,6 +362,11 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkOrderProgressApi, WorkOrderProgress } from '@/api/erp/workorderprogress'
 import WorkOrderProgressForm from './WorkOrderProgressForm.vue'
+import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import { EquipmentApi, Equipment } from '@/api/erp/equipment'
+import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 工单进度 列表 */
 defineOptions({ name: 'WorkOrderProgress' })
@@ -389,11 +388,6 @@ const queryParams = reactive({
   plannedEndTime: [],
   actualStartTime: [],
   actualEndTime: [],
-  plannedQuantity: undefined,
-  completedQuantity: undefined,
-  qualifiedQuantity: undefined,
-  rejectedQuantity: undefined,
-  scrapQuantity: undefined,
   status: undefined,
   operatorId: undefined,
   equipmentId: undefined,
@@ -405,6 +399,10 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const workOrderList = ref<WorkOrder[]>([]) // 工单列表
+const equipmentList = ref<Equipment[]>([]) // 设备列表
+const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
+const userList = ref<UserVO[]>([]) // 用户列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -444,7 +442,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await WorkOrderProgressApi.deleteWorkOrderProgress(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -482,8 +479,44 @@ const handleExport = async () => {
   }
 }
 
+/** 获取工单名称 */
+const getWorkOrderName = (id?: number) => {
+  if (!id) return '-'
+  const workOrder = workOrderList.value.find(item => item.id === id)
+  return workOrder?.workOrderNo || `工单${id}`
+}
+
+/** 获取设备名称 */
+const getEquipmentName = (id?: number) => {
+  if (!id) return '-'
+  const equipment = equipmentList.value.find(item => item.id === id)
+  return equipment?.equipmentName || equipment?.equipmentNo || `设备${id}`
+}
+
+/** 获取用户名称 */
+const getUserName = (id?: number) => {
+  if (!id) return '-'
+  const user = userList.value.find(item => item.id === id)
+  return user?.nickname || `用户${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载工单、设备、工艺路线明细、用户列表
+  try {
+    const [workOrderData, equipmentData, processRouteItemData, users] = await Promise.all([
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
+      EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 }),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 }),
+      UserApi.getSimpleUserList()
+    ])
+    workOrderList.value = workOrderData.list || []
+    equipmentList.value = equipmentData.list || []
+    processRouteItemList.value = processRouteItemData.list || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

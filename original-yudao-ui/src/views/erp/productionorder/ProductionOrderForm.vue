@@ -4,26 +4,59 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="生产订单号" prop="no">
         <el-input v-model="formData.no" placeholder="请输入生产订单号" />
       </el-form-item>
-      <el-form-item label="客户ID（关联销售订单）" prop="customerId">
-        <el-input v-model="formData.customerId" placeholder="请输入客户ID（关联销售订单）" />
+      <el-form-item label="客户" prop="customerId">
+        <el-select
+          v-model="formData.customerId"
+          clearable
+          filterable
+          placeholder="请选择客户"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in customerList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品名称" prop="productName">
-        <el-input v-model="formData.productName" placeholder="请输入产品名称" />
-      </el-form-item>
-      <el-form-item label="产品规格" prop="productSpec">
-        <el-input v-model="formData.productSpec" placeholder="请输入产品规格" />
-      </el-form-item>
-      <el-form-item label="单位ID" prop="unitId">
-        <el-input v-model="formData.unitId" placeholder="请输入单位ID" />
+      <el-form-item label="单位" prop="unitId">
+        <el-select
+          v-model="formData.unitId"
+          clearable
+          filterable
+          placeholder="请选择单位"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productUnitList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="生产数量" prop="quantity">
         <el-input v-model="formData.quantity" placeholder="请输入生产数量" />
@@ -94,8 +127,8 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="来源单据ID" prop="sourceId">
-        <el-input v-model="formData.sourceId" placeholder="请输入来源单据ID" />
+      <el-form-item label="来源单据" prop="sourceId">
+        <el-input v-model="formData.sourceId" placeholder="请输入来源单据" />
       </el-form-item>
       <el-form-item label="生产说明" prop="description">
         <Editor v-model="formData.description" height="150px" />
@@ -113,6 +146,9 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
+import { CustomerApi, Customer } from '@/api/erp/sale/customer'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { ProductUnitApi, ProductUnit } from '@/api/erp/product/unit'
 
 /** ERP 生产订单 DO
  * 表单 */
@@ -130,8 +166,6 @@ const formData = ref({
   no: undefined,
   customerId: undefined,
   productId: undefined,
-  productName: undefined,
-  productSpec: undefined,
   unitId: undefined,
   quantity: undefined,
   completedQuantity: undefined,
@@ -148,15 +182,37 @@ const formData = ref({
 })
 const formRules = reactive({
   no: [{ required: true, message: '生产订单号不能为空', trigger: 'blur' }],
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }],
-  productName: [{ required: true, message: '产品名称不能为空', trigger: 'blur' }],
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   quantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }],
-  status: [{ required: true, message: '状态：1-待开始，2-进行中，3-已暂停，4-已完成，5-已取消不能为空', trigger: 'blur' }]
+  status: [{ required: true, message: '状态不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const customerList = ref<Customer[]>([]) // 客户列表
+const productList = ref<ProductVO[]>([]) // 产品列表
+const productUnitList = ref<ProductUnit[]>([]) // 产品单位列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const [customerData, products, unitData] = await Promise.all([
+      CustomerApi.getCustomerPage({ pageNo: 1, pageSize: 100 }),
+      ProductApi.getProductSimpleList(),
+      ProductUnitApi.getProductUnitPage({ pageNo: 1, pageSize: 100 })
+    ])
+    customerList.value = customerData.list || []
+    productList.value = products || []
+    productUnitList.value = unitData.list || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type
@@ -204,8 +260,6 @@ const resetForm = () => {
     no: undefined,
     customerId: undefined,
     productId: undefined,
-    productName: undefined,
-    productSpec: undefined,
     unitId: undefined,
     quantity: undefined,
     completedQuantity: undefined,

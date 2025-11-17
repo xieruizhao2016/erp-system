@@ -4,14 +4,40 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
-      <el-form-item label="检验ID" prop="inspectionId">
-        <el-input v-model="formData.inspectionId" placeholder="请输入检验ID" />
+      <el-form-item label="检验记录" prop="inspectionId">
+        <el-select
+          v-model="formData.inspectionId"
+          clearable
+          filterable
+          placeholder="请选择检验记录"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in qualityInspectionList"
+            :key="item.id"
+            :label="item.inspectionNo || `检验${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="检验项目ID" prop="itemId">
-        <el-input v-model="formData.itemId" placeholder="请输入检验项目ID" />
+      <el-form-item label="检验项目" prop="itemId">
+        <el-select
+          v-model="formData.itemId"
+          clearable
+          filterable
+          placeholder="请选择检验项目"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in qualityItemList"
+            :key="item.id"
+            :label="item.itemName || item.itemNo || `项目${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="样本编号" prop="sampleNo">
         <el-input v-model="formData.sampleNo" placeholder="请输入样本编号" />
@@ -41,8 +67,21 @@
       <el-form-item label="缺陷图片URLs" prop="imageUrls">
         <el-input v-model="formData.imageUrls" placeholder="请输入缺陷图片URLs" />
       </el-form-item>
-      <el-form-item label="检验员ID" prop="inspectorId">
-        <el-input v-model="formData.inspectorId" placeholder="请输入检验员ID" />
+      <el-form-item label="检验员" prop="inspectorId">
+        <el-select
+          v-model="formData.inspectorId"
+          clearable
+          filterable
+          placeholder="请选择检验员"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="检验时间" prop="inspectionTime">
         <el-date-picker
@@ -65,6 +104,10 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityInspectionItemApi, QualityInspectionItem } from '@/api/erp/qualityinspectionitem'
+import { QualityInspectionApi, QualityInspection } from '@/api/erp/qualityinspection'
+import { QualityItemApi, QualityItem } from '@/api/erp/qualityitem'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 质检明细 表单 */
 defineOptions({ name: 'QualityInspectionItemForm' })
@@ -92,14 +135,37 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  inspectionId: [{ required: true, message: '检验ID不能为空', trigger: 'blur' }],
-  itemId: [{ required: true, message: '检验项目ID不能为空', trigger: 'blur' }],
+  inspectionId: [{ required: true, message: '检验记录不能为空', trigger: 'change' }],
+  itemId: [{ required: true, message: '检验项目不能为空', trigger: 'change' }],
   inspectionTime: [{ required: true, message: '检验时间不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const qualityInspectionList = ref<QualityInspection[]>([]) // 质检记录列表
+const qualityItemList = ref<QualityItem[]>([]) // 质检项目列表
+const userList = ref<UserVO[]>([]) // 用户列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const [inspectionData, itemData, users] = await Promise.all([
+      QualityInspectionApi.getQualityInspectionPage({ pageNo: 1, pageSize: 100 }),
+      QualityItemApi.getQualityItemPage({ pageNo: 1, pageSize: 100 }),
+      UserApi.getSimpleUserList()
+    ])
+    qualityInspectionList.value = inspectionData.list || []
+    qualityItemList.value = itemData.list || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (qualityInspectionList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

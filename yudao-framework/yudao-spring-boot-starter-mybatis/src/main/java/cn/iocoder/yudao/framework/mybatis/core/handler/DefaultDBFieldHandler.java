@@ -2,6 +2,7 @@ package cn.iocoder.yudao.framework.mybatis.core.handler;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
+import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import org.apache.ibatis.reflection.MetaObject;
 
@@ -41,6 +42,15 @@ public class DefaultDBFieldHandler implements MetaObjectHandler {
             // 当前登录用户不为空，更新人为空，则当前登录用户为更新人
             if (Objects.nonNull(userId) && Objects.isNull(baseDO.getUpdater())) {
                 baseDO.setUpdater(userId.toString());
+            }
+            
+            // 填充租户ID（如果DO类中有tenantId字段且值为空）
+            Long tenantId = TenantContextHolder.getTenantId();
+            if (Objects.nonNull(tenantId) && metaObject.hasGetter("tenantId")) {
+                Object currentTenantId = getFieldValByName("tenantId", metaObject);
+                if (Objects.isNull(currentTenantId)) {
+                    setFieldValByName("tenantId", tenantId, metaObject);
+                }
             }
         }
     }

@@ -6,34 +6,55 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="工单ID" prop="workOrderId">
-        <el-input
+      <el-form-item label="工单" prop="workOrderId">
+        <el-select
           v-model="queryParams.workOrderId"
-          placeholder="请输入工单ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工单"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in workOrderList"
+            :key="item.id"
+            :label="item.workOrderNo || `工单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input
+      <el-form-item label="工序" prop="processId">
+        <el-select
           v-model="queryParams.processId"
-          placeholder="请输入工序ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工序"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="操作员ID" prop="operatorId">
-        <el-input
+      <el-form-item label="操作员" prop="operatorId">
+        <el-select
           v-model="queryParams.operatorId"
-          placeholder="请输入操作员ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择操作员"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="工作日期" prop="workDate">
         <el-date-picker
@@ -46,10 +67,10 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="班次ID" prop="shiftId">
+      <el-form-item label="班次" prop="shiftId">
         <el-input
           v-model="queryParams.shiftId"
-          placeholder="请输入班次ID"
+          placeholder="请输入班次"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -77,7 +98,7 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="工作时长（分钟）" prop="duration">
+      <el-form-item label="工作时长" prop="duration">
         <el-input
           v-model="queryParams.duration"
           placeholder="请输入工作时长（分钟）"
@@ -86,7 +107,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="标准工时（分钟）" prop="standardDuration">
+      <el-form-item label="标准工时" prop="standardDuration">
         <el-input
           v-model="queryParams.standardDuration"
           placeholder="请输入标准工时（分钟）"
@@ -95,7 +116,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="加班时长（分钟）" prop="overtimeDuration">
+      <el-form-item label="加班时长" prop="overtimeDuration">
         <el-input
           v-model="queryParams.overtimeDuration"
           placeholder="请输入加班时长（分钟）"
@@ -108,24 +129,6 @@
         <el-input
           v-model="queryParams.machineHours"
           placeholder="请输入机时"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="操作员工时费率" prop="operatorRate">
-        <el-input
-          v-model="queryParams.operatorRate"
-          placeholder="请输入操作员工时费率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="设备时费率" prop="machineRate">
-        <el-input
-          v-model="queryParams.machineRate"
-          placeholder="请输入设备时费率"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -149,10 +152,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-有效，2-无效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-有效，2-无效"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -229,16 +232,28 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="工单ID" align="center" prop="workOrderId" />
-      <el-table-column label="工序ID" align="center" prop="processId" />
-      <el-table-column label="操作员ID" align="center" prop="operatorId" />
+      <el-table-column label="工单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getWorkOrderName(scope.row.workOrderId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工序名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProcessName(scope.row.processId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作员" align="center" min-width="100">
+        <template #default="scope">
+          {{ getUserName(scope.row.operatorId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="工作日期" align="center" prop="workDate" />
-      <el-table-column label="班次ID" align="center" prop="shiftId" />
+      <el-table-column label="班次" align="center" prop="shiftId" />
       <el-table-column label="开始时间" align="center" prop="startTime" />
       <el-table-column label="结束时间" align="center" prop="endTime" />
-      <el-table-column label="工作时长（分钟）" align="center" prop="duration" />
-      <el-table-column label="标准工时（分钟）" align="center" prop="standardDuration" />
-      <el-table-column label="加班时长（分钟）" align="center" prop="overtimeDuration" />
+      <el-table-column label="工作时长" align="center" prop="duration" />
+      <el-table-column label="标准工时" align="center" prop="standardDuration" />
+      <el-table-column label="加班时长" align="center" prop="overtimeDuration" />
       <el-table-column label="机时" align="center" prop="machineHours" />
       <el-table-column label="操作员工时费率" align="center" prop="operatorRate" />
       <el-table-column label="设备时费率" align="center" prop="machineRate" />
@@ -298,6 +313,10 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkHoursApi, WorkHours } from '@/api/erp/workhours'
 import WorkHoursForm from './WorkHoursForm.vue'
+import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 工时统计 列表 */
 defineOptions({ name: 'WorkHours' })
@@ -322,8 +341,6 @@ const queryParams = reactive({
   standardDuration: undefined,
   overtimeDuration: undefined,
   machineHours: undefined,
-  operatorRate: undefined,
-  machineRate: undefined,
   laborCost: undefined,
   machineCost: undefined,
   status: undefined,
@@ -332,6 +349,9 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const workOrderList = ref<WorkOrder[]>([]) // 工单列表
+const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
+const userList = ref<UserVO[]>([]) // 用户列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -371,7 +391,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await WorkHoursApi.deleteWorkHours(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -409,8 +428,42 @@ const handleExport = async () => {
   }
 }
 
+/** 获取工单名称 */
+const getWorkOrderName = (id?: number) => {
+  if (!id) return '-'
+  const workOrder = workOrderList.value.find(item => item.id === id)
+  return workOrder?.workOrderNo || `工单${id}`
+}
+
+/** 获取工序名称 */
+const getProcessName = (id?: number) => {
+  if (!id) return '-'
+  const process = processRouteItemList.value.find(item => item.processId === id)
+  return process?.operationName || `工序${id}`
+}
+
+/** 获取用户名称 */
+const getUserName = (id?: number) => {
+  if (!id) return '-'
+  const user = userList.value.find(item => item.id === id)
+  return user?.nickname || `用户${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载工单、工艺路线明细、用户列表
+  try {
+    const [workOrderData, processRouteItemData, users] = await Promise.all([
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 }),
+      UserApi.getSimpleUserList()
+    ])
+    workOrderList.value = workOrderData.list || []
+    processRouteItemList.value = processRouteItemData.list || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

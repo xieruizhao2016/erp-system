@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="运算批次号" prop="runNo">
         <el-input
@@ -17,23 +17,37 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
+          placeholder="请选择产品"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name || `产品${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="仓库ID" prop="warehouseId">
-        <el-input
+      <el-form-item label="仓库" prop="warehouseId">
+        <el-select
           v-model="queryParams.warehouseId"
-          placeholder="请输入仓库ID"
+          placeholder="请选择仓库"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in warehouseList"
+            :key="item.id"
+            :label="item.name || `仓库${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="周期开始日期" prop="periodStartDate">
         <el-date-picker
@@ -111,10 +125,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="订单类型：1-生产订单，2-采购订单" prop="orderType">
+      <el-form-item label="订单类型" prop="orderType">
         <el-select
           v-model="queryParams.orderType"
-          placeholder="请选择订单类型：1-生产订单，2-采购订单"
+          placeholder="请选择订单类型"
           clearable
           class="!w-240px"
         >
@@ -136,7 +150,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="提前期（天）" prop="leadTime">
+      <el-form-item label="提前期" prop="leadTime">
         <el-date-picker
           v-model="queryParams.leadTime"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -156,10 +170,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="订单状态：1-建议，2-确认，3-下达" prop="orderStatus">
+      <el-form-item label="订单状态" prop="orderStatus">
         <el-select
           v-model="queryParams.orderStatus"
-          placeholder="请选择订单状态：1-建议，2-确认，3-下达"
+          placeholder="请选择订单状态"
           clearable
           class="!w-240px"
         >
@@ -239,8 +253,16 @@
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="运算批次号" align="center" prop="runNo" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
-      <el-table-column label="仓库ID" align="center" prop="warehouseId" />
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="仓库名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getWarehouseName(scope.row.warehouseId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="周期开始日期" align="center" prop="periodStartDate" />
       <el-table-column label="周期结束日期" align="center" prop="periodEndDate" />
       <el-table-column label="毛需求" align="center" prop="grossRequirement" />
@@ -259,7 +281,7 @@
           <dict-tag :type="DICT_TYPE.ERP_MRP_LOT_SIZING_RULE" :value="scope.row.lotSizingRule" />
         </template>
       </el-table-column>
-      <el-table-column label="提前期（天）" align="center" prop="leadTime" />
+      <el-table-column label="提前期" align="center" prop="leadTime" />
       <el-table-column label="安全库存" align="center" prop="safetyStock" />
       <el-table-column label="订单状态" align="center" prop="orderStatus">
         <template #default="scope">
@@ -314,6 +336,8 @@ import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { MrpResultApi, MrpResult } from '@/api/erp/mrpresult'
+import { ProductApi } from '@/api/erp/product'
+import { WarehouseApi } from '@/api/erp/stock/warehouse'
 import MrpResultForm from './MrpResultForm.vue'
 
 /** ERP MRP运算结果 列表 */
@@ -349,6 +373,10 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+
+// 数据列表
+const productList = ref<any[]>([]) // 产品列表
+const warehouseList = ref<any[]>([]) // 仓库列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -388,7 +416,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await MrpResultApi.deleteMrpResult(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -426,8 +453,38 @@ const handleExport = async () => {
   }
 }
 
+// 加载数据列表
+const loadListData = async () => {
+  try {
+    // 加载产品列表
+    const productData = await ProductApi.getProductPage({ pageNo: 1, pageSize: 100 })
+    productList.value = productData.list || []
+
+    // 加载仓库列表
+    const warehouseData = await WarehouseApi.getWarehousePage({ pageNo: 1, pageSize: 100 })
+    warehouseList.value = warehouseData.list || []
+  } catch (error) {
+    console.error('加载数据列表失败:', error)
+  }
+}
+
+// 辅助函数：获取产品名称
+const getProductName = (productId: number | undefined) => {
+  if (!productId) return '-'
+  const product = productList.value.find(item => item.id === productId)
+  return product ? product.name || `产品${productId}` : `产品${productId}`
+}
+
+// 辅助函数：获取仓库名称
+const getWarehouseName = (warehouseId: number | undefined) => {
+  if (!warehouseId) return '-'
+  const warehouse = warehouseList.value.find(item => item.id === warehouseId)
+  return warehouse ? warehouse.name || `仓库${warehouseId}` : `仓库${warehouseId}`
+}
+
 /** 初始化 **/
 onMounted(() => {
+  loadListData()
   getList()
 })
 </script>

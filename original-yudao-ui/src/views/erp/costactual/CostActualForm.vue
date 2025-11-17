@@ -4,20 +4,59 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="成本单号" prop="costNo">
         <el-input v-model="formData.costNo" placeholder="请输入成本单号" />
       </el-form-item>
-      <el-form-item label="工单ID" prop="workOrderId">
-        <el-input v-model="formData.workOrderId" placeholder="请输入工单ID" />
+      <el-form-item label="工单" prop="workOrderId">
+        <el-select
+          v-model="formData.workOrderId"
+          clearable
+          filterable
+          placeholder="请选择工单"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in workOrderList"
+            :key="item.id"
+            :label="item.workOrderNo || `工单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="生产订单ID" prop="productionOrderId">
-        <el-input v-model="formData.productionOrderId" placeholder="请输入生产订单ID" />
+      <el-form-item label="生产订单" prop="productionOrderId">
+        <el-select
+          v-model="formData.productionOrderId"
+          clearable
+          filterable
+          placeholder="请选择生产订单"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productionOrderList"
+            :key="item.id"
+            :label="item.orderNo || `订单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="生产数量" prop="productionQuantity">
         <el-input v-model="formData.productionQuantity" placeholder="请输入生产数量" />
@@ -49,7 +88,7 @@
       <el-form-item label="成本币种" prop="costCurrency">
         <el-input v-model="formData.costCurrency" placeholder="请输入成本币种" />
       </el-form-item>
-      <el-form-item label="成本期间（YYYY-MM）" prop="costPeriod">
+      <el-form-item label="成本期间" prop="costPeriod">
         <el-input v-model="formData.costPeriod" placeholder="请输入成本期间（YYYY-MM）" />
       </el-form-item>
       <el-form-item label="计算日期" prop="calculationDate">
@@ -92,6 +131,9 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostActualApi, CostActual } from '@/api/erp/costactual'
+import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 实际成本 表单 */
 defineOptions({ name: 'CostActualForm' })
@@ -127,7 +169,7 @@ const formData = ref({
 })
 const formRules = reactive({
   costNo: [{ required: true, message: '成本单号不能为空', trigger: 'blur' }],
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }],
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   productionQuantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }],
   materialCost: [{ required: true, message: '材料成本不能为空', trigger: 'blur' }],
   laborCost: [{ required: true, message: '人工成本不能为空', trigger: 'blur' }],
@@ -138,9 +180,32 @@ const formRules = reactive({
   calculationDate: [{ required: true, message: '计算日期不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const workOrderList = ref<WorkOrder[]>([]) // 工单列表
+const productionOrderList = ref<ProductionOrder[]>([]) // 生产订单列表
+const productList = ref<ProductVO[]>([]) // 产品列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const [workOrderData, productionOrderData, products] = await Promise.all([
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
+      ProductionOrderApi.getProductionOrderPage({ pageNo: 1, pageSize: 100 }),
+      ProductApi.getProductSimpleList()
+    ])
+    workOrderList.value = workOrderData.list || []
+    productionOrderList.value = productionOrderData.list || []
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

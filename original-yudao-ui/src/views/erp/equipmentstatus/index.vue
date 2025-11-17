@@ -6,21 +6,28 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="设备ID" prop="equipmentId">
-        <el-input
+      <el-form-item label="设备" prop="equipmentId">
+        <el-select
           v-model="queryParams.equipmentId"
-          placeholder="请输入设备ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择设备"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in equipmentList"
+            :key="item.id"
+            :label="item.equipmentName || item.equipmentNo || `设备${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="状态：1-运行，2-待机，3-故障，4-维修，5-停机" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-运行，2-待机，3-故障，4-维修，5-停机"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -54,7 +61,7 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="持续时间（分钟）" prop="duration">
+      <el-form-item label="持续时间" prop="duration">
         <el-input
           v-model="queryParams.duration"
           placeholder="请输入持续时间（分钟）"
@@ -63,23 +70,37 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="关联工单ID" prop="workOrderId">
-        <el-input
+      <el-form-item label="关联工单" prop="workOrderId">
+        <el-select
           v-model="queryParams.workOrderId"
-          placeholder="请输入关联工单ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择关联工单"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in workOrderList"
+            :key="item.id"
+            :label="item.workOrderNo || `工单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="操作员ID" prop="operatorId">
-        <el-input
+      <el-form-item label="操作员" prop="operatorId">
+        <el-select
           v-model="queryParams.operatorId"
-          placeholder="请输入操作员ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择操作员"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
         <el-input
@@ -146,7 +167,11 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="设备ID" align="center" prop="equipmentId" />
+      <el-table-column label="设备名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getEquipmentName(scope.row.equipmentId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template #default="scope">
           <dict-tag :type="DICT_TYPE.ERP_EQUIPMENT_STATUS_RECORD" :value="scope.row.status" />
@@ -166,9 +191,17 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="持续时间（分钟）" align="center" prop="duration" />
-      <el-table-column label="关联工单ID" align="center" prop="workOrderId" />
-      <el-table-column label="操作员ID" align="center" prop="operatorId" />
+      <el-table-column label="持续时间" align="center" prop="duration" />
+      <el-table-column label="关联工单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getWorkOrderName(scope.row.workOrderId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作员" align="center" min-width="100">
+        <template #default="scope">
+          {{ getUserName(scope.row.operatorId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column
         label="创建时间"
@@ -218,6 +251,10 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { EquipmentStatusApi, EquipmentStatus } from '@/api/erp/equipmentstatus'
 import EquipmentStatusForm from './EquipmentStatusForm.vue'
+import { EquipmentApi, Equipment } from '@/api/erp/equipment'
+import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 设备状态记录 列表 */
 defineOptions({ name: 'EquipmentStatus' })
@@ -243,6 +280,9 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const equipmentList = ref<Equipment[]>([]) // 设备列表
+const workOrderList = ref<WorkOrder[]>([]) // 工单列表
+const userList = ref<UserVO[]>([]) // 用户列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -282,7 +322,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await EquipmentStatusApi.deleteEquipmentStatus(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -320,8 +359,42 @@ const handleExport = async () => {
   }
 }
 
+/** 获取设备名称 */
+const getEquipmentName = (id?: number) => {
+  if (!id) return '-'
+  const equipment = equipmentList.value.find(item => item.id === id)
+  return equipment?.equipmentName || equipment?.equipmentNo || `设备${id}`
+}
+
+/** 获取工单名称 */
+const getWorkOrderName = (id?: number) => {
+  if (!id) return '-'
+  const workOrder = workOrderList.value.find(item => item.id === id)
+  return workOrder?.workOrderNo || `工单${id}`
+}
+
+/** 获取用户名称 */
+const getUserName = (id?: number) => {
+  if (!id) return '-'
+  const user = userList.value.find(item => item.id === id)
+  return user?.nickname || `用户${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载设备、工单、用户列表
+  try {
+    const [equipmentData, workOrderData, users] = await Promise.all([
+      EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 }),
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
+      UserApi.getSimpleUserList()
+    ])
+    equipmentList.value = equipmentData.list || []
+    workOrderList.value = workOrderData.list || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

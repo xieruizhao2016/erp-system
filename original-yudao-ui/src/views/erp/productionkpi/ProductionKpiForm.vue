@@ -4,7 +4,7 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="KPI编号" prop="kpiNo">
@@ -21,17 +21,30 @@
           <el-option label="交期率" value="4" />
         </el-select>
       </el-form-item>
-      <el-form-item label="分类：1-效率，2-质量，3-交付，4-成本" prop="category">
-        <el-input v-model="formData.category" placeholder="请输入分类：1-效率，2-质量，3-交付，4-成本" />
+      <el-form-item label="分类" prop="category">
+        <el-input v-model="formData.category" placeholder="请输入分类" />
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
-        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心ID" />
+      <el-form-item label="工作中心" prop="workCenterId">
+        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心" />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="统计周期：1-小时，2-天，3-周，4-月" prop="measurementPeriod">
-        <el-input v-model="formData.measurementPeriod" placeholder="请输入统计周期：1-小时，2-天，3-周，4-月" />
+      <el-form-item label="统计周期" prop="measurementPeriod">
+        <el-input v-model="formData.measurementPeriod" placeholder="请输入统计周期" />
       </el-form-item>
       <el-form-item label="目标值" prop="targetValue">
         <el-input v-model="formData.targetValue" placeholder="请输入目标值" />
@@ -85,6 +98,7 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionKpiApi, ProductionKpi } from '@/api/erp/productionkpi'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 生产KPI 表单 */
 defineOptions({ name: 'ProductionKpiForm' })
@@ -118,17 +132,32 @@ const formData = ref({
 const formRules = reactive({
   kpiNo: [{ required: true, message: 'KPI编号不能为空', trigger: 'blur' }],
   kpiName: [{ required: true, message: 'KPI名称不能为空', trigger: 'blur' }],
-  kpiType: [{ required: true, message: 'KPI类型：1-OEE，2-合格率，3-达成率，4-交期率不能为空', trigger: 'change' }],
-  measurementPeriod: [{ required: true, message: '统计周期：1-小时，2-天，3-周，4-月不能为空', trigger: 'blur' }],
+  kpiType: [{ required: true, message: 'KPI类型不能为空', trigger: 'change' }],
+  measurementPeriod: [{ required: true, message: '统计周期不能为空', trigger: 'blur' }],
   actualValue: [{ required: true, message: '实际值不能为空', trigger: 'blur' }],
   calculationDate: [{ required: true, message: '计算日期不能为空', trigger: 'blur' }],
   periodStartTime: [{ required: true, message: '周期开始时间不能为空', trigger: 'blur' }],
   periodEndTime: [{ required: true, message: '周期结束时间不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const productList = ref<ProductVO[]>([]) // 产品列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const products = await ProductApi.getProductSimpleList()
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载产品列表失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

@@ -4,7 +4,7 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="工艺路线编号" prop="routeNo">
@@ -13,13 +13,26 @@
       <el-form-item label="工艺路线名称" prop="routeName">
         <el-input v-model="formData.routeName" placeholder="请输入工艺路线名称" />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="版本号" prop="version">
         <el-input v-model="formData.version" placeholder="请输入版本号" />
       </el-form-item>
-      <el-form-item label="标准周期时间（分钟）" prop="standardCycleTime">
+      <el-form-item label="标准周期时间" prop="standardCycleTime">
         <el-date-picker
           v-model="formData.standardCycleTime"
           type="date"
@@ -54,6 +67,7 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteApi, ProcessRoute } from '@/api/erp/processroute'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 工艺路线主 表单 */
 defineOptions({ name: 'ProcessRouteForm' })
@@ -79,12 +93,27 @@ const formData = ref({
 const formRules = reactive({
   routeNo: [{ required: true, message: '工艺路线编号不能为空', trigger: 'blur' }],
   routeName: [{ required: true, message: '工艺路线名称不能为空', trigger: 'blur' }],
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }]
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }]
 })
 const formRef = ref() // 表单 Ref
+const productList = ref<ProductVO[]>([]) // 产品列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const products = await ProductApi.getProductSimpleList()
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载产品列表失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

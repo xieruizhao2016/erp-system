@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="检验单号" prop="inspectionNo">
         <el-input
@@ -26,37 +26,58 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择产品"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input
+      <el-form-item label="工序" prop="processId">
+        <el-select
           v-model="queryParams.processId"
-          placeholder="请输入工序ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工序"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工单ID" prop="workOrderId">
-        <el-input
+      <el-form-item label="工单" prop="workOrderId">
+        <el-select
           v-model="queryParams.workOrderId"
-          placeholder="请输入工单ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工单"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in workOrderList"
+            :key="item.id"
+            :label="item.workOrderNo || `工单${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="检验类型：1-进料检验，2-过程检验，3-成品检验" prop="inspectionType">
+      <el-form-item label="检验类型" prop="inspectionType">
         <el-select
           v-model="queryParams.inspectionType"
-          placeholder="请选择检验类型：1-进料检验，2-过程检验，3-成品检验"
+          placeholder="请选择检验类型"
           clearable
           class="!w-240px"
         >
@@ -74,7 +95,7 @@
       <el-form-item label="检验级别（旧）" prop="inspectionLevelOld" style="display: none;">
         <el-input
           v-model="queryParams.inspectionLevel"
-          placeholder="请输入检验级别：1-全检，2-抽检"
+          placeholder="请输入检验级别"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -89,59 +110,30 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="样本数量" prop="sampleSize">
-        <el-input
-          v-model="queryParams.sampleSize"
-          placeholder="请输入样本数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="合格数量" prop="qualifiedQuantity">
-        <el-input
-          v-model="queryParams.qualifiedQuantity"
-          placeholder="请输入合格数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="不合格数量" prop="rejectedQuantity">
-        <el-input
-          v-model="queryParams.rejectedQuantity"
-          placeholder="请输入不合格数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="报废数量" prop="scrapQuantity">
-        <el-input
-          v-model="queryParams.scrapQuantity"
-          placeholder="请输入报废数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="检验结果：1-合格，2-不合格，3-待复检" prop="inspectionResult">
+      <el-form-item label="检验结果" prop="inspectionResult">
         <el-input
           v-model="queryParams.inspectionResult"
-          placeholder="请输入检验结果：1-合格，2-不合格，3-待复检"
+          placeholder="请输入检验结果"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="检验员ID" prop="inspectorId">
-        <el-input
+      <el-form-item label="检验员" prop="inspectorId">
+        <el-select
           v-model="queryParams.inspectorId"
-          placeholder="请输入检验员ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择检验员"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in userList"
+            :key="item.id"
+            :label="item.nickname"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="检验时间" prop="inspectionTime">
         <el-date-picker
@@ -239,11 +231,23 @@
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="检验单号" align="center" prop="inspectionNo" />
       <el-table-column label="批次号" align="center" prop="batchNo" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
-      <el-table-column label="工序ID" align="center" prop="processId" />
-      <el-table-column label="工单ID" align="center" prop="workOrderId" />
-      <el-table-column label="检验类型：1-进料检验，2-过程检验，3-成品检验" align="center" prop="inspectionType" />
-      <el-table-column label="检验级别：1-全检，2-抽检" align="center" prop="inspectionLevel" />
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工序名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProcessName(scope.row.processId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getWorkOrderName(scope.row.workOrderId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="检验类型" align="center" prop="inspectionType" />
+      <el-table-column label="检验级别" align="center" prop="inspectionLevel" />
       <el-table-column label="批量大小" align="center" prop="lotSize" />
       <el-table-column label="样本数量" align="center" prop="sampleSize" />
       <el-table-column label="合格数量" align="center" prop="qualifiedQuantity" />
@@ -254,7 +258,11 @@
           <dict-tag :type="DICT_TYPE.ERP_QUALITY_STATUS" :value="scope.row.inspectionResult" />
         </template>
       </el-table-column>
-      <el-table-column label="检验员ID" align="center" prop="inspectorId" />
+      <el-table-column label="检验员" align="center" min-width="100">
+        <template #default="scope">
+          {{ getUserName(scope.row.inspectorId) }}
+        </template>
+      </el-table-column>
       <el-table-column
         label="检验时间"
         align="center"
@@ -313,6 +321,11 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityInspectionApi, QualityInspection } from '@/api/erp/qualityinspection'
 import QualityInspectionForm from './QualityInspectionForm.vue'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import * as UserApi from '@/api/system/user'
+import { UserVO } from '@/api/system/user'
 
 /** ERP 质检记录 列表 */
 defineOptions({ name: 'QualityInspection' })
@@ -334,10 +347,6 @@ const queryParams = reactive({
   inspectionType: undefined,
   inspectionLevel: undefined,
   lotSize: undefined,
-  sampleSize: undefined,
-  qualifiedQuantity: undefined,
-  rejectedQuantity: undefined,
-  scrapQuantity: undefined,
   inspectionResult: undefined,
   inspectorId: undefined,
   inspectionTime: [],
@@ -348,6 +357,10 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const productList = ref<ProductVO[]>([]) // 产品列表
+const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
+const workOrderList = ref<WorkOrder[]>([]) // 工单列表
+const userList = ref<UserVO[]>([]) // 用户列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -387,7 +400,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await QualityInspectionApi.deleteQualityInspection(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -425,8 +437,51 @@ const handleExport = async () => {
   }
 }
 
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
+/** 获取工序名称 */
+const getProcessName = (id?: number) => {
+  if (!id) return '-'
+  const process = processRouteItemList.value.find(item => item.processId === id)
+  return process?.operationName || `工序${id}`
+}
+
+/** 获取工单名称 */
+const getWorkOrderName = (id?: number) => {
+  if (!id) return '-'
+  const workOrder = workOrderList.value.find(item => item.id === id)
+  return workOrder?.workOrderNo || `工单${id}`
+}
+
+/** 获取用户名称 */
+const getUserName = (id?: number) => {
+  if (!id) return '-'
+  const user = userList.value.find(item => item.id === id)
+  return user?.nickname || `用户${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载产品、工艺路线明细、工单、用户列表
+  try {
+    const [products, processRouteItemData, workOrderData, users] = await Promise.all([
+      ProductApi.getProductSimpleList(),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 }),
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
+      UserApi.getSimpleUserList()
+    ])
+    productList.value = products || []
+    processRouteItemList.value = processRouteItemData.list || []
+    workOrderList.value = workOrderData.list || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

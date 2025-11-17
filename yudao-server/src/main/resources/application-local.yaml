@@ -82,7 +82,7 @@ spring:
     host: ${REDIS_HOST:127.0.0.1} # 地址
     port: ${REDIS_PORT:6379} # 端口（Docker容器中的Redis运行在6379端口）
     database: ${REDIS_DATABASE:0} # 数据库索引
-    password: ${REDIS_PASSWORD:} # 密码，建议生产环境开启
+    # 密码，建议生产环境开启。如果REDIS_PASSWORD为空，则不设置此配置项
 
 --- #################### 定时任务相关配置 ####################
 

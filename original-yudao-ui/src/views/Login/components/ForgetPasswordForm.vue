@@ -129,6 +129,7 @@ import { LoginStateEnum, useFormValid, useLoginState } from './useLogin'
 import { ElLoading } from 'element-plus'
 import * as authUtil from '@/utils/auth'
 import * as LoginApi from '@/api/login'
+import { InputPassword } from '@/components/InputPassword'
 defineOptions({ name: 'ForgetPasswordForm' })
 const verify = ref()
 

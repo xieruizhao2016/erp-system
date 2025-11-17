@@ -4,11 +4,24 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select
+          v-model="formData.productId"
+          clearable
+          filterable
+          placeholder="请选择产品"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="版本号" prop="version">
         <el-input v-model="formData.version" placeholder="请输入版本号" />
@@ -82,6 +95,7 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostStandardApi, CostStandard } from '@/api/erp/coststandard'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 标准成本 表单 */
 defineOptions({ name: 'CostStandardForm' })
@@ -111,7 +125,7 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }],
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   effectiveDate: [{ required: true, message: '生效日期不能为空', trigger: 'blur' }],
   materialCost: [{ required: true, message: '材料成本不能为空', trigger: 'blur' }],
   laborCost: [{ required: true, message: '人工成本不能为空', trigger: 'blur' }],
@@ -120,9 +134,24 @@ const formRules = reactive({
   calculationDate: [{ required: true, message: '计算日期不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const productList = ref<ProductVO[]>([]) // 产品列表
+
+/** 加载列表数据 */
+const loadListData = async () => {
+  try {
+    const products = await ProductApi.getProductSimpleList()
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载产品列表失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
+  // 首次打开时加载列表数据
+  if (productList.value.length === 0) {
+    await loadListData()
+  }
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type

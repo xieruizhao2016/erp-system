@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="KPI编号" prop="kpiNo">
         <el-input
@@ -26,10 +26,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="KPI类型：1-OEE，2-合格率，3-达成率，4-交期率" prop="kpiType">
+      <el-form-item label="KPI类型" prop="kpiType">
         <el-select
           v-model="queryParams.kpiType"
-          placeholder="请选择KPI类型：1-OEE，2-合格率，3-达成率，4-交期率"
+          placeholder="请选择KPI类型"
           clearable
           class="!w-240px"
         >
@@ -39,37 +39,44 @@
           <el-option label="交期率" value="4" />
         </el-select>
       </el-form-item>
-      <el-form-item label="分类：1-效率，2-质量，3-交付，4-成本" prop="category">
+      <el-form-item label="分类" prop="category">
         <el-input
           v-model="queryParams.category"
-          placeholder="请输入分类：1-效率，2-质量，3-交付，4-成本"
+          placeholder="请输入分类"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
+      <el-form-item label="工作中心" prop="workCenterId">
         <el-input
           v-model="queryParams.workCenterId"
-          placeholder="请输入工作中心ID"
+          placeholder="请输入工作中心"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择产品"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="统计周期：1-小时，2-天，3-周，4-月" prop="measurementPeriod">
+      <el-form-item label="统计周期" prop="measurementPeriod">
         <el-input
           v-model="queryParams.measurementPeriod"
-          placeholder="请输入统计周期：1-小时，2-天，3-周，4-月"
+          placeholder="请输入统计周期"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -228,10 +235,14 @@
           <el-tag v-else-if="scope.row.kpiType === 4" type="warning">交期率</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="分类：1-效率，2-质量，3-交付，4-成本" align="center" prop="category" />
-      <el-table-column label="工作中心ID" align="center" prop="workCenterId" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
-      <el-table-column label="统计周期：1-小时，2-天，3-周，4-月" align="center" prop="measurementPeriod" />
+      <el-table-column label="分类" align="center" prop="category" />
+      <el-table-column label="工作中心" align="center" prop="workCenterId" />
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="统计周期" align="center" prop="measurementPeriod" />
       <el-table-column label="目标值" align="center" prop="targetValue" />
       <el-table-column label="实际值" align="center" prop="actualValue" />
       <el-table-column label="差异值" align="center" prop="variance" />
@@ -307,6 +318,7 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionKpiApi, ProductionKpi } from '@/api/erp/productionkpi'
 import ProductionKpiForm from './ProductionKpiForm.vue'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 生产KPI 列表 */
 defineOptions({ name: 'ProductionKpi' })
@@ -340,6 +352,7 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const productList = ref<ProductVO[]>([]) // 产品列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -379,7 +392,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductionKpiApi.deleteProductionKpi(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -417,8 +429,22 @@ const handleExport = async () => {
   }
 }
 
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载产品列表
+  try {
+    const products = await ProductApi.getProductSimpleList()
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载产品列表失败:', error)
+  }
 })
 </script>

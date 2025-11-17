@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="标准编号" prop="standardNo">
         <el-input
@@ -26,28 +26,42 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择产品"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input
+      <el-form-item label="工序" prop="processId">
+        <el-select
           v-model="queryParams.processId"
-          placeholder="请输入工序ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工序"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="检验类型：1-进料检验，2-过程检验，3-成品检验" prop="inspectionType">
+      <el-form-item label="检验类型" prop="inspectionType">
         <el-select
           v-model="queryParams.inspectionType"
-          placeholder="请选择检验类型：1-进料检验，2-过程检验，3-成品检验"
+          placeholder="请选择检验类型"
           clearable
           class="!w-240px"
         >
@@ -83,10 +97,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-生效，3-失效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-草稿，2-生效，3-失效"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -156,8 +170,16 @@
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="标准编号" align="center" prop="standardNo" />
       <el-table-column label="标准名称" align="center" prop="standardName" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
-      <el-table-column label="工序ID" align="center" prop="processId" />
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工序名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProcessName(scope.row.processId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="检验类型" align="center" prop="inspectionType">
         <template #default="scope">
           <el-tag v-if="scope.row.inspectionType === 1" type="primary">进料检验</el-tag>
@@ -222,6 +244,8 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityStandardApi, QualityStandard } from '@/api/erp/qualitystandard'
 import QualityStandardForm from './QualityStandardForm.vue'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
 
 /** ERP 质检标准 列表 */
 defineOptions({ name: 'QualityStandard' })
@@ -249,6 +273,8 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const productList = ref<ProductVO[]>([]) // 产品列表
+const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -288,7 +314,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await QualityStandardApi.deleteQualityStandard(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -326,8 +351,33 @@ const handleExport = async () => {
   }
 }
 
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
+/** 获取工序名称 */
+const getProcessName = (id?: number) => {
+  if (!id) return '-'
+  const process = processRouteItemList.value.find(item => item.processId === id)
+  return process?.operationName || `工序${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载产品、工艺路线明细列表
+  try {
+    const [products, processRouteItemData] = await Promise.all([
+      ProductApi.getProductSimpleList(),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 })
+    ])
+    productList.value = products || []
+    processRouteItemList.value = processRouteItemData.list || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

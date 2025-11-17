@@ -6,25 +6,39 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="工艺路线ID" prop="routeId">
-        <el-input
+      <el-form-item label="工艺路线" prop="routeId">
+        <el-select
           v-model="queryParams.routeId"
-          placeholder="请输入工艺路线ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工艺路线"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in processRouteList"
+            :key="item.id"
+            :label="item.routeName || item.routeNo || `路线${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input
+      <el-form-item label="工序" prop="processId">
+        <el-select
           v-model="queryParams.processId"
-          placeholder="请输入工序ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工序"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="序号" prop="sequence">
         <el-input
@@ -35,16 +49,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="工序名称" prop="operationName">
-        <el-input
-          v-model="queryParams.operationName"
-          placeholder="请输入工序名称"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="标准工时（分钟）" prop="standardTime">
+      <el-form-item label="标准工时" prop="standardTime">
         <el-date-picker
           v-model="queryParams.standardTime"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -55,7 +60,7 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="准备时间（分钟）" prop="setupTime">
+      <el-form-item label="准备时间" prop="setupTime">
         <el-date-picker
           v-model="queryParams.setupTime"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -66,46 +71,26 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="人员数量" prop="workerCount">
-        <el-input
-          v-model="queryParams.workerCount"
-          placeholder="请输入人员数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="设备ID" prop="equipmentId">
-        <el-input
+      <el-form-item label="设备" prop="equipmentId">
+        <el-select
           v-model="queryParams.equipmentId"
-          placeholder="请输入设备ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择设备"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in equipmentList"
+            :key="item.id"
+            :label="item.equipmentName || item.equipmentNo || `设备${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
+      <el-form-item label="工作中心" prop="workCenterId">
         <el-input
           v-model="queryParams.workCenterId"
-          placeholder="请输入工作中心ID"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="人工费率" prop="laborRate">
-        <el-input
-          v-model="queryParams.laborRate"
-          placeholder="请输入人工费率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="制造费率" prop="overheadRate">
-        <el-input
-          v-model="queryParams.overheadRate"
-          placeholder="请输入制造费率"
+          placeholder="请输入工作中心"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -193,15 +178,27 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="工艺路线ID" align="center" prop="routeId" />
-      <el-table-column label="工序ID" align="center" prop="processId" />
+      <el-table-column label="工艺路线名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProcessRouteName(scope.row.routeId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工序名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProcessName(scope.row.processId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="序号" align="center" prop="sequence" />
       <el-table-column label="工序名称" align="center" prop="operationName" />
-      <el-table-column label="标准工时（分钟）" align="center" prop="standardTime" />
-      <el-table-column label="准备时间（分钟）" align="center" prop="setupTime" />
+      <el-table-column label="标准工时" align="center" prop="standardTime" />
+      <el-table-column label="准备时间" align="center" prop="setupTime" />
       <el-table-column label="人员数量" align="center" prop="workerCount" />
-      <el-table-column label="设备ID" align="center" prop="equipmentId" />
-      <el-table-column label="工作中心ID" align="center" prop="workCenterId" />
+      <el-table-column label="设备名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getEquipmentName(scope.row.equipmentId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工作中心" align="center" prop="workCenterId" />
       <el-table-column label="人工费率" align="center" prop="laborRate" />
       <el-table-column label="制造费率" align="center" prop="overheadRate" />
       <el-table-column label="是否瓶颈工序" align="center" prop="isBottleneck" />
@@ -254,6 +251,8 @@ import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import { ProcessRouteApi } from '@/api/erp/processroute'
+import { EquipmentApi } from '@/api/erp/equipment'
 import ProcessRouteItemForm from './ProcessRouteItemForm.vue'
 
 /** ERP 工艺路线明细 列表 */
@@ -271,14 +270,10 @@ const queryParams = reactive({
   routeId: undefined,
   processId: undefined,
   sequence: undefined,
-  operationName: undefined,
   standardTime: [],
   setupTime: [],
-  workerCount: undefined,
   equipmentId: undefined,
   workCenterId: undefined,
-  laborRate: undefined,
-  overheadRate: undefined,
   isBottleneck: undefined,
   qualityCheckRequired: undefined,
   remark: undefined,
@@ -286,6 +281,11 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+
+// 数据列表
+const processRouteList = ref<any[]>([]) // 工艺路线列表
+const processRouteItemList = ref<any[]>([]) // 工艺路线明细列表（用于工序）
+const equipmentList = ref<any[]>([]) // 设备列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -325,7 +325,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProcessRouteItemApi.deleteProcessRouteItem(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -363,8 +362,49 @@ const handleExport = async () => {
   }
 }
 
+// 加载数据列表
+const loadListData = async () => {
+  try {
+    // 加载工艺路线列表
+    const processRouteData = await ProcessRouteApi.getProcessRoutePage({ pageNo: 1, pageSize: 100 })
+    processRouteList.value = processRouteData.list || []
+
+    // 加载工艺路线明细列表（用于工序）
+    const processRouteItemData = await ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 })
+    processRouteItemList.value = processRouteItemData.list || []
+
+    // 加载设备列表
+    const equipmentData = await EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 })
+    equipmentList.value = equipmentData.list || []
+  } catch (error) {
+    console.error('加载数据列表失败:', error)
+  }
+}
+
+// 辅助函数：获取工艺路线名称
+const getProcessRouteName = (routeId: number | undefined) => {
+  if (!routeId) return '-'
+  const route = processRouteList.value.find(item => item.id === routeId)
+  return route ? route.name || route.routeName || `工艺路线${routeId}` : `工艺路线${routeId}`
+}
+
+// 辅助函数：获取工序名称
+const getProcessName = (processId: number | undefined) => {
+  if (!processId) return '-'
+  const process = processRouteItemList.value.find(item => item.id === processId)
+  return process ? process.operationName || `工序${processId}` : `工序${processId}`
+}
+
+// 辅助函数：获取设备名称
+const getEquipmentName = (equipmentId: number | undefined) => {
+  if (!equipmentId) return '-'
+  const equipment = equipmentList.value.find(item => item.id === equipmentId)
+  return equipment ? equipment.name || equipment.equipmentName || `设备${equipmentId}` : `设备${equipmentId}`
+}
+
 /** 初始化 **/
 onMounted(() => {
+  loadListData()
   getList()
 })
 </script>

@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="排程单号" prop="scheduleNo">
         <el-input
@@ -26,10 +26,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="排程类型：1-主排程，2-详细排程" prop="scheduleType">
+      <el-form-item label="排程类型" prop="scheduleType">
         <el-select
           v-model="queryParams.scheduleType"
-          placeholder="请选择排程类型：1-主排程，2-详细排程"
+          placeholder="请选择排程类型"
           clearable
           class="!w-240px"
         >
@@ -87,15 +87,6 @@
         <el-input
           v-model="queryParams.totalOrders"
           placeholder="请输入总订单数"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总数量" prop="totalQuantity">
-        <el-input
-          v-model="queryParams.totalQuantity"
-          placeholder="请输入总数量"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -274,7 +265,6 @@ const queryParams = reactive({
   endDate: [],
   status: undefined,
   totalOrders: undefined,
-  totalQuantity: undefined,
   totalWorkHours: undefined,
   createdBy: undefined,
   createTime: [],
@@ -321,7 +311,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductionScheduleApi.deleteProductionSchedule(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}

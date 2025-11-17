@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="生产订单号" prop="no">
         <el-input
@@ -17,68 +17,37 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="客户ID（关联销售订单）" prop="customerId">
-        <el-input
+      <el-form-item label="客户" prop="customerId">
+        <el-select
           v-model="queryParams.customerId"
-          placeholder="请输入客户ID（关联销售订单）"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择客户"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in customerList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择产品"
           class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="产品名称" prop="productName">
-        <el-input
-          v-model="queryParams.productName"
-          placeholder="请输入产品名称"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="产品规格" prop="productSpec">
-        <el-input
-          v-model="queryParams.productSpec"
-          placeholder="请输入产品规格"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="单位ID" prop="unitId">
-        <el-input
-          v-model="queryParams.unitId"
-          placeholder="请输入单位ID"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="生产数量" prop="quantity">
-        <el-input
-          v-model="queryParams.quantity"
-          placeholder="请输入生产数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="已完成数量" prop="completedQuantity">
-        <el-input
-          v-model="queryParams.completedQuantity"
-          placeholder="请输入已完成数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="计划开始时间" prop="startTime">
         <el-date-picker
@@ -169,10 +138,10 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="来源单据ID" prop="sourceId">
+      <el-form-item label="来源单据" prop="sourceId">
         <el-input
           v-model="queryParams.sourceId"
-          placeholder="请输入来源单据ID"
+          placeholder="请输入来源单据"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -244,11 +213,22 @@
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="生产订单号" align="center" prop="no" />
-      <el-table-column label="客户ID（关联销售订单）" align="center" prop="customerId" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
-      <el-table-column label="产品名称" align="center" prop="productName" />
+      <el-table-column label="客户名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getCustomerName(scope.row.customerId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="产品规格" align="center" prop="productSpec" />
-      <el-table-column label="单位ID" align="center" prop="unitId" />
+      <el-table-column label="单位" align="center" min-width="100">
+        <template #default="scope">
+          {{ getProductUnitName(scope.row.unitId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="生产数量" align="center" prop="quantity" />
       <el-table-column label="已完成数量" align="center" prop="completedQuantity" />
       <el-table-column
@@ -294,7 +274,7 @@
           <dict-tag :type="DICT_TYPE.ERP_PRODUCTION_ORDER_SOURCE_TYPE" :value="scope.row.sourceType" />
         </template>
       </el-table-column>
-      <el-table-column label="来源单据ID" align="center" prop="sourceId" />
+      <el-table-column label="来源单据" align="center" prop="sourceId" />
       <el-table-column label="生产说明" align="center" prop="description" />
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column
@@ -345,6 +325,9 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
 import ProductionOrderForm from './ProductionOrderForm.vue'
+import { CustomerApi, Customer } from '@/api/erp/sale/customer'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { ProductUnitApi, ProductUnit } from '@/api/erp/product/unit'
 
 /** ERP 生产订单 DO
  * 列表 */
@@ -362,11 +345,6 @@ const queryParams = reactive({
   no: undefined,
   customerId: undefined,
   productId: undefined,
-  productName: undefined,
-  productSpec: undefined,
-  unitId: undefined,
-  quantity: undefined,
-  completedQuantity: undefined,
   startTime: [],
   endTime: [],
   actualStartTime: [],
@@ -381,6 +359,9 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const customerList = ref<Customer[]>([]) // 客户列表
+const productList = ref<ProductVO[]>([]) // 产品列表
+const productUnitList = ref<ProductUnit[]>([]) // 产品单位列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -420,7 +401,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductionOrderApi.deleteProductionOrder(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -459,8 +439,42 @@ const handleExport = async () => {
   }
 }
 
+/** 获取客户名称 */
+const getCustomerName = (id?: number) => {
+  if (!id) return '-'
+  const customer = customerList.value.find(item => item.id === id)
+  return customer?.name || `客户${id}`
+}
+
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
+/** 获取产品单位名称 */
+const getProductUnitName = (id?: number) => {
+  if (!id) return '-'
+  const unit = productUnitList.value.find(item => item.id === id)
+  return unit?.name || `单位${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载客户、产品、单位列表
+  try {
+    const [customerData, products, unitData] = await Promise.all([
+      CustomerApi.getCustomerPage({ pageNo: 1, pageSize: 100 }),
+      ProductApi.getProductSimpleList(),
+      ProductUnitApi.getProductUnitPage({ pageNo: 1, pageSize: 100 })
+    ])
+    customerList.value = customerData.list || []
+    productList.value = products || []
+    productUnitList.value = unitData.list || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

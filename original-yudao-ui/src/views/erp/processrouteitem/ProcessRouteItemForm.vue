@@ -4,14 +4,28 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
-      <el-form-item label="工艺路线ID" prop="routeId">
-        <el-input v-model="formData.routeId" placeholder="请输入工艺路线ID" />
+      <el-form-item label="工艺路线" prop="routeId">
+        <el-select v-model="formData.routeId" placeholder="请选择工艺路线" clearable filterable style="width: 100%">
+          <el-option
+            v-for="item in processRouteList"
+            :key="item.id"
+            :label="item.name || item.routeName || `工艺路线${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input v-model="formData.processId" placeholder="请输入工序ID" />
+      <el-form-item label="工序" prop="processId">
+        <el-select v-model="formData.processId" placeholder="请选择工序" clearable filterable style="width: 100%">
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="序号" prop="sequence">
         <el-input v-model="formData.sequence" placeholder="请输入序号" />
@@ -19,7 +33,7 @@
       <el-form-item label="工序名称" prop="operationName">
         <el-input v-model="formData.operationName" placeholder="请输入工序名称" />
       </el-form-item>
-      <el-form-item label="标准工时（分钟）" prop="standardTime">
+      <el-form-item label="标准工时" prop="standardTime">
         <el-date-picker
           v-model="formData.standardTime"
           type="date"
@@ -27,7 +41,7 @@
           placeholder="选择标准工时（分钟）"
         />
       </el-form-item>
-      <el-form-item label="准备时间（分钟）" prop="setupTime">
+      <el-form-item label="准备时间" prop="setupTime">
         <el-date-picker
           v-model="formData.setupTime"
           type="date"
@@ -38,11 +52,18 @@
       <el-form-item label="人员数量" prop="workerCount">
         <el-input v-model="formData.workerCount" placeholder="请输入人员数量" />
       </el-form-item>
-      <el-form-item label="设备ID" prop="equipmentId">
-        <el-input v-model="formData.equipmentId" placeholder="请输入设备ID" />
+      <el-form-item label="设备" prop="equipmentId">
+        <el-select v-model="formData.equipmentId" placeholder="请选择设备" clearable filterable style="width: 100%">
+          <el-option
+            v-for="item in equipmentList"
+            :key="item.id"
+            :label="item.name || item.equipmentName || `设备${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
-        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心ID" />
+      <el-form-item label="工作中心" prop="workCenterId">
+        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心" />
       </el-form-item>
       <el-form-item label="人工费率" prop="laborRate">
         <el-input v-model="formData.laborRate" placeholder="请输入人工费率" />
@@ -75,6 +96,8 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import { ProcessRouteApi } from '@/api/erp/processroute'
+import { EquipmentApi } from '@/api/erp/equipment'
 
 /** ERP 工艺路线明细 表单 */
 defineOptions({ name: 'ProcessRouteItemForm' })
@@ -104,13 +127,37 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  routeId: [{ required: true, message: '工艺路线ID不能为空', trigger: 'blur' }],
-  processId: [{ required: true, message: '工序ID不能为空', trigger: 'blur' }],
+  routeId: [{ required: true, message: '工艺路线不能为空', trigger: 'change' }],
+  processId: [{ required: true, message: '工序不能为空', trigger: 'change' }],
   sequence: [{ required: true, message: '序号不能为空', trigger: 'blur' }],
   operationName: [{ required: true, message: '工序名称不能为空', trigger: 'blur' }],
   standardTime: [{ required: true, message: '标准工时（分钟）不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+
+// 数据列表
+const processRouteList = ref<any[]>([]) // 工艺路线列表
+const processRouteItemList = ref<any[]>([]) // 工艺路线明细列表（用于工序）
+const equipmentList = ref<any[]>([]) // 设备列表
+
+// 加载数据列表
+const loadListData = async () => {
+  try {
+    // 加载工艺路线列表
+    const processRouteData = await ProcessRouteApi.getProcessRoutePage({ pageNo: 1, pageSize: 100 })
+    processRouteList.value = processRouteData.list || []
+
+    // 加载工艺路线明细列表（用于工序）
+    const processRouteItemData = await ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 })
+    processRouteItemList.value = processRouteItemData.list || []
+
+    // 加载设备列表
+    const equipmentData = await EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 })
+    equipmentList.value = equipmentData.list || []
+  } catch (error) {
+    console.error('加载数据列表失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
@@ -118,6 +165,8 @@ const open = async (type: string, id?: number) => {
   dialogTitle.value = t('action.' + type)
   formType.value = type
   resetForm()
+  // 加载数据列表
+  await loadListData()
   // 修改时，设置数据
   if (id) {
     formLoading.value = true

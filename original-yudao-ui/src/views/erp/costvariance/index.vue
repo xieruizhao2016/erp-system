@@ -6,34 +6,39 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="实际成本ID" prop="costActualId">
-        <el-input
+      <el-form-item label="实际成本" prop="costActualId">
+        <el-select
           v-model="queryParams.costActualId"
-          placeholder="请输入实际成本ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择实际成本"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in costActualList"
+            :key="item.id"
+            :label="item.costNo || `成本${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择产品"
           class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="生产数量" prop="productionQuantity">
-        <el-input
-          v-model="queryParams.productionQuantity"
-          placeholder="请输入生产数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="标准总成本" prop="standardTotalCost">
         <el-input
@@ -125,10 +130,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="差异类型：1-有利，2-不利" prop="varianceType">
+      <el-form-item label="差异类型" prop="varianceType">
         <el-select
           v-model="queryParams.varianceType"
-          placeholder="请选择差异类型：1-有利，2-不利"
+          placeholder="请选择差异类型"
           clearable
           class="!w-240px"
         >
@@ -225,8 +230,16 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="实际成本ID" align="center" prop="costActualId" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
+      <el-table-column label="成本单号" align="center" min-width="120">
+        <template #default="scope">
+          {{ getCostActualName(scope.row.costActualId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="生产数量" align="center" prop="productionQuantity" />
       <el-table-column label="标准总成本" align="center" prop="standardTotalCost" />
       <el-table-column label="实际总成本" align="center" prop="actualTotalCost" />
@@ -300,6 +313,8 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { CostVarianceApi, CostVariance } from '@/api/erp/costvariance'
 import CostVarianceForm from './CostVarianceForm.vue'
+import { CostActualApi, CostActual } from '@/api/erp/costactual'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 成本差异分析 列表 */
 defineOptions({ name: 'CostVariance' })
@@ -315,7 +330,6 @@ const queryParams = reactive({
   pageSize: 10,
   costActualId: undefined,
   productId: undefined,
-  productionQuantity: undefined,
   standardTotalCost: undefined,
   actualTotalCost: undefined,
   totalVariance: undefined,
@@ -334,6 +348,8 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const costActualList = ref<CostActual[]>([]) // 实际成本列表
+const productList = ref<ProductVO[]>([]) // 产品列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -373,7 +389,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await CostVarianceApi.deleteCostVariance(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -411,8 +426,33 @@ const handleExport = async () => {
   }
 }
 
+/** 获取实际成本名称 */
+const getCostActualName = (id?: number) => {
+  if (!id) return '-'
+  const costActual = costActualList.value.find(item => item.id === id)
+  return costActual?.costNo || `成本${id}`
+}
+
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载实际成本、产品列表
+  try {
+    const [costActualData, products] = await Promise.all([
+      CostActualApi.getCostActualPage({ pageNo: 1, pageSize: 100 }),
+      ProductApi.getProductSimpleList()
+    ])
+    costActualList.value = costActualData.list || []
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

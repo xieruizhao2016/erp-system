@@ -4,17 +4,31 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="运算批次号" prop="runNo">
         <el-input v-model="formData.runNo" placeholder="请输入运算批次号" />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input v-model="formData.productId" placeholder="请输入产品ID" />
+      <el-form-item label="产品" prop="productId">
+        <el-select v-model="formData.productId" placeholder="请选择产品" clearable filterable style="width: 100%">
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name || `产品${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="仓库ID" prop="warehouseId">
-        <el-input v-model="formData.warehouseId" placeholder="请输入仓库ID" />
+      <el-form-item label="仓库" prop="warehouseId">
+        <el-select v-model="formData.warehouseId" placeholder="请选择仓库" clearable filterable style="width: 100%">
+          <el-option
+            v-for="item in warehouseList"
+            :key="item.id"
+            :label="item.name || `仓库${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="周期开始日期" prop="periodStartDate">
         <el-date-picker
@@ -70,7 +84,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="提前期（天）" prop="leadTime">
+      <el-form-item label="提前期" prop="leadTime">
         <el-input-number v-model="formData.leadTime" placeholder="请输入提前期（天）" :min="0" class="!w-1/1" />
       </el-form-item>
       <el-form-item label="安全库存" prop="safetyStock">
@@ -105,6 +119,8 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { MrpResultApi, MrpResult } from '@/api/erp/mrpresult'
+import { ProductApi } from '@/api/erp/product'
+import { WarehouseApi } from '@/api/erp/stock/warehouse'
 
 /** ERP MRP运算结果 表单 */
 defineOptions({ name: 'MrpResultForm' })
@@ -138,11 +154,30 @@ const formData = ref({
 })
 const formRules = reactive({
   runNo: [{ required: true, message: '运算批次号不能为空', trigger: 'blur' }],
-  productId: [{ required: true, message: '产品ID不能为空', trigger: 'blur' }],
+  productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   periodStartDate: [{ required: true, message: '周期开始日期不能为空', trigger: 'blur' }],
   periodEndDate: [{ required: true, message: '周期结束日期不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+
+// 数据列表
+const productList = ref<any[]>([]) // 产品列表
+const warehouseList = ref<any[]>([]) // 仓库列表
+
+// 加载数据列表
+const loadListData = async () => {
+  try {
+    // 加载产品列表
+    const productData = await ProductApi.getProductPage({ pageNo: 1, pageSize: 100 })
+    productList.value = productData.list || []
+
+    // 加载仓库列表
+    const warehouseData = await WarehouseApi.getWarehousePage({ pageNo: 1, pageSize: 100 })
+    warehouseList.value = warehouseData.list || []
+  } catch (error) {
+    console.error('加载数据列表失败:', error)
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
@@ -150,6 +185,8 @@ const open = async (type: string, id?: number) => {
   dialogTitle.value = t('action.' + type)
   formType.value = type
   resetForm()
+  // 加载数据列表
+  await loadListData()
   // 修改时，设置数据
   if (id) {
     formLoading.value = true

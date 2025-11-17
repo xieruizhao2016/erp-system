@@ -6,16 +6,23 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择产品"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="BOM编号" prop="bomNo">
         <el-input
@@ -99,10 +106,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-生效，3-失效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-草稿，2-生效，3-失效"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -170,7 +177,11 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="BOM编号" align="center" prop="bomNo" />
       <el-table-column label="BOM名称" align="center" prop="bomName" />
       <el-table-column label="版本号" align="center" prop="version" />
@@ -248,6 +259,7 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductBomApi, ProductBom } from '@/api/erp/productbom'
 import ProductBomForm from './ProductBomForm.vue'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP BOM主 列表 */
 defineOptions({ name: 'ProductBom' })
@@ -275,6 +287,7 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const productList = ref<ProductVO[]>([]) // 产品列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -314,7 +327,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductBomApi.deleteProductBom(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -352,8 +364,22 @@ const handleExport = async () => {
   }
 }
 
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载产品列表
+  try {
+    const products = await ProductApi.getProductSimpleList()
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载产品列表失败:', error)
+  }
 })
 </script>

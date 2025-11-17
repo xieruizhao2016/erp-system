@@ -6,34 +6,55 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
-      <el-form-item label="BOM ID" prop="bomId">
-        <el-input
+      <el-form-item label="BOM" prop="bomId">
+        <el-select
           v-model="queryParams.bomId"
-          placeholder="请输入BOM ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择BOM"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productBomList"
+            :key="item.id"
+            :label="item.bomName || item.bomNo || `BOM${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="父产品ID" prop="parentProductId">
-        <el-input
+      <el-form-item label="父产品" prop="parentProductId">
+        <el-select
           v-model="queryParams.parentProductId"
-          placeholder="请输入父产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择父产品"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
-      <el-form-item label="子产品ID" prop="childProductId">
-        <el-input
+      <el-form-item label="子产品" prop="childProductId">
+        <el-select
           v-model="queryParams.childProductId"
-          placeholder="请输入子产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择子产品"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="子产品名称" prop="childProductName">
         <el-input
@@ -48,42 +69,6 @@
         <el-input
           v-model="queryParams.childProductSpec"
           placeholder="请输入子产品规格"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="单位ID" prop="unitId">
-        <el-input
-          v-model="queryParams.unitId"
-          placeholder="请输入单位ID"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="用量" prop="quantity">
-        <el-input
-          v-model="queryParams.quantity"
-          placeholder="请输入用量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="损耗率" prop="lossRate">
-        <el-input
-          v-model="queryParams.lossRate"
-          placeholder="请输入损耗率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="有效用量" prop="effectiveQuantity">
-        <el-input
-          v-model="queryParams.effectiveQuantity"
-          placeholder="请输入有效用量"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -124,14 +109,21 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="工序ID" prop="processId">
-        <el-input
+      <el-form-item label="工序" prop="processId">
+        <el-select
           v-model="queryParams.processId"
-          placeholder="请输入工序ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择工序"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in processRouteItemList"
+            :key="item.id"
+            :label="item.operationName || `工序${item.id}`"
+            :value="item.processId"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
         <el-input
@@ -198,12 +190,27 @@
     >
     <el-table-column type="selection" width="55" />
       <el-table-column label="编号" align="center" prop="id" />
-      <el-table-column label="BOM ID" align="center" prop="bomId" />
-      <el-table-column label="父产品ID" align="center" prop="parentProductId" />
-      <el-table-column label="子产品ID" align="center" prop="childProductId" />
-      <el-table-column label="子产品名称" align="center" prop="childProductName" />
+      <el-table-column label="BOM名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductBomName(scope.row.bomId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="父产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.parentProductId) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="子产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.childProductId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="子产品规格" align="center" prop="childProductSpec" />
-      <el-table-column label="单位ID" align="center" prop="unitId" />
+      <el-table-column label="单位" align="center" min-width="100">
+        <template #default="scope">
+          {{ getProductUnitName(scope.row.unitId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="用量" align="center" prop="quantity" />
       <el-table-column label="损耗率" align="center" prop="lossRate" />
       <el-table-column label="有效用量" align="center" prop="effectiveQuantity" />
@@ -211,7 +218,11 @@
       <el-table-column label="是否替代料" align="center" prop="isAlternative" />
       <el-table-column label="替代料组" align="center" prop="alternativeGroup" />
       <el-table-column label="位号" align="center" prop="position" />
-      <el-table-column label="工序ID" align="center" prop="processId" />
+      <el-table-column label="工序名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProcessName(scope.row.processId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column
         label="创建时间"
@@ -261,6 +272,10 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductBomItemApi, ProductBomItem } from '@/api/erp/productbomitem'
 import ProductBomItemForm from './ProductBomItemForm.vue'
+import { ProductBomApi, ProductBom } from '@/api/erp/productbom'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { ProductUnitApi, ProductUnit } from '@/api/erp/product/unit'
+import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
 
 /** ERP BOM明细 列表 */
 defineOptions({ name: 'ProductBomItem' })
@@ -279,10 +294,6 @@ const queryParams = reactive({
   childProductId: undefined,
   childProductName: undefined,
   childProductSpec: undefined,
-  unitId: undefined,
-  quantity: undefined,
-  lossRate: undefined,
-  effectiveQuantity: undefined,
   isKeyMaterial: undefined,
   isAlternative: undefined,
   alternativeGroup: undefined,
@@ -293,6 +304,10 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const productBomList = ref<ProductBom[]>([]) // BOM列表
+const productList = ref<ProductVO[]>([]) // 产品列表
+const productUnitList = ref<ProductUnit[]>([]) // 产品单位列表
+const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -332,7 +347,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductBomItemApi.deleteProductBomItem(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -370,8 +384,51 @@ const handleExport = async () => {
   }
 }
 
+/** 获取BOM名称 */
+const getProductBomName = (id?: number) => {
+  if (!id) return '-'
+  const bom = productBomList.value.find(item => item.id === id)
+  return bom?.bomName || bom?.bomNo || `BOM${id}`
+}
+
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
+/** 获取产品单位名称 */
+const getProductUnitName = (id?: number) => {
+  if (!id) return '-'
+  const unit = productUnitList.value.find(item => item.id === id)
+  return unit?.name || `单位${id}`
+}
+
+/** 获取工序名称 */
+const getProcessName = (id?: number) => {
+  if (!id) return '-'
+  const process = processRouteItemList.value.find(item => item.processId === id)
+  return process?.operationName || `工序${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载BOM、产品、单位、工艺路线明细列表
+  try {
+    const [bomData, products, unitData, processRouteItemData] = await Promise.all([
+      ProductBomApi.getProductBomPage({ pageNo: 1, pageSize: 100 }),
+      ProductApi.getProductSimpleList(),
+      ProductUnitApi.getProductUnitPage({ pageNo: 1, pageSize: 100 }),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 })
+    ])
+    productBomList.value = bomData.list || []
+    productList.value = products || []
+    productUnitList.value = unitData.list || []
+    processRouteItemList.value = processRouteItemData.list || []
+  } catch (error) {
+    console.error('加载列表数据失败:', error)
+  }
 })
 </script>

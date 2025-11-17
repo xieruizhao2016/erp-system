@@ -120,11 +120,16 @@ $JAVA_CMD -version
 # 检查是否以后台模式运行（添加-d参数）
 if [ "$1" = "-d" ] || [ "$1" = "--daemon" ]; then
     echo "以后台模式启动..."
+    # 构建Redis配置参数
+    REDIS_ARGS="--spring.redis.host=${REDIS_HOST:-127.0.0.1} --spring.redis.port=${REDIS_PORT:-6379}"
+    if [ -n "$REDIS_PASSWORD" ]; then
+        REDIS_ARGS="$REDIS_ARGS --spring.redis.password=$REDIS_PASSWORD"
+    fi
+    
     nohup $JAVA_CMD -Xms512m -Xmx512m \
         -jar "$JAR_FILE" \
         --spring.profiles.active=local \
-        --spring.redis.host=127.0.0.1 \
-        --spring.redis.port=6379 > nohup.out 2>&1 &
+        $REDIS_ARGS > nohup.out 2>&1 &
     echo "后端服务已在后台启动，PID: $!"
     echo "日志文件: nohup.out"
     echo "使用 'tail -f nohup.out' 查看日志"
@@ -132,11 +137,16 @@ if [ "$1" = "-d" ] || [ "$1" = "--daemon" ]; then
 else
     echo "前台模式启动（Ctrl+C停止服务）"
     echo "提示: 使用 './start-backend.sh -d' 在后台启动"
+    # 构建Redis配置参数
+    REDIS_ARGS="--spring.redis.host=${REDIS_HOST:-127.0.0.1} --spring.redis.port=${REDIS_PORT:-6379}"
+    if [ -n "$REDIS_PASSWORD" ]; then
+        REDIS_ARGS="$REDIS_ARGS --spring.redis.password=$REDIS_PASSWORD"
+    fi
+    
     # 前台启动
     $JAVA_CMD -Xms512m -Xmx512m \
         -jar "$JAR_FILE" \
         --spring.profiles.active=local \
-        --spring.redis.host=127.0.0.1 \
-        --spring.redis.port=6379
+        $REDIS_ARGS
 fi
 

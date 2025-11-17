@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="设备编号" prop="equipmentNo">
         <el-input
@@ -83,7 +83,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="设计寿命（年）" prop="serviceLife">
+      <el-form-item label="设计寿命" prop="serviceLife">
         <el-input
           v-model="queryParams.serviceLife"
           placeholder="请输入设计寿命（年）"
@@ -92,10 +92,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
+      <el-form-item label="工作中心" prop="workCenterId">
         <el-input
           v-model="queryParams.workCenterId"
-          placeholder="请输入工作中心ID"
+          placeholder="请输入工作中心"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -110,7 +110,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="产能（小时/天）" prop="capacity">
+      <el-form-item label="产能" prop="capacity">
         <el-input
           v-model="queryParams.capacity"
           placeholder="请输入产能（小时/天）"
@@ -128,10 +128,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-正常，2-维修中，3-故障，4-报废" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-正常，2-维修中，3-故障，4-报废"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -234,10 +234,10 @@
       <el-table-column label="序列号" align="center" prop="serialNumber" />
       <el-table-column label="购置日期" align="center" prop="purchaseDate" />
       <el-table-column label="购置价格" align="center" prop="purchasePrice" />
-      <el-table-column label="设计寿命（年）" align="center" prop="serviceLife" />
-      <el-table-column label="工作中心ID" align="center" prop="workCenterId" />
+      <el-table-column label="设计寿命" align="center" prop="serviceLife" />
+      <el-table-column label="工作中心" align="center" prop="workCenterId" />
       <el-table-column label="设备位置" align="center" prop="location" />
-      <el-table-column label="产能（小时/天）" align="center" prop="capacity" />
+      <el-table-column label="产能" align="center" prop="capacity" />
       <el-table-column label="效率系数" align="center" prop="efficiencyRate" />
       <el-table-column label="状态" align="center" prop="status">
         <template #default="scope">
@@ -368,7 +368,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await EquipmentApi.deleteEquipment(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}

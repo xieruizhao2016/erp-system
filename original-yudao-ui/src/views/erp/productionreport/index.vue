@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="报表编号" prop="reportNo">
         <el-input
@@ -26,10 +26,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="报表类型：1-日报，2-周报，3-月报，4-年报" prop="reportType">
+      <el-form-item label="报表类型" prop="reportType">
         <el-select
           v-model="queryParams.reportType"
-          placeholder="请选择报表类型：1-日报，2-周报，3-月报，4-年报"
+          placeholder="请选择报表类型"
           clearable
           class="!w-240px"
         >
@@ -48,10 +48,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
+      <el-form-item label="工作中心" prop="workCenterId">
         <el-input
           v-model="queryParams.workCenterId"
-          placeholder="请输入工作中心ID"
+          placeholder="请输入工作中心"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -61,33 +61,6 @@
         <el-input
           v-model="queryParams.productionOrders"
           placeholder="请输入生产订单数"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总计划数量" prop="totalPlanQuantity">
-        <el-input
-          v-model="queryParams.totalPlanQuantity"
-          placeholder="请输入总计划数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总完成数量" prop="totalCompletedQuantity">
-        <el-input
-          v-model="queryParams.totalCompletedQuantity"
-          placeholder="请输入总完成数量"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总合格数量" prop="totalQualifiedQuantity">
-        <el-input
-          v-model="queryParams.totalQualifiedQuantity"
-          placeholder="请输入总合格数量"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"
@@ -187,10 +160,10 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-已发布" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-草稿，2-已发布"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -202,7 +175,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="详细数据（JSON）" prop="reportData">
+      <el-form-item label="详细数据" prop="reportData">
         <el-input
           v-model="queryParams.reportData"
           placeholder="请输入详细数据（JSON）"
@@ -269,9 +242,9 @@
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="报表编号" align="center" prop="reportNo" />
       <el-table-column label="报表名称" align="center" prop="reportName" />
-      <el-table-column label="报表类型：1-日报，2-周报，3-月报，4-年报" align="center" prop="reportType" />
+      <el-table-column label="报表类型" align="center" prop="reportType" />
       <el-table-column label="报表期间" align="center" prop="reportPeriod" />
-      <el-table-column label="工作中心ID" align="center" prop="workCenterId" />
+      <el-table-column label="工作中心" align="center" prop="workCenterId" />
       <el-table-column label="生产订单数" align="center" prop="productionOrders" />
       <el-table-column label="总计划数量" align="center" prop="totalPlanQuantity" />
       <el-table-column label="总完成数量" align="center" prop="totalCompletedQuantity" />
@@ -292,8 +265,8 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="状态：1-草稿，2-已发布" align="center" prop="status" />
-      <el-table-column label="详细数据（JSON）" align="center" prop="reportData" />
+      <el-table-column label="状态" align="center" prop="status" />
+      <el-table-column label="详细数据" align="center" prop="reportData" />
       <el-table-column
         label="创建时间"
         align="center"
@@ -361,9 +334,6 @@ const queryParams = reactive({
   reportPeriod: undefined,
   workCenterId: undefined,
   productionOrders: undefined,
-  totalPlanQuantity: undefined,
-  totalCompletedQuantity: undefined,
-  totalQualifiedQuantity: undefined,
   completionRate: undefined,
   qualityRate: undefined,
   totalWorkHours: undefined,
@@ -419,7 +389,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductionReportApi.deleteProductionReport(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}

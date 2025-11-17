@@ -6,7 +6,7 @@
       :model="queryParams"
       ref="queryFormRef"
       :inline="true"
-      label-width="68px"
+      label-width="120px"
     >
       <el-form-item label="工艺路线编号" prop="routeNo">
         <el-input
@@ -26,14 +26,21 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="产品ID" prop="productId">
-        <el-input
+      <el-form-item label="产品" prop="productId">
+        <el-select
           v-model="queryParams.productId"
-          placeholder="请输入产品ID"
           clearable
-          @keyup.enter="handleQuery"
+          filterable
+          placeholder="请选择产品"
           class="!w-240px"
-        />
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="版本号" prop="version">
         <el-input
@@ -44,7 +51,7 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="标准周期时间（分钟）" prop="standardCycleTime">
+      <el-form-item label="标准周期时间" prop="standardCycleTime">
         <el-date-picker
           v-model="queryParams.standardCycleTime"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -73,10 +80,10 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="状态：1-草稿，2-生效，3-失效" prop="status">
+      <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
-          placeholder="请选择状态：1-草稿，2-生效，3-失效"
+          placeholder="请选择状态"
           clearable
           class="!w-240px"
         >
@@ -146,9 +153,13 @@
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="工艺路线编号" align="center" prop="routeNo" />
       <el-table-column label="工艺路线名称" align="center" prop="routeName" />
-      <el-table-column label="产品ID" align="center" prop="productId" />
+      <el-table-column label="产品名称" align="center" min-width="120">
+        <template #default="scope">
+          {{ getProductName(scope.row.productId) }}
+        </template>
+      </el-table-column>
       <el-table-column label="版本号" align="center" prop="version" />
-      <el-table-column label="标准周期时间（分钟）" align="center" prop="standardCycleTime" />
+      <el-table-column label="标准周期时间" align="center" prop="standardCycleTime" />
       <el-table-column label="标准人工成本" align="center" prop="standardLaborCost" />
       <el-table-column label="标准制造费用" align="center" prop="standardOverheadCost" />
       <el-table-column label="状态" align="center" prop="status">
@@ -204,6 +215,7 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteApi, ProcessRoute } from '@/api/erp/processroute'
 import ProcessRouteForm from './ProcessRouteForm.vue'
+import { ProductApi, ProductVO } from '@/api/erp/product/product'
 
 /** ERP 工艺路线主 列表 */
 defineOptions({ name: 'ProcessRoute' })
@@ -229,6 +241,7 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const productList = ref<ProductVO[]>([]) // 产品列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -268,7 +281,6 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProcessRouteApi.deleteProcessRoute(id)
     message.success(t('common.delSuccess'))
-    currentRow.value = {}
     // 刷新列表
     await getList()
   } catch {}
@@ -306,8 +318,22 @@ const handleExport = async () => {
   }
 }
 
+/** 获取产品名称 */
+const getProductName = (id?: number) => {
+  if (!id) return '-'
+  const product = productList.value.find(item => item.id === id)
+  return product?.name || `产品${id}`
+}
+
 /** 初始化 **/
-onMounted(() => {
-  getList()
+onMounted(async () => {
+  await getList()
+  // 加载产品列表
+  try {
+    const products = await ProductApi.getProductSimpleList()
+    productList.value = products || []
+  } catch (error) {
+    console.error('加载产品列表失败:', error)
+  }
 })
 </script>

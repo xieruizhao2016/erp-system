@@ -4,7 +4,7 @@
       ref="formRef"
       :model="formData"
       :rules="formRules"
-      label-width="100px"
+      label-width="120px"
       v-loading="formLoading"
     >
       <el-form-item label="设备编号" prop="equipmentNo">
@@ -36,16 +36,16 @@
       <el-form-item label="购置价格" prop="purchasePrice">
         <el-input v-model="formData.purchasePrice" placeholder="请输入购置价格" />
       </el-form-item>
-      <el-form-item label="设计寿命（年）" prop="serviceLife">
+      <el-form-item label="设计寿命" prop="serviceLife">
         <el-input v-model="formData.serviceLife" placeholder="请输入设计寿命（年）" />
       </el-form-item>
-      <el-form-item label="工作中心ID" prop="workCenterId">
-        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心ID" />
+      <el-form-item label="工作中心" prop="workCenterId">
+        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心" />
       </el-form-item>
       <el-form-item label="设备位置" prop="location">
         <el-input v-model="formData.location" placeholder="请输入设备位置" />
       </el-form-item>
-      <el-form-item label="产能（小时/天）" prop="capacity">
+      <el-form-item label="产能" prop="capacity">
         <el-input v-model="formData.capacity" placeholder="请输入产能（小时/天）" />
       </el-form-item>
       <el-form-item label="效率系数" prop="efficiencyRate">
