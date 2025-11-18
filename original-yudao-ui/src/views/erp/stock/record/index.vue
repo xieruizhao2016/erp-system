@@ -81,14 +81,6 @@
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
         <el-button
-          type="primary"
-          plain
-          @click="openForm('create')"
-          v-hasPermi="['erp:stock-record:create']"
-        >
-          <Icon icon="ep:plus" class="mr-5px" /> 新增
-        </el-button>
-        <el-button
           type="success"
           plain
           @click="handleExport"
@@ -182,8 +174,13 @@ const getList = async () => {
   loading.value = true
   try {
     const data = await StockRecordApi.getStockRecordPage(queryParams)
-    list.value = data.list
-    total.value = data.total
+    list.value = data.list || []
+    total.value = data.total || 0
+  } catch (error) {
+    console.error('获取出入库明细列表失败:', error)
+    message.error('获取出入库明细列表失败，请稍后重试')
+    list.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -201,24 +198,7 @@ const resetQuery = () => {
   handleQuery()
 }
 
-/** 添加/修改操作 */
-const formRef = ref()
-const openForm = (type: string, id?: number) => {
-  formRef.value.open(type, id)
-}
-
-/** 删除按钮操作 */
-const handleDelete = async (id: number) => {
-  try {
-    // 删除的二次确认
-    await message.delConfirm()
-    // 发起删除
-    await StockRecordApi.deleteStockRecord(id)
-    message.success(t('common.delSuccess'))
-    // 刷新列表
-    await getList()
-  } catch {}
-}
+// 注意：出入库明细是系统自动生成的记录，不支持手动新增和删除
 
 /** 导出按钮操作 */
 const handleExport = async () => {
@@ -241,9 +221,24 @@ onActivated(() => {
 })
 
 onMounted(async () => {
+  // 先加载下拉列表数据，再加载主列表数据
+  try {
+    // 并行加载产品、仓库列表
+    const [products, warehouses] = await Promise.all([
+      ProductApi.getProductSimpleList().catch(err => {
+        console.error('加载产品列表失败:', err)
+        return []
+      }),
+      WarehouseApi.getWarehouseSimpleList().catch(err => {
+        console.error('加载仓库列表失败:', err)
+        return []
+      })
+    ])
+    productList.value = products || []
+    warehouseList.value = warehouses || []
+  } catch (error) {
+    console.error('加载下拉列表数据失败:', error)
+  }
   await getList()
-  // 加载产品、仓库列表
-  productList.value = await ProductApi.getProductSimpleList()
-  warehouseList.value = await WarehouseApi.getWarehouseSimpleList()
 })
 </script>

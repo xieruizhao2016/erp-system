@@ -37,6 +37,16 @@
           </el-radio>
         </el-radio-group>
       </el-form-item>
+      <el-form-item label="产品类型" prop="productionType">
+        <el-select v-model="formData.productionType" clearable placeholder="请选择产品类型" class="w-1/1">
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCT_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="submitForm" type="primary" :disabled="formLoading">确 定</el-button>
@@ -66,14 +76,16 @@ const formData = ref({
   name: undefined,
   code: undefined,
   sort: undefined,
-  status: CommonStatusEnum.ENABLE
+  status: CommonStatusEnum.ENABLE,
+  productionType: undefined
 })
 const formRules = reactive({
   parentId: [{ required: true, message: '上级编号不能为空', trigger: 'blur' }],
   name: [{ required: true, message: '名称不能为空', trigger: 'blur' }],
   code: [{ required: true, message: '编码不能为空', trigger: 'blur' }],
   sort: [{ required: true, message: '排序不能为空', trigger: 'blur' }],
-  status: [{ required: true, message: '状态不能为空', trigger: 'blur' }]
+  status: [{ required: true, message: '状态不能为空', trigger: 'blur' }],
+  productionType: [{ required: true, message: '产品类型不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
 const productCategoryTree = ref() // 树形结构
@@ -129,7 +141,8 @@ const resetForm = () => {
     name: undefined,
     code: undefined,
     sort: undefined,
-    status: CommonStatusEnum.ENABLE
+    status: CommonStatusEnum.ENABLE,
+    productionType: undefined
   }
   formRef.value?.resetFields()
 }

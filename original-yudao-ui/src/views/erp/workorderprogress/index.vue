@@ -149,26 +149,34 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="实际工时" prop="workTime">
-        <el-date-picker
-          v-model="queryParams.workTime"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          type="daterange"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
-          class="!w-220px"
+      <el-form-item label="实际工时（分钟）" prop="workTime">
+        <el-input-number
+          v-model="queryParams.workTimeMin"
+          placeholder="最小工时"
+          :min="0"
+          class="!w-120px"
+        />
+        <span class="mx-2">-</span>
+        <el-input-number
+          v-model="queryParams.workTimeMax"
+          placeholder="最大工时"
+          :min="0"
+          class="!w-120px"
         />
       </el-form-item>
-      <el-form-item label="停机时间" prop="downtime">
-        <el-date-picker
-          v-model="queryParams.downtime"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          type="daterange"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
-          class="!w-220px"
+      <el-form-item label="停机时间（分钟）" prop="downtime">
+        <el-input-number
+          v-model="queryParams.downtimeMin"
+          placeholder="最小时间"
+          :min="0"
+          class="!w-120px"
+        />
+        <span class="mx-2">-</span>
+        <el-input-number
+          v-model="queryParams.downtimeMax"
+          placeholder="最大时间"
+          :min="0"
+          class="!w-120px"
         />
       </el-form-item>
       <el-form-item label="质检状态" prop="qualityStatus">
@@ -391,8 +399,12 @@ const queryParams = reactive({
   status: undefined,
   operatorId: undefined,
   equipmentId: undefined,
-  workTime: [],
-  downtime: [],
+  workTime: undefined, // 将在查询时构建为数组
+  workTimeMin: undefined,
+  workTimeMax: undefined,
+  downtime: undefined, // 将在查询时构建为数组
+  downtimeMin: undefined,
+  downtimeMax: undefined,
   qualityStatus: undefined,
   remark: undefined,
   createTime: []
@@ -408,9 +420,32 @@ const userList = ref<UserVO[]>([]) // 用户列表
 const getList = async () => {
   loading.value = true
   try {
-    const data = await WorkOrderProgressApi.getWorkOrderProgressPage(queryParams)
-    list.value = data.list
-    total.value = data.total
+    // 构建查询参数，将工时和停机时间的范围转换为数组
+    const params = { ...queryParams }
+    if (params.workTimeMin !== undefined || params.workTimeMax !== undefined) {
+      params.workTime = [params.workTimeMin, params.workTimeMax].filter(v => v !== undefined)
+    } else {
+      params.workTime = undefined
+    }
+    if (params.downtimeMin !== undefined || params.downtimeMax !== undefined) {
+      params.downtime = [params.downtimeMin, params.downtimeMax].filter(v => v !== undefined)
+    } else {
+      params.downtime = undefined
+    }
+    // 移除临时字段
+    delete params.workTimeMin
+    delete params.workTimeMax
+    delete params.downtimeMin
+    delete params.downtimeMax
+    
+    const data = await WorkOrderProgressApi.getWorkOrderProgressPage(params)
+    list.value = data.list || []
+    total.value = data.total || 0
+  } catch (error) {
+    console.error('获取工单进度列表失败:', error)
+    message.error('获取工单进度列表失败，请稍后重试')
+    list.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -502,14 +537,25 @@ const getUserName = (id?: number) => {
 
 /** 初始化 **/
 onMounted(async () => {
-  await getList()
-  // 加载工单、设备、工艺路线明细、用户列表
+  // 先加载下拉列表数据，再加载主列表数据
   try {
     const [workOrderData, equipmentData, processRouteItemData, users] = await Promise.all([
-      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }),
-      EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 }),
-      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 }),
-      UserApi.getSimpleUserList()
+      WorkOrderApi.getWorkOrderPage({ pageNo: 1, pageSize: 100 }).catch(err => {
+        console.error('加载工单列表失败:', err)
+        return { list: [] }
+      }),
+      EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 }).catch(err => {
+        console.error('加载设备列表失败:', err)
+        return { list: [] }
+      }),
+      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 }).catch(err => {
+        console.error('加载工艺路线明细列表失败:', err)
+        return { list: [] }
+      }),
+      UserApi.getSimpleUserList().catch(err => {
+        console.error('加载用户列表失败:', err)
+        return []
+      })
     ])
     workOrderList.value = workOrderData.list || []
     equipmentList.value = equipmentData.list || []
@@ -518,5 +564,6 @@ onMounted(async () => {
   } catch (error) {
     console.error('加载列表数据失败:', error)
   }
+  await getList()
 })
 </script>

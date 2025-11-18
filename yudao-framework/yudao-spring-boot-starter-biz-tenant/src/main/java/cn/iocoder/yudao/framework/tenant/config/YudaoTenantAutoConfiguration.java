@@ -2,7 +2,6 @@ package cn.iocoder.yudao.framework.tenant.config;
 
 import cn.iocoder.yudao.framework.common.biz.system.tenant.TenantCommonApi;
 import cn.iocoder.yudao.framework.common.enums.WebFilterOrderEnum;
-import cn.iocoder.yudao.framework.mybatis.core.util.MyBatisUtils;
 import cn.iocoder.yudao.framework.redis.config.YudaoCacheProperties;
 import cn.iocoder.yudao.framework.security.core.service.SecurityFrameworkService;
 import cn.iocoder.yudao.framework.tenant.core.aop.TenantIgnore;
@@ -21,6 +20,7 @@ import cn.iocoder.yudao.framework.tenant.core.web.TenantVisitContextInterceptor;
 import cn.iocoder.yudao.framework.web.config.WebProperties;
 import cn.iocoder.yudao.framework.web.core.handler.GlobalExceptionHandler;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -44,7 +44,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.util.pattern.PathPattern;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -79,7 +81,10 @@ public class YudaoTenantAutoConfiguration {
         TenantLineInnerInterceptor inner = new TenantLineInnerInterceptor(new TenantDatabaseInterceptor(properties));
         // 添加到 interceptor 中
         // 需要加在首个，主要是为了在分页插件前面。这个是 MyBatis Plus 的规定
-        MyBatisUtils.addInterceptor(interceptor, inner, 0);
+        // 由于 MybatisPlusInterceptor 不支持添加拦截器，所以只能全量设置
+        List<InnerInterceptor> inners = new ArrayList<>(interceptor.getInterceptors());
+        inners.add(0, inner);
+        interceptor.setInterceptors(inners);
         return inner;
     }
 

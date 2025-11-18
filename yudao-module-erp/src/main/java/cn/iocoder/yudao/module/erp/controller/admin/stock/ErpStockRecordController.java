@@ -92,13 +92,34 @@ public class ErpStockRecordController {
                 convertSet(pageResult.getList(), ErpStockRecordDO::getProductId));
         Map<Long, ErpWarehouseDO> warehouseMap = warehouseService.getWarehouseMap(
                 convertSet(pageResult.getList(), ErpStockRecordDO::getWarehouseId));
+        // 安全地转换 creator 字符串为 Long，过滤掉空值或无效值
+        // convertSet 会自动过滤掉 null 值
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(pageResult.getList(), record -> Long.parseLong(record.getCreator())));
+                convertSet(pageResult.getList(), record -> {
+                    String creator = record.getCreator();
+                    if (creator == null || creator.trim().isEmpty()) {
+                        return null;
+                    }
+                    try {
+                        return Long.parseLong(creator);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                }));
         return BeanUtils.toBean(pageResult, ErpStockRecordRespVO.class, stock -> {
             MapUtils.findAndThen(productMap, stock.getProductId(), product -> stock.setProductName(product.getName())
                     .setCategoryName(product.getCategoryName()).setUnitName(product.getUnitName()));
             MapUtils.findAndThen(warehouseMap, stock.getWarehouseId(), warehouse -> stock.setWarehouseName(warehouse.getName()));
-            MapUtils.findAndThen(userMap, Long.parseLong(stock.getCreator()), user -> stock.setCreatorName(user.getNickname()));
+            // 安全地转换 creator 字符串为 Long
+            String creator = stock.getCreator();
+            if (creator != null && !creator.trim().isEmpty()) {
+                try {
+                    Long creatorId = Long.parseLong(creator);
+                    MapUtils.findAndThen(userMap, creatorId, user -> stock.setCreatorName(user.getNickname()));
+                } catch (NumberFormatException e) {
+                    // 如果转换失败，不设置 creatorName，保持为 null
+                }
+            }
         });
     }
 

@@ -29,8 +29,10 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
@@ -127,22 +129,43 @@ public class ErpStockCheckController {
             return PageResult.empty(pageResult.getTotal());
         }
         // 1.1 盘点项
-        List<ErpStockCheckItemDO> stockCheckItemList = stockCheckService.getStockCheckItemListByCheckIds(
-                convertSet(pageResult.getList(), ErpStockCheckDO::getId));
+        Set<Long> checkIds = convertSet(pageResult.getList(), ErpStockCheckDO::getId);
+        List<ErpStockCheckItemDO> stockCheckItemList = CollUtil.isEmpty(checkIds) ? Collections.emptyList()
+                : stockCheckService.getStockCheckItemListByCheckIds(checkIds);
         Map<Long, List<ErpStockCheckItemDO>> stockCheckItemMap = convertMultiMap(stockCheckItemList, ErpStockCheckItemDO::getCheckId);
         // 1.2 产品信息
-        Map<Long, ErpProductRespVO> productMap = productService.getProductVOMap(
-                convertSet(stockCheckItemList, ErpStockCheckItemDO::getProductId));
+        Set<Long> productIds = convertSet(stockCheckItemList, ErpStockCheckItemDO::getProductId);
+        Map<Long, ErpProductRespVO> productMap = CollUtil.isEmpty(productIds) ? Collections.emptyMap()
+                : productService.getProductVOMap(productIds);
         // 1.3 管理员信息
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(pageResult.getList(), stockCheck -> Long.parseLong(stockCheck.getCreator())));
+        Set<Long> creatorIds = convertSet(pageResult.getList(), stockCheck -> {
+            String creator = stockCheck.getCreator();
+            if (creator == null || creator.isEmpty()) {
+                return null;
+            }
+            try {
+                return Long.parseLong(creator);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        });
+        Map<Long, AdminUserRespDTO> userMap = CollUtil.isEmpty(creatorIds) ? Collections.emptyMap()
+                : adminUserApi.getUserMap(creatorIds);
         // 2. 开始拼接
         return BeanUtils.toBean(pageResult, ErpStockCheckRespVO.class, stockCheck -> {
             stockCheck.setItems(BeanUtils.toBean(stockCheckItemMap.get(stockCheck.getId()), ErpStockCheckRespVO.Item.class,
                     item -> MapUtils.findAndThen(productMap, item.getProductId(), product -> item.setProductName(product.getName())
                             .setProductBarCode(product.getBarCode()).setProductUnitName(product.getUnitName()))));
             stockCheck.setProductNames(CollUtil.join(stockCheck.getItems(), "，", ErpStockCheckRespVO.Item::getProductName));
-            MapUtils.findAndThen(userMap, Long.parseLong(stockCheck.getCreator()), user -> stockCheck.setCreatorName(user.getNickname()));
+            String creator = stockCheck.getCreator();
+            if (creator != null && !creator.isEmpty()) {
+                try {
+                    Long creatorId = Long.parseLong(creator);
+                    MapUtils.findAndThen(userMap, creatorId, user -> stockCheck.setCreatorName(user.getNickname()));
+                } catch (NumberFormatException e) {
+                    // 忽略解析错误
+                }
+            }
         });
     }
 

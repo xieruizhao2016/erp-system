@@ -73,6 +73,8 @@ public interface ErrorCodeConstants {
     ErrorCode DICT_DATA_NOT_EXISTS = new ErrorCode(1_002_007_001, "当前字典数据不存在");
     ErrorCode DICT_DATA_NOT_ENABLE = new ErrorCode(1_002_007_002, "字典数据({})不处于开启状态，不允许选择");
     ErrorCode DICT_DATA_VALUE_DUPLICATE = new ErrorCode(1_002_007_003, "已经存在该值的字典数据");
+    ErrorCode DICT_DATA_CAN_NOT_UPDATE_SYSTEM = new ErrorCode(1_002_007_004, "系统默认字典数据不可修改");
+    ErrorCode DICT_DATA_CAN_NOT_DELETE_SYSTEM = new ErrorCode(1_002_007_005, "系统默认字典数据不可删除");
 
     // ========== 通知公告 1-002-008-000 ==========
     ErrorCode NOTICE_NOT_FOUND = new ErrorCode(1_002_008_001, "当前通知公告不存在");

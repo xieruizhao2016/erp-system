@@ -107,7 +107,7 @@ SET @preparedStatement = (SELECT IF(
             AND (COLUMN_NAME = @columnname)
     ) > 0,
     'SELECT 1',
-    CONCAT('ALTER TABLE `', @tablename, '` ADD COLUMN `', @columnname, '` int NULL DEFAULT 1 COMMENT ''仓库类型：1-原材料仓，2-半成品仓，3-成品仓，4-废品仓''')
+    CONCAT('ALTER TABLE `', @tablename, '` ADD COLUMN `', @columnname, '` int NULL DEFAULT 1 COMMENT ''仓库类型：1-普通仓库，2-原材料仓，3-半成品仓，4-成品仓''')
 ));
 PREPARE alterIfNotExists FROM @preparedStatement;
 EXECUTE alterIfNotExists;

@@ -2,7 +2,7 @@ package cn.iocoder.yudao.module.erp.controller.admin.stock.vo.warehouse;
 
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
-import cn.iocoder.yudao.module.system.enums.DictTypeConstants;
+import cn.iocoder.yudao.module.erp.enums.DictTypeConstants;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,6 +11,8 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+
+import static cn.iocoder.yudao.module.system.enums.DictTypeConstants.COMMON_STATUS;
 
 @Schema(description = "管理后台 - ERP 仓库 Response VO")
 @Data
@@ -51,12 +53,17 @@ public class ErpWarehouseRespVO {
 
     @Schema(description = "开启状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @ExcelProperty(value = "开启状态", converter = DictConvert.class)
-    @DictFormat(DictTypeConstants.COMMON_STATUS)
+    @DictFormat(COMMON_STATUS)
     private Integer status;
 
     @Schema(description = "是否默认", example = "1")
     @ExcelProperty("是否默认")
     private Boolean defaultStatus;
+
+    @Schema(description = "仓库类型", example = "1")
+    @ExcelProperty(value = "仓库类型", converter = DictConvert.class)
+    @DictFormat(DictTypeConstants.ERP_WAREHOUSE_TYPE)
+    private Integer warehouseType;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")

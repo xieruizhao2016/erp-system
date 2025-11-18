@@ -44,4 +44,8 @@ public class ErpWarehouseSaveReqVO {
     @InEnum(CommonStatusEnum.class)
     private Integer status;
 
+    @Schema(description = "仓库类型", example = "1")
+    @NotNull(message = "仓库类型不能为空")
+    private Integer warehouseType;
+
 }

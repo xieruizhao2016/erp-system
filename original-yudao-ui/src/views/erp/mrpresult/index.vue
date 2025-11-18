@@ -336,7 +336,7 @@ import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { MrpResultApi, MrpResult } from '@/api/erp/mrpresult'
-import { ProductApi } from '@/api/erp/product'
+import { ProductApi } from '@/api/erp/product/product'
 import { WarehouseApi } from '@/api/erp/stock/warehouse'
 import MrpResultForm from './MrpResultForm.vue'
 

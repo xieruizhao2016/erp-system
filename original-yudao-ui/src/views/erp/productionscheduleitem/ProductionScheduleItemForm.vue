@@ -144,7 +144,7 @@ import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionScheduleItemApi, ProductionScheduleItem } from '@/api/erp/productionscheduleitem'
 import { ProductionScheduleApi } from '@/api/erp/productionschedule'
 import { ProductionOrderApi } from '@/api/erp/productionorder'
-import { ProductApi } from '@/api/erp/product'
+import { ProductApi } from '@/api/erp/product/product'
 import { EquipmentApi } from '@/api/erp/equipment'
 
 /** ERP 排程明细 表单 */

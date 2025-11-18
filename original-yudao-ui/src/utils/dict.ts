@@ -238,6 +238,8 @@ export enum DICT_TYPE {
   ERP_QUALITY_STATUS = 'erp_quality_status', // 质检状态
   ERP_WORK_HOURS_STATUS = 'erp_work_hours_status', // 工时统计状态
   ERP_PRODUCTION_REPORT_STATUS = 'erp_production_report_status', // 生产报表状态
+  ERP_PRODUCT_TYPE = 'erp_product_type', // 产品类型：原材料、半成品、成品
+  ERP_WAREHOUSE_TYPE = 'erp_warehouse_type', // 仓库类型：普通仓库、原材料仓、半成品仓、成品仓
 
   // ========== AI - 人工智能模块  ==========
   AI_PLATFORM = 'ai_platform', // AI 平台

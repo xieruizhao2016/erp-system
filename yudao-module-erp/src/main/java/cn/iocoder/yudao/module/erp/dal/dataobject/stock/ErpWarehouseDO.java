@@ -66,5 +66,12 @@ public class ErpWarehouseDO extends BaseDO {
      * 是否默认
      */
     private Boolean defaultStatus;
+    /**
+     * 仓库类型
+     *
+     * 字典 {@link cn.iocoder.yudao.module.erp.enums.DictTypeConstants#ERP_WAREHOUSE_TYPE}
+     * 1-普通仓库，2-原材料仓，3-半成品仓，4-成品仓
+     */
+    private Integer warehouseType;
 
 }

@@ -376,7 +376,7 @@ import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionScheduleItemApi, ProductionScheduleItem } from '@/api/erp/productionscheduleitem'
 import { ProductionScheduleApi } from '@/api/erp/productionschedule'
 import { ProductionOrderApi } from '@/api/erp/productionorder'
-import { ProductApi } from '@/api/erp/product'
+import { ProductApi } from '@/api/erp/product/product'
 import { EquipmentApi } from '@/api/erp/equipment'
 import ProductionScheduleItemForm from './ProductionScheduleItemForm.vue'
 
@@ -425,8 +425,13 @@ const getList = async () => {
   loading.value = true
   try {
     const data = await ProductionScheduleItemApi.getProductionScheduleItemPage(queryParams)
-    list.value = data.list
-    total.value = data.total
+    list.value = data.list || []
+    total.value = data.total || 0
+  } catch (error) {
+    console.error('获取排程明细列表失败:', error)
+    message.error('获取排程明细列表失败，请稍后重试')
+    list.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -497,25 +502,51 @@ const handleExport = async () => {
 
 // 加载数据列表
 const loadListData = async () => {
-  try {
+  // 并行加载所有下拉列表数据，单个失败不影响其他
+  const loadPromises = [
     // 加载生产排程列表
-    const productionScheduleData = await ProductionScheduleApi.getProductionSchedulePage({ pageNo: 1, pageSize: 100 })
-    productionScheduleList.value = productionScheduleData.list || []
+    ProductionScheduleApi.getProductionSchedulePage({ pageNo: 1, pageSize: 100 })
+      .then(data => {
+        productionScheduleList.value = data.list || []
+      })
+      .catch(error => {
+        console.error('加载生产排程列表失败:', error)
+        productionScheduleList.value = []
+      }),
 
     // 加载生产订单列表
-    const productionOrderData = await ProductionOrderApi.getProductionOrderPage({ pageNo: 1, pageSize: 100 })
-    productionOrderList.value = productionOrderData.list || []
+    ProductionOrderApi.getProductionOrderPage({ pageNo: 1, pageSize: 100 })
+      .then(data => {
+        productionOrderList.value = data.list || []
+      })
+      .catch(error => {
+        console.error('加载生产订单列表失败:', error)
+        productionOrderList.value = []
+      }),
 
     // 加载产品列表
-    const productData = await ProductApi.getProductPage({ pageNo: 1, pageSize: 100 })
-    productList.value = productData.list || []
+    ProductApi.getProductPage({ pageNo: 1, pageSize: 100 })
+      .then(data => {
+        productList.value = data.list || []
+      })
+      .catch(error => {
+        console.error('加载产品列表失败:', error)
+        productList.value = []
+      }),
 
     // 加载设备列表
-    const equipmentData = await EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 })
-    equipmentList.value = equipmentData.list || []
-  } catch (error) {
-    console.error('加载数据列表失败:', error)
-  }
+    EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 })
+      .then(data => {
+        equipmentList.value = data.list || []
+      })
+      .catch(error => {
+        console.error('加载设备列表失败:', error)
+        equipmentList.value = []
+      })
+  ]
+  
+  // 等待所有请求完成（无论成功或失败）
+  await Promise.allSettled(loadPromises)
 }
 
 // 辅助函数：获取生产排程名称
@@ -547,8 +578,14 @@ const getEquipmentName = (equipmentId: number | undefined) => {
 }
 
 /** 初始化 **/
-onMounted(() => {
-  loadListData()
-  getList()
+onMounted(async () => {
+  // 先加载下拉列表数据，再加载主列表数据
+  try {
+    await loadListData()
+  } catch (error) {
+    console.error('加载下拉列表数据失败:', error)
+    // 下拉列表加载失败不影响主列表加载
+  }
+  await getList()
 })
 </script>

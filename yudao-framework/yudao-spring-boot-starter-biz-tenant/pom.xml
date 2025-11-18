@@ -28,9 +28,28 @@
         </dependency>
 
         <!-- DB 相关 -->
+        <!-- 注意：不直接依赖 yudao-spring-boot-starter-mybatis，避免循环依赖 -->
+        <!-- MyBatis Plus 相关类通过 mybatis-plus-boot-starter 提供 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser-4.9</artifactId>
+        </dependency>
+        <!-- BaseDO 类需要从 yudao-spring-boot-starter-mybatis 获取，但使用 provided scope 避免循环依赖 -->
         <dependency>
             <groupId>cn.iocoder.boot</groupId>
             <artifactId>yudao-spring-boot-starter-mybatis</artifactId>
+            <scope>provided</scope>
+            <exclusions>
+                <!-- 排除所有传递依赖，只保留编译时需要的类 -->
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

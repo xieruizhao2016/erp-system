@@ -25,6 +25,16 @@
           </el-radio>
         </el-radio-group>
       </el-form-item>
+      <el-form-item label="仓库类型" prop="warehouseType">
+        <el-select v-model="formData.warehouseType" clearable placeholder="请选择仓库类型" class="w-1/1">
+          <el-option
+            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_WAREHOUSE_TYPE)"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="仓储费" prop="warehousePrice">
         <el-input-number
           v-model="formData.warehousePrice"
@@ -88,12 +98,14 @@ const formData = ref({
   principal: undefined,
   warehousePrice: undefined,
   truckagePrice: undefined,
-  status: undefined
+  status: undefined,
+  warehouseType: undefined
 })
 const formRules = reactive({
   name: [{ required: true, message: '仓库名称不能为空', trigger: 'blur' }],
   sort: [{ required: true, message: '排序不能为空', trigger: 'blur' }],
-  status: [{ required: true, message: '开启状态不能为空', trigger: 'blur' }]
+  status: [{ required: true, message: '开启状态不能为空', trigger: 'blur' }],
+  warehouseType: [{ required: true, message: '仓库类型不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
 
@@ -150,7 +162,8 @@ const resetForm = () => {
     principal: undefined,
     warehousePrice: undefined,
     truckagePrice: undefined,
-    status: CommonStatusEnum.ENABLE
+    status: CommonStatusEnum.ENABLE,
+    warehouseType: undefined
   }
   formRef.value?.resetFields()
 }

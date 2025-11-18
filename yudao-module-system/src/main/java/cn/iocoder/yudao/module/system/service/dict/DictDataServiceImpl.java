@@ -78,7 +78,9 @@ public class DictDataServiceImpl implements DictDataService {
     @Override
     public void updateDictData(DictDataSaveReqVO updateReqVO) {
         // 校验自己存在
-        validateDictDataExists(updateReqVO.getId());
+        DictDataDO dictData = validateDictDataExists(updateReqVO.getId());
+        // 校验是否为系统默认字典数据（产品类型和仓库类型的系统默认项不可修改）
+        validateSystemDefaultDictData(dictData);
         // 校验字典类型有效
         validateDictTypeExists(updateReqVO.getDictType());
         // 校验字典数据的值的唯一性
@@ -92,7 +94,9 @@ public class DictDataServiceImpl implements DictDataService {
     @Override
     public void deleteDictData(Long id) {
         // 校验是否存在
-        validateDictDataExists(id);
+        DictDataDO dictData = validateDictDataExists(id);
+        // 校验是否为系统默认字典数据（产品类型的系统默认项不可删除）
+        validateSystemDefaultDictDataForDelete(dictData);
 
         // 删除字典数据
         dictDataMapper.deleteById(id);
@@ -100,6 +104,13 @@ public class DictDataServiceImpl implements DictDataService {
 
     @Override
     public void deleteDictDataList(List<Long> ids) {
+        // 校验是否有系统默认字典数据
+        for (Long id : ids) {
+            DictDataDO dictData = dictDataMapper.selectById(id);
+            if (dictData != null) {
+                validateSystemDefaultDictDataForDelete(dictData);
+            }
+        }
         dictDataMapper.deleteByIds(ids);
     }
 
@@ -124,13 +135,47 @@ public class DictDataServiceImpl implements DictDataService {
     }
 
     @VisibleForTesting
-    public void validateDictDataExists(Long id) {
+    public DictDataDO validateDictDataExists(Long id) {
         if (id == null) {
-            return;
+            return null;
         }
         DictDataDO dictData = dictDataMapper.selectById(id);
         if (dictData == null) {
             throw exception(DICT_DATA_NOT_EXISTS);
+        }
+        return dictData;
+    }
+
+    /**
+     * 校验系统默认字典数据（产品类型和仓库类型的系统默认项不可修改）
+     * 系统默认字典数据的ID范围：
+     * - 产品类型：3107-3109（原材料、半成品、成品）
+     * - 仓库类型：3110-3113（普通仓库、原材料仓、半成品仓、成品仓）
+     */
+    private void validateSystemDefaultDictData(DictDataDO dictData) {
+        if (dictData == null) {
+            return;
+        }
+        Long id = dictData.getId();
+        // 产品类型和仓库类型的系统默认项不可修改
+        if ((id >= 3107L && id <= 3109L) || (id >= 3110L && id <= 3113L)) {
+            throw exception(cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.DICT_DATA_CAN_NOT_UPDATE_SYSTEM);
+        }
+    }
+
+    /**
+     * 校验系统默认字典数据（产品类型的系统默认项不可删除）
+     * 系统默认字典数据的ID范围：
+     * - 产品类型：3107-3109（原材料、半成品、成品）
+     */
+    private void validateSystemDefaultDictDataForDelete(DictDataDO dictData) {
+        if (dictData == null) {
+            return;
+        }
+        Long id = dictData.getId();
+        // 产品类型的系统默认项不可删除
+        if (id >= 3107L && id <= 3109L) {
+            throw exception(cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.DICT_DATA_CAN_NOT_DELETE_SYSTEM);
         }
     }
 

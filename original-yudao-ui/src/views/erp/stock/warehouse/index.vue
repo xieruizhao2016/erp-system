@@ -63,6 +63,11 @@
     <el-table v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
       <el-table-column label="仓库名称" align="center" prop="name" />
       <el-table-column label="仓库地址" align="center" prop="address" />
+      <el-table-column label="仓库类型" align="center" prop="warehouseType">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_WAREHOUSE_TYPE" :value="scope.row.warehouseType" />
+        </template>
+      </el-table-column>
       <el-table-column
         label="仓储费"
         align="center"

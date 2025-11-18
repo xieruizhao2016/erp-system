@@ -74,6 +74,11 @@
       <el-table-column label="编码" align="center" prop="code" />
       <el-table-column label="名称" align="center" prop="name" />
       <el-table-column label="排序" align="center" prop="sort" />
+      <el-table-column label="产品类型" align="center" prop="productionType">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCT_TYPE" :value="scope.row.productionType" />
+        </template>
+      </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template #default="scope">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="scope.row.status" />

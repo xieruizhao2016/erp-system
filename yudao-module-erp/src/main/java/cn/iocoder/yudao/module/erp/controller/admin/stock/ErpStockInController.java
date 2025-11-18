@@ -34,8 +34,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
@@ -139,18 +141,32 @@ public class ErpStockInController {
             return PageResult.empty(pageResult.getTotal());
         }
         // 1.1 入库项
-        List<ErpStockInItemDO> stockInItemList = stockInService.getStockInItemListByInIds(
-                convertSet(pageResult.getList(), ErpStockInDO::getId));
+        Set<Long> inIds = convertSet(pageResult.getList(), ErpStockInDO::getId);
+        List<ErpStockInItemDO> stockInItemList = CollUtil.isEmpty(inIds) ? Collections.emptyList()
+                : stockInService.getStockInItemListByInIds(inIds);
         Map<Long, List<ErpStockInItemDO>> stockInItemMap = convertMultiMap(stockInItemList, ErpStockInItemDO::getInId);
         // 1.2 产品信息
-        Map<Long, ErpProductRespVO> productMap = productService.getProductVOMap(
-                convertSet(stockInItemList, ErpStockInItemDO::getProductId));
+        Set<Long> productIds = convertSet(stockInItemList, ErpStockInItemDO::getProductId);
+        Map<Long, ErpProductRespVO> productMap = CollUtil.isEmpty(productIds) ? Collections.emptyMap()
+                : productService.getProductVOMap(productIds);
         // 1.3 供应商信息
-        Map<Long, ErpSupplierDO> supplierMap = supplierService.getSupplierMap(
-                convertSet(pageResult.getList(), ErpStockInDO::getSupplierId));
+        Set<Long> supplierIds = convertSet(pageResult.getList(), ErpStockInDO::getSupplierId);
+        Map<Long, ErpSupplierDO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap()
+                : supplierService.getSupplierMap(supplierIds);
         // 1.4 管理员信息
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(pageResult.getList(), stockIn -> Long.parseLong(stockIn.getCreator())));
+        Set<Long> creatorIds = convertSet(pageResult.getList(), stockIn -> {
+            String creator = stockIn.getCreator();
+            if (creator == null || creator.isEmpty()) {
+                return null;
+            }
+            try {
+                return Long.parseLong(creator);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        });
+        Map<Long, AdminUserRespDTO> userMap = CollUtil.isEmpty(creatorIds) ? Collections.emptyMap()
+                : adminUserApi.getUserMap(creatorIds);
         // 2. 开始拼接
         return BeanUtils.toBean(pageResult, ErpStockInRespVO.class, stockIn -> {
             stockIn.setItems(BeanUtils.toBean(stockInItemMap.get(stockIn.getId()), ErpStockInRespVO.Item.class,
@@ -158,7 +174,15 @@ public class ErpStockInController {
                             .setProductBarCode(product.getBarCode()).setProductUnitName(product.getUnitName()))));
             stockIn.setProductNames(CollUtil.join(stockIn.getItems(), "，", ErpStockInRespVO.Item::getProductName));
             MapUtils.findAndThen(supplierMap, stockIn.getSupplierId(), supplier -> stockIn.setSupplierName(supplier.getName()));
-            MapUtils.findAndThen(userMap, Long.parseLong(stockIn.getCreator()), user -> stockIn.setCreatorName(user.getNickname()));
+            String creator = stockIn.getCreator();
+            if (creator != null && !creator.isEmpty()) {
+                try {
+                    Long creatorId = Long.parseLong(creator);
+                    MapUtils.findAndThen(userMap, creatorId, user -> stockIn.setCreatorName(user.getNickname()));
+                } catch (NumberFormatException e) {
+                    // 忽略解析错误
+                }
+            }
         });
     }
 

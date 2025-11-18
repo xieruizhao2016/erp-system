@@ -55,4 +55,8 @@ public class ProductSaveReqVO {
     @Schema(description = "最低价格，单位：元", example = "161.87")
     private BigDecimal minPrice;
 
+    // 注意：产品类型已从产品分类中获取，此处不再需要用户输入
+    // @Schema(description = "产品类型", example = "1")
+    // private Integer productionType;
+
 }

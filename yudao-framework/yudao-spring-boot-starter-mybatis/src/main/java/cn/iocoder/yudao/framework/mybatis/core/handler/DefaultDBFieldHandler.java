@@ -2,7 +2,6 @@ package cn.iocoder.yudao.framework.mybatis.core.handler;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
-import cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import org.apache.ibatis.reflection.MetaObject;
 
@@ -45,7 +44,8 @@ public class DefaultDBFieldHandler implements MetaObjectHandler {
             }
             
             // 填充租户ID（如果DO类中有tenantId字段且值为空）
-            Long tenantId = TenantContextHolder.getTenantId();
+            // 使用反射访问 TenantContextHolder，避免循环依赖
+            Long tenantId = getTenantId();
             if (Objects.nonNull(tenantId) && metaObject.hasGetter("tenantId")) {
                 Object currentTenantId = getFieldValByName("tenantId", metaObject);
                 if (Objects.isNull(currentTenantId)) {
@@ -68,6 +68,25 @@ public class DefaultDBFieldHandler implements MetaObjectHandler {
         Long userId = SecurityFrameworkUtils.getLoginUserId();
         if (Objects.nonNull(userId) && Objects.isNull(modifier)) {
             setFieldValByName("updater", userId.toString(), metaObject);
+        }
+    }
+
+    /**
+     * 获取租户ID（使用反射避免循环依赖）
+     * 
+     * @return 租户ID，如果获取失败返回null
+     */
+    private Long getTenantId() {
+        try {
+            // 使用反射访问 TenantContextHolder，避免直接依赖
+            Class<?> tenantContextHolderClass = Class.forName("cn.iocoder.yudao.framework.tenant.core.context.TenantContextHolder");
+            java.lang.reflect.Method getTenantIdMethod = tenantContextHolderClass.getMethod("getTenantId");
+            Object result = getTenantIdMethod.invoke(null);
+            return result != null ? (Long) result : null;
+        } catch (Exception e) {
+            // 如果 TenantContextHolder 不存在或获取失败，返回 null
+            // 这通常发生在未引入 yudao-spring-boot-starter-biz-tenant 依赖时
+            return null;
         }
     }
 }

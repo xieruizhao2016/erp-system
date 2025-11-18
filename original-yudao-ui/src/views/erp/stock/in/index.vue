@@ -288,8 +288,13 @@ const getList = async () => {
   loading.value = true
   try {
     const data = await StockInApi.getStockInPage(queryParams)
-    list.value = data.list
-    total.value = data.total
+    list.value = data.list || []
+    total.value = data.total || 0
+  } catch (error) {
+    console.error('获取其它入库单列表失败:', error)
+    message.error('获取其它入库单列表失败，请稍后重试')
+    list.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -363,12 +368,36 @@ const handleSelectionChange = (rows: StockInVO[]) => {
 
 /** 初始化 **/
 onMounted(async () => {
+  // 先加载下拉列表数据，再加载主列表数据
+  try {
+    // 并行加载产品、仓库、供应商、用户列表
+    const [products, warehouses, suppliers, users] = await Promise.all([
+      ProductApi.getProductSimpleList().catch(err => {
+        console.error('加载产品列表失败:', err)
+        return []
+      }),
+      WarehouseApi.getWarehouseSimpleList().catch(err => {
+        console.error('加载仓库列表失败:', err)
+        return []
+      }),
+      SupplierApi.getSupplierSimpleList().catch(err => {
+        console.error('加载供应商列表失败:', err)
+        return []
+      }),
+      UserApi.getSimpleUserList().catch(err => {
+        console.error('加载用户列表失败:', err)
+        return []
+      })
+    ])
+    productList.value = products || []
+    warehouseList.value = warehouses || []
+    supplierList.value = suppliers || []
+    userList.value = users || []
+  } catch (error) {
+    console.error('加载下拉列表数据失败:', error)
+    // 下拉列表加载失败不影响主列表加载
+  }
   await getList()
-  // 加载产品、仓库列表、供应商
-  productList.value = await ProductApi.getProductSimpleList()
-  warehouseList.value = await WarehouseApi.getWarehouseSimpleList()
-  supplierList.value = await SupplierApi.getSupplierSimpleList()
-  userList.value = await UserApi.getSimpleUserList()
 })
 // TODO 芋艿：可优化功能：列表界面，支持导入
 // TODO 芋艿：可优化功能：详情界面，支持打印

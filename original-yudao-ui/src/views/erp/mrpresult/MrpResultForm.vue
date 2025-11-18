@@ -119,7 +119,7 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { MrpResultApi, MrpResult } from '@/api/erp/mrpresult'
-import { ProductApi } from '@/api/erp/product'
+import { ProductApi } from '@/api/erp/product/product'
 import { WarehouseApi } from '@/api/erp/stock/warehouse'
 
 /** ERP MRP运算结果 表单 */

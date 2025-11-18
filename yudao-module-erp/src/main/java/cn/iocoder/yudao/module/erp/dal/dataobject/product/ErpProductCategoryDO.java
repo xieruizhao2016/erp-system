@@ -50,5 +50,12 @@ public class ErpProductCategoryDO extends BaseDO {
      * 枚举 {@link cn.iocoder.yudao.framework.common.enums.CommonStatusEnum}
      */
     private Integer status;
+    /**
+     * 产品类型
+     *
+     * 字典 {@link cn.iocoder.yudao.module.erp.enums.DictTypeConstants#ERP_PRODUCT_TYPE}
+     * 1-原材料，2-半成品，3-成品
+     */
+    private Integer productionType;
 
 }

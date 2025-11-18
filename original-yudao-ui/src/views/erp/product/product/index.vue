@@ -62,6 +62,11 @@
       <el-table-column label="规格" align="center" prop="standard" />
       <el-table-column label="分类" align="center" prop="categoryName" />
       <el-table-column label="单位" align="center" prop="unitName" />
+      <el-table-column label="产品类型" align="center" prop="productionType">
+        <template #default="scope">
+          <dict-tag :type="DICT_TYPE.ERP_PRODUCT_TYPE" :value="scope.row.productionType" />
+        </template>
+      </el-table-column>
       <el-table-column
         label="采购价格"
         align="center"
