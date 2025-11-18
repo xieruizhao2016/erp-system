@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.costactual.CostActualMapper;
+import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -32,10 +33,20 @@ public class CostActualServiceImpl implements CostActualService {
     @Resource
     private CostActualMapper costActualMapper;
 
+    @Resource
+    private ErpNoRedisDAO noRedisDAO;
+
     @Override
     public Long createCostActual(CostActualSaveReqVO createReqVO) {
+        // 生成成本单号，并校验唯一性
+        String costNo = noRedisDAO.generate(ErpNoRedisDAO.COST_ACTUAL_NO_PREFIX);
+        if (costActualMapper.selectByCostNo(costNo) != null) {
+            throw exception(COST_ACTUAL_NO_EXISTS);
+        }
+
         // 插入
         CostActualDO costActual = BeanUtils.toBean(createReqVO, CostActualDO.class);
+        costActual.setCostNo(costNo);
         costActualMapper.insert(costActual);
 
         // 返回

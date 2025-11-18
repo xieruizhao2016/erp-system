@@ -101,4 +101,15 @@ public class ProductionOrderController {
                         BeanUtils.toBean(list, ProductionOrderRespVO.class));
     }
 
+    @PutMapping("/update-status")
+    @Operation(summary = "更新生产订单状态")
+    @Parameter(name = "id", description = "编号", required = true)
+    @Parameter(name = "status", description = "状态", required = true)
+    @PreAuthorize("@ss.hasPermission('erp:production-order:update')")
+    public CommonResult<Boolean> updateProductionOrderStatus(@RequestParam("id") Long id,
+                                                              @RequestParam("status") Integer status) {
+        productionOrderService.updateProductionOrderStatus(id, status);
+        return success(true);
+    }
+
 }

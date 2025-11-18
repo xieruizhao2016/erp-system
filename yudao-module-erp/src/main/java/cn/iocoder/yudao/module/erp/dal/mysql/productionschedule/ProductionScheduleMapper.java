@@ -35,4 +35,8 @@ public interface ProductionScheduleMapper extends BaseMapperX<ProductionSchedule
                 .orderByDesc(ProductionScheduleDO::getId));
     }
 
+    default ProductionScheduleDO selectByScheduleNo(String scheduleNo) {
+        return selectOne(ProductionScheduleDO::getScheduleNo, scheduleNo);
+    }
+
 }

@@ -8,7 +8,7 @@
       v-loading="formLoading"
     >
       <el-form-item label="检验单号" prop="inspectionNo">
-        <el-input v-model="formData.inspectionNo" placeholder="请输入检验单号" />
+        <el-input v-model="formData.inspectionNo" disabled placeholder="保存时自动生成" />
       </el-form-item>
       <el-form-item label="批次号" prop="batchNo">
         <el-input v-model="formData.batchNo" placeholder="请输入批次号" />
@@ -180,7 +180,6 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  inspectionNo: [{ required: true, message: '检验单号不能为空', trigger: 'blur' }],
   productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   inspectionTime: [{ required: true, message: '检验时间不能为空', trigger: 'blur' }]
 })

@@ -42,4 +42,8 @@ public interface CostActualMapper extends BaseMapperX<CostActualDO> {
                 .orderByDesc(CostActualDO::getId));
     }
 
+    default CostActualDO selectByCostNo(String costNo) {
+        return selectOne(CostActualDO::getCostNo, costNo);
+    }
+
 }

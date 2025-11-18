@@ -8,7 +8,7 @@
       v-loading="formLoading"
     >
       <el-form-item label="排程单号" prop="scheduleNo">
-        <el-input v-model="formData.scheduleNo" placeholder="请输入排程单号" />
+        <el-input v-model="formData.scheduleNo" disabled placeholder="保存时自动生成" />
       </el-form-item>
       <el-form-item label="排程名称" prop="scheduleName">
         <el-input v-model="formData.scheduleName" placeholder="请输入排程名称" />
@@ -101,7 +101,6 @@ const formData = ref({
   updatedBy: undefined
 })
 const formRules = reactive({
-  scheduleNo: [{ required: true, message: '排程单号不能为空', trigger: 'blur' }],
   scheduleName: [{ required: true, message: '排程名称不能为空', trigger: 'blur' }],
   startDate: [{ required: true, message: '计划开始日期不能为空', trigger: 'blur' }],
   endDate: [{ required: true, message: '计划结束日期不能为空', trigger: 'blur' }]

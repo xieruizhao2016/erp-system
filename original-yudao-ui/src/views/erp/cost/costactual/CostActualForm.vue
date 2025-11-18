@@ -8,7 +8,7 @@
       v-loading="formLoading"
     >
       <el-form-item label="成本单号" prop="costNo">
-        <el-input v-model="formData.costNo" placeholder="请输入成本单号" />
+        <el-input v-model="formData.costNo" disabled placeholder="保存时自动生成" />
       </el-form-item>
       <el-form-item label="工单" prop="workOrderId">
         <el-select
@@ -168,7 +168,6 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  costNo: [{ required: true, message: '成本单号不能为空', trigger: 'blur' }],
   productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   productionQuantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }],
   materialCost: [{ required: true, message: '材料成本不能为空', trigger: 'blur' }],

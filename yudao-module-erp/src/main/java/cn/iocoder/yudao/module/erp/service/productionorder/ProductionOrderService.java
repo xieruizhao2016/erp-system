@@ -68,4 +68,12 @@ public interface ProductionOrderService {
      */
     PageResult<ProductionOrderDO> getProductionOrderPage(ProductionOrderPageReqVO pageReqVO);
 
+    /**
+     * 更新生产订单状态
+     *
+     * @param id 编号
+     * @param status 状态
+     */
+    void updateProductionOrderStatus(Long id, Integer status);
+
 }

@@ -60,5 +60,16 @@ export const ProductionOrderApi = {
   /** 导出ERP 生产订单 Excel */
   exportProductionOrder: async (params) => {
     return await request.download({ url: `/erp/production-order/export-excel`, params })
+  },
+
+  /** 更新生产订单状态 */
+  updateProductionOrderStatus: async (id: number, status: number) => {
+    return await request.put({
+      url: `/erp/production-order/update-status`,
+      params: {
+        id,
+        status
+      }
+    })
   }
 }

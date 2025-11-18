@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.productionorder.ProductionOrderMapper;
+import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -33,10 +34,20 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     @Resource
     private ProductionOrderMapper productionOrderMapper;
 
+    @Resource
+    private ErpNoRedisDAO noRedisDAO;
+
     @Override
     public Long createProductionOrder(ProductionOrderSaveReqVO createReqVO) {
+        // 生成生产订单号，并校验唯一性
+        String no = noRedisDAO.generate(ErpNoRedisDAO.PRODUCTION_ORDER_NO_PREFIX);
+        if (productionOrderMapper.selectByNo(no) != null) {
+            throw exception(PRODUCTION_ORDER_NO_EXISTS);
+        }
+
         // 插入
         ProductionOrderDO productionOrder = BeanUtils.toBean(createReqVO, ProductionOrderDO.class);
+        productionOrder.setNo(no);
         productionOrderMapper.insert(productionOrder);
 
         // 返回
@@ -81,6 +92,17 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
     @Override
     public PageResult<ProductionOrderDO> getProductionOrderPage(ProductionOrderPageReqVO pageReqVO) {
         return productionOrderMapper.selectPage(pageReqVO);
+    }
+
+    @Override
+    public void updateProductionOrderStatus(Long id, Integer status) {
+        // 校验存在
+        validateProductionOrderExists(id);
+        // 更新状态
+        ProductionOrderDO updateObj = new ProductionOrderDO();
+        updateObj.setId(id);
+        updateObj.setStatus(status);
+        productionOrderMapper.updateById(updateObj);
     }
 
 }

@@ -40,4 +40,8 @@ public interface WorkOrderMapper extends BaseMapperX<WorkOrderDO> {
                 .orderByDesc(WorkOrderDO::getId));
     }
 
+    default WorkOrderDO selectByWorkOrderNo(String workOrderNo) {
+        return selectOne(WorkOrderDO::getWorkOrderNo, workOrderNo);
+    }
+
 }

@@ -41,4 +41,8 @@ public interface QualityInspectionMapper extends BaseMapperX<QualityInspectionDO
                 .orderByDesc(QualityInspectionDO::getId));
     }
 
+    default QualityInspectionDO selectByInspectionNo(String inspectionNo) {
+        return selectOne(QualityInspectionDO::getInspectionNo, inspectionNo);
+    }
+
 }

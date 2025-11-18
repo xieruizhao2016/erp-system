@@ -8,7 +8,7 @@
       v-loading="formLoading"
     >
       <el-form-item label="工单号" prop="workOrderNo">
-        <el-input v-model="formData.workOrderNo" placeholder="请输入工单号" />
+        <el-input v-model="formData.workOrderNo" disabled placeholder="保存时自动生成" />
       </el-form-item>
       <el-form-item label="生产订单" prop="productionOrderId">
         <el-select
@@ -167,7 +167,6 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  workOrderNo: [{ required: true, message: '工单号不能为空', trigger: 'blur' }],
   productionOrderId: [{ required: true, message: '生产订单不能为空', trigger: 'change' }],
   productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   quantity: [{ required: true, message: '工单数量不能为空', trigger: 'blur' }],

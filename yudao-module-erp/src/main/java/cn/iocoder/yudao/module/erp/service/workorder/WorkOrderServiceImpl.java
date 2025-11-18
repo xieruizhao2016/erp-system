@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.workorder.WorkOrderMapper;
+import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -32,10 +33,20 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     @Resource
     private WorkOrderMapper workOrderMapper;
 
+    @Resource
+    private ErpNoRedisDAO noRedisDAO;
+
     @Override
     public Long createWorkOrder(WorkOrderSaveReqVO createReqVO) {
+        // 生成工单号，并校验唯一性
+        String workOrderNo = noRedisDAO.generate(ErpNoRedisDAO.WORK_ORDER_NO_PREFIX);
+        if (workOrderMapper.selectByWorkOrderNo(workOrderNo) != null) {
+            throw exception(WORK_ORDER_NO_EXISTS);
+        }
+
         // 插入
         WorkOrderDO workOrder = BeanUtils.toBean(createReqVO, WorkOrderDO.class);
+        workOrder.setWorkOrderNo(workOrderNo);
         workOrderMapper.insert(workOrder);
 
         // 返回

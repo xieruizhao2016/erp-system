@@ -1,3 +1,4 @@
+<!-- ERP 生产订单列表 -->
 <template>
   <ContentWrap>
     <!-- 搜索工作栏 -->
@@ -284,7 +285,7 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="操作" align="center" min-width="120px">
+      <el-table-column label="操作" align="center" min-width="180px">
         <template #default="scope">
           <el-button
             link
@@ -294,6 +295,23 @@
           >
             编辑
           </el-button>
+          <el-dropdown @command="(command) => handleStatusChange(scope.row.id, command)">
+            <el-button link type="primary">
+              状态切换<Icon icon="ep:arrow-down" class="ml-5px" />
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_STATUS)"
+                  :key="dict.value"
+                  :command="dict.value"
+                  :disabled="scope.row.status === dict.value"
+                >
+                  {{ dict.label }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <el-button
             link
             type="danger"
@@ -325,9 +343,9 @@ import download from '@/utils/download'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
 import ProductionOrderForm from './ProductionOrderForm.vue'
-import { CustomerApi, Customer } from '@/api/erp/sale/customer'
+import { CustomerApi, CustomerVO } from '@/api/erp/sale/customer'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
-import { ProductUnitApi, ProductUnit } from '@/api/erp/product/unit'
+import { ProductUnitApi, ProductUnitVO } from '@/api/erp/product/unit'
 
 /** ERP 生产订单 DO
  * 列表 */
@@ -359,9 +377,9 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
-const customerList = ref<Customer[]>([]) // 客户列表
+const customerList = ref<CustomerVO[]>([]) // 客户列表
 const productList = ref<ProductVO[]>([]) // 产品列表
-const productUnitList = ref<ProductUnit[]>([]) // 产品单位列表
+const productUnitList = ref<ProductUnitVO[]>([]) // 产品单位列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -401,6 +419,21 @@ const handleDelete = async (id: number) => {
     // 发起删除
     await ProductionOrderApi.deleteProductionOrder(id)
     message.success(t('common.delSuccess'))
+    // 刷新列表
+    await getList()
+  } catch {}
+}
+
+/** 状态切换操作 */
+const handleStatusChange = async (id: number, status: number) => {
+  try {
+    const statusDict = getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_STATUS).find(d => d.value === status)
+    const statusName = statusDict?.label || '状态'
+    // 状态切换的二次确认
+    await message.confirm(`确定将订单状态切换为"${statusName}"吗？`)
+    // 发起状态更新
+    await ProductionOrderApi.updateProductionOrderStatus(id, status)
+    message.success('状态切换成功')
     // 刷新列表
     await getList()
   } catch {}

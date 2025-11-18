@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.qualityinspection.QualityInspectionMapper;
+import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -32,10 +33,20 @@ public class QualityInspectionServiceImpl implements QualityInspectionService {
     @Resource
     private QualityInspectionMapper qualityInspectionMapper;
 
+    @Resource
+    private ErpNoRedisDAO noRedisDAO;
+
     @Override
     public Long createQualityInspection(QualityInspectionSaveReqVO createReqVO) {
+        // 生成质检单号，并校验唯一性
+        String inspectionNo = noRedisDAO.generate(ErpNoRedisDAO.QUALITY_INSPECTION_NO_PREFIX);
+        if (qualityInspectionMapper.selectByInspectionNo(inspectionNo) != null) {
+            throw exception(QUALITY_INSPECTION_NO_EXISTS);
+        }
+
         // 插入
         QualityInspectionDO qualityInspection = BeanUtils.toBean(createReqVO, QualityInspectionDO.class);
+        qualityInspection.setInspectionNo(inspectionNo);
         qualityInspectionMapper.insert(qualityInspection);
 
         // 返回

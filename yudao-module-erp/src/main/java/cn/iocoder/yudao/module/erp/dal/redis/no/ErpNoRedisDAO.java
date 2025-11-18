@@ -69,6 +69,22 @@ public class ErpNoRedisDAO {
      * 生产订单 {@link cn.iocoder.yudao.module.erp.dal.dataobject.productionorder.ProductionOrderDO}
      */
     public static final String PRODUCTION_ORDER_NO_PREFIX = "SCDD";
+    /**
+     * 工单 {@link cn.iocoder.yudao.module.erp.dal.dataobject.workorder.WorkOrderDO}
+     */
+    public static final String WORK_ORDER_NO_PREFIX = "GD";
+    /**
+     * 成本单 {@link cn.iocoder.yudao.module.erp.dal.dataobject.costactual.CostActualDO}
+     */
+    public static final String COST_ACTUAL_NO_PREFIX = "CBD";
+    /**
+     * 排程单 {@link cn.iocoder.yudao.module.erp.dal.dataobject.productionschedule.ProductionScheduleDO}
+     */
+    public static final String PRODUCTION_SCHEDULE_NO_PREFIX = "PCD";
+    /**
+     * 质检单 {@link cn.iocoder.yudao.module.erp.dal.dataobject.qualityinspection.QualityInspectionDO}
+     */
+    public static final String QUALITY_INSPECTION_NO_PREFIX = "ZJD";
 
     /**
      * 付款单 {@link cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpFinancePaymentDO}

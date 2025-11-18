@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.productionschedule.ProductionScheduleMapper;
+import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -32,10 +33,20 @@ public class ProductionScheduleServiceImpl implements ProductionScheduleService 
     @Resource
     private ProductionScheduleMapper productionScheduleMapper;
 
+    @Resource
+    private ErpNoRedisDAO noRedisDAO;
+
     @Override
     public Long createProductionSchedule(ProductionScheduleSaveReqVO createReqVO) {
+        // 生成排程单号，并校验唯一性
+        String scheduleNo = noRedisDAO.generate(ErpNoRedisDAO.PRODUCTION_SCHEDULE_NO_PREFIX);
+        if (productionScheduleMapper.selectByScheduleNo(scheduleNo) != null) {
+            throw exception(PRODUCTION_SCHEDULE_NO_EXISTS);
+        }
+
         // 插入
         ProductionScheduleDO productionSchedule = BeanUtils.toBean(createReqVO, ProductionScheduleDO.class);
+        productionSchedule.setScheduleNo(scheduleNo);
         productionScheduleMapper.insert(productionSchedule);
 
         // 返回

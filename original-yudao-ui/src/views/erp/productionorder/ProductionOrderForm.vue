@@ -8,7 +8,7 @@
       v-loading="formLoading"
     >
       <el-form-item label="生产订单号" prop="no">
-        <el-input v-model="formData.no" placeholder="请输入生产订单号" />
+        <el-input v-model="formData.no" disabled placeholder="保存时自动生成" />
       </el-form-item>
       <el-form-item label="客户" prop="customerId">
         <el-select
@@ -61,9 +61,6 @@
       <el-form-item label="生产数量" prop="quantity">
         <el-input v-model="formData.quantity" placeholder="请输入生产数量" />
       </el-form-item>
-      <el-form-item label="已完成数量" prop="completedQuantity">
-        <el-input v-model="formData.completedQuantity" placeholder="请输入已完成数量" />
-      </el-form-item>
       <el-form-item label="计划开始时间" prop="startTime">
         <el-date-picker
           v-model="formData.startTime"
@@ -80,33 +77,6 @@
           placeholder="选择计划完成时间"
         />
       </el-form-item>
-      <el-form-item label="实际开始时间" prop="actualStartTime">
-        <el-date-picker
-          v-model="formData.actualStartTime"
-          type="date"
-          value-format="x"
-          placeholder="选择实际开始时间"
-        />
-      </el-form-item>
-      <el-form-item label="实际完成时间" prop="actualEndTime">
-        <el-date-picker
-          v-model="formData.actualEndTime"
-          type="date"
-          value-format="x"
-          placeholder="选择实际完成时间"
-        />
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-radio-group v-model="formData.status">
-          <el-radio
-            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_STATUS)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </el-radio>
-        </el-radio-group>
-      </el-form-item>
       <el-form-item label="优先级" prop="priority">
         <el-select v-model="formData.priority" placeholder="请选择优先级" clearable>
           <el-option
@@ -118,7 +88,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="来源类型" prop="sourceType">
-        <el-select v-model="formData.sourceType" placeholder="请选择来源类型" clearable>
+        <el-select v-model="formData.sourceType" placeholder="请选择来源类型" clearable @change="handleSourceTypeChange">
           <el-option
             v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCTION_ORDER_SOURCE_TYPE)"
             :key="dict.value"
@@ -127,8 +97,21 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="来源单据" prop="sourceId">
-        <el-input v-model="formData.sourceId" placeholder="请输入来源单据" />
+      <el-form-item v-if="showSourceId" label="来源单据" prop="sourceId">
+        <el-select
+          v-model="formData.sourceId"
+          clearable
+          filterable
+          placeholder="请选择未完成的销售订单"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in saleOrderList"
+            :key="item.id"
+            :label="`${item.no} - ${getCustomerName(item.customerId)}`"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="生产说明" prop="description">
         <Editor v-model="formData.description" height="150px" />
@@ -146,9 +129,10 @@
 <script setup lang="ts">
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
-import { CustomerApi, Customer } from '@/api/erp/sale/customer'
+import { CustomerApi, CustomerVO } from '@/api/erp/sale/customer'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
-import { ProductUnitApi, ProductUnit } from '@/api/erp/product/unit'
+import { ProductUnitApi, ProductUnitVO } from '@/api/erp/product/unit'
+import { SaleOrderApi, SaleOrderVO } from '@/api/erp/sale/order'
 
 /** ERP 生产订单 DO
  * 表单 */
@@ -181,15 +165,15 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  no: [{ required: true, message: '生产订单号不能为空', trigger: 'blur' }],
   productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
-  quantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }],
-  status: [{ required: true, message: '状态不能为空', trigger: 'blur' }]
+  quantity: [{ required: true, message: '生产数量不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
-const customerList = ref<Customer[]>([]) // 客户列表
+const customerList = ref<CustomerVO[]>([]) // 客户列表
 const productList = ref<ProductVO[]>([]) // 产品列表
-const productUnitList = ref<ProductUnit[]>([]) // 产品单位列表
+const productUnitList = ref<ProductUnitVO[]>([]) // 产品单位列表
+const saleOrderList = ref<SaleOrderVO[]>([]) // 销售订单列表
+const showSourceId = ref(false) // 是否显示来源单据
 
 /** 加载列表数据 */
 const loadListData = async () => {
@@ -204,6 +188,48 @@ const loadListData = async () => {
     productUnitList.value = unitData.list || []
   } catch (error) {
     console.error('加载列表数据失败:', error)
+  }
+}
+
+/** 加载未完成的销售订单 */
+const loadUncompletedSaleOrders = async () => {
+  try {
+    // 查询状态为已审核的销售订单（状态为20表示已审核）
+    const data = await SaleOrderApi.getSaleOrderPage({
+      pageNo: 1,
+      pageSize: 1000,
+      status: 20 // 已审核状态
+    })
+    // 过滤未完成的订单：已审核且出库数量小于总数量（未全部出库）
+    saleOrderList.value = (data.list || []).filter((order: SaleOrderVO) => {
+      const outCount = order.outCount || 0
+      const totalCount = order.totalCount || 0
+      // 已审核且未全部出库的订单
+      return order.status === 20 && outCount < totalCount
+    })
+  } catch (error) {
+    console.error('加载销售订单列表失败:', error)
+  }
+}
+
+/** 获取客户名称 */
+const getCustomerName = (id?: number) => {
+  if (!id) return ''
+  const customer = customerList.value.find(item => item.id === id)
+  return customer?.name || `客户${id}`
+}
+
+/** 来源类型变化处理 */
+const handleSourceTypeChange = (value: number) => {
+  // 来源类型为2表示销售订单
+  if (value === 2) {
+    showSourceId.value = true
+    if (saleOrderList.value.length === 0) {
+      loadUncompletedSaleOrders()
+    }
+  } else {
+    showSourceId.value = false
+    formData.value.sourceId = undefined
   }
 }
 
@@ -222,6 +248,11 @@ const open = async (type: string, id?: number) => {
     formLoading.value = true
     try {
       formData.value = await ProductionOrderApi.getProductionOrder(id)
+      // 如果是修改且来源类型是销售订单，显示来源单据并加载销售订单列表
+      if (formData.value.sourceType === 2) {
+        showSourceId.value = true
+        await loadUncompletedSaleOrders()
+      }
     } finally {
       formLoading.value = false
     }
@@ -274,6 +305,7 @@ const resetForm = () => {
     description: undefined,
     remark: undefined
   }
+  showSourceId.value = false
   formRef.value?.resetFields()
 }
 </script>

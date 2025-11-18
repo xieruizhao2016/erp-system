@@ -180,6 +180,7 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     // ========== ERP 生产排程（1-030-703-000） ==========
     ErrorCode PRODUCTION_SCHEDULE_NOT_EXISTS = new ErrorCode(1_030_703_000, "生产排程不存在");
     ErrorCode PRODUCTION_SCHEDULE_ITEM_NOT_EXISTS = new ErrorCode(1_030_703_001, "生产排程明细不存在");
+    ErrorCode PRODUCTION_SCHEDULE_NO_EXISTS = new ErrorCode(1_030_703_002, "生成排程单号失败，请重新提交");
 
     // ========== ERP MRP（1-030-704-000） ==========
     ErrorCode MRP_PARAMS_NOT_EXISTS = new ErrorCode(1_030_704_000, "MRP参数不存在");
@@ -188,12 +189,14 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     // ========== ERP 工单（1-030-705-000） ==========
     ErrorCode WORK_ORDER_NOT_EXISTS = new ErrorCode(1_030_705_000, "工单不存在");
     ErrorCode WORK_ORDER_PROGRESS_NOT_EXISTS = new ErrorCode(1_030_705_001, "工单进度不存在");
+    ErrorCode WORK_ORDER_NO_EXISTS = new ErrorCode(1_030_705_002, "生成工单号失败，请重新提交");
 
     // ========== ERP 质量管理（1-030-706-000） ==========
     ErrorCode QUALITY_STANDARD_NOT_EXISTS = new ErrorCode(1_030_706_000, "质检标准不存在");
     ErrorCode QUALITY_ITEM_NOT_EXISTS = new ErrorCode(1_030_706_001, "质检项目不存在");
     ErrorCode QUALITY_INSPECTION_NOT_EXISTS = new ErrorCode(1_030_706_002, "质检记录不存在");
     ErrorCode QUALITY_INSPECTION_ITEM_NOT_EXISTS = new ErrorCode(1_030_706_003, "质检明细不存在");
+    ErrorCode QUALITY_INSPECTION_NO_EXISTS = new ErrorCode(1_030_706_004, "生成质检单号失败，请重新提交");
 
     // ========== ERP 设备管理（1-030-707-000） ==========
     ErrorCode EQUIPMENT_NOT_EXISTS = new ErrorCode(1_030_707_000, "设备不存在");
@@ -203,6 +206,7 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode COST_STANDARD_NOT_EXISTS = new ErrorCode(1_030_708_000, "标准成本不存在");
     ErrorCode COST_ACTUAL_NOT_EXISTS = new ErrorCode(1_030_708_001, "实际成本不存在");
     ErrorCode COST_VARIANCE_NOT_EXISTS = new ErrorCode(1_030_708_002, "成本差异不存在");
+    ErrorCode COST_ACTUAL_NO_EXISTS = new ErrorCode(1_030_708_003, "生成成本单号失败，请重新提交");
 
     // ========== ERP 工时统计（1-030-709-000） ==========
     ErrorCode WORK_HOURS_NOT_EXISTS = new ErrorCode(1_030_709_000, "工时统计不存在");
