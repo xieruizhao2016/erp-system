@@ -191,15 +191,6 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="完成率" prop="completionRate">
-        <el-input
-          v-model="queryParams.completionRate"
-          placeholder="请输入完成率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="延迟原因" prop="delayReason">
         <el-input
           v-model="queryParams.delayReason"

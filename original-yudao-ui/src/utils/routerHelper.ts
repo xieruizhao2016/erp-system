@@ -1,5 +1,6 @@
 import type { RouteLocationNormalized, Router, RouteRecordNormalized } from 'vue-router'
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
+import { defineAsyncComponent } from 'vue'
 import { isUrl } from '@/utils/is'
 import { cloneDeep, omit } from 'lodash-es'
 import qs from 'qs'

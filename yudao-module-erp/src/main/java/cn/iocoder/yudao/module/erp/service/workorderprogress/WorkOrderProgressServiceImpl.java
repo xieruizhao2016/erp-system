@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.erp.service.workorderprogress;
 
 import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -25,6 +26,7 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
  *
  * @author 芋道源码
  */
+@Slf4j
 @Service
 @Validated
 public class WorkOrderProgressServiceImpl implements WorkOrderProgressService {
@@ -79,7 +81,15 @@ public class WorkOrderProgressServiceImpl implements WorkOrderProgressService {
 
     @Override
     public PageResult<WorkOrderProgressDO> getWorkOrderProgressPage(WorkOrderProgressPageReqVO pageReqVO) {
-        return workOrderProgressMapper.selectPage(pageReqVO);
+        try {
+            log.debug("查询工单进度分页，参数：{}", pageReqVO);
+            PageResult<WorkOrderProgressDO> result = workOrderProgressMapper.selectPage(pageReqVO);
+            log.debug("查询工单进度分页成功，结果数量：{}", result.getTotal());
+            return result;
+        } catch (Exception e) {
+            log.error("查询工单进度分页失败，参数：{}", pageReqVO, e);
+            throw e;
+        }
     }
 
 }

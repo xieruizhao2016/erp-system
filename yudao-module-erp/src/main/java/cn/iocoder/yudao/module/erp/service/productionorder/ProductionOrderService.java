@@ -4,6 +4,7 @@ import java.util.*;
 import javax.validation.*;
 import cn.iocoder.yudao.module.erp.controller.admin.productionorder.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.productionorder.ProductionOrderDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.productionorder.ProductionOrderItemDO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 
@@ -75,5 +76,13 @@ public interface ProductionOrderService {
      * @param status 状态
      */
     void updateProductionOrderStatus(Long id, Integer status);
+
+    /**
+     * 获得生产订单项列表
+     *
+     * @param orderId 订单编号
+     * @return 生产订单项列表
+     */
+    List<ProductionOrderItemDO> getProductionOrderItemListByOrderId(Long orderId);
 
 }

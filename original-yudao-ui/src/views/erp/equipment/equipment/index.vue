@@ -74,24 +74,6 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="购置价格" prop="purchasePrice">
-        <el-input
-          v-model="queryParams.purchasePrice"
-          placeholder="请输入购置价格"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="设计寿命" prop="serviceLife">
-        <el-input
-          v-model="queryParams.serviceLife"
-          placeholder="请输入设计寿命（年）"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="工作中心" prop="workCenterId">
         <el-input
           v-model="queryParams.workCenterId"
@@ -156,15 +138,6 @@
         <el-input
           v-model="queryParams.specification"
           placeholder="请输入技术规格"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="备注" prop="remark">
-        <el-input
-          v-model="queryParams.remark"
-          placeholder="请输入备注"
           clearable
           @keyup.enter="handleQuery"
           class="!w-240px"

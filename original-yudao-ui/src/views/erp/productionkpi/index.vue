@@ -82,42 +82,6 @@
           class="!w-240px"
         />
       </el-form-item>
-      <el-form-item label="目标值" prop="targetValue">
-        <el-input
-          v-model="queryParams.targetValue"
-          placeholder="请输入目标值"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="实际值" prop="actualValue">
-        <el-input
-          v-model="queryParams.actualValue"
-          placeholder="请输入实际值"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="差异值" prop="variance">
-        <el-input
-          v-model="queryParams.variance"
-          placeholder="请输入差异值"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="差异率" prop="varianceRate">
-        <el-input
-          v-model="queryParams.varianceRate"
-          placeholder="请输入差异率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="计算日期" prop="calculationDate">
         <el-date-picker
           v-model="queryParams.calculationDate"

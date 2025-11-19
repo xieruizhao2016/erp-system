@@ -15,8 +15,7 @@ public class QualityInspectionSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "3217")
     private Long id;
 
-    @Schema(description = "检验单号", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty(message = "检验单号不能为空")
+    @Schema(description = "检验单号（新增时由系统自动生成，修改时必填）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String inspectionNo;
 
     @Schema(description = "批次号")

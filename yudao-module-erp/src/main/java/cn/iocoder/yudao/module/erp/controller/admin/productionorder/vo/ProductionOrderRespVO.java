@@ -94,4 +94,36 @@ public class ProductionOrderRespVO {
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
 
+    @Schema(description = "生产订单项列表")
+    private List<Item> items;
+
+    @Data
+    public static class Item {
+
+        @Schema(description = "订单项编号", example = "11756")
+        private Long id;
+
+        @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
+        private Long productId;
+
+        @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "产品名称")
+        private String productName;
+
+        @Schema(description = "产品规格", example = "规格")
+        private String productSpec;
+
+        @Schema(description = "单位编号", example = "3113")
+        private Long unitId;
+
+        @Schema(description = "生产数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        private BigDecimal quantity;
+
+        @Schema(description = "已完成数量", example = "0.00")
+        private BigDecimal completedQuantity;
+
+        @Schema(description = "备注", example = "随便")
+        private String remark;
+
+    }
+
 }

@@ -37,8 +37,8 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
     public Long createProductCategory(ErpProductCategorySaveReqVO createReqVO) {
         // 校验父分类编号的有效性
         validateParentProductCategory(null, createReqVO.getParentId());
-        // 校验分类名称的唯一性
-        validateProductCategoryNameUnique(null, createReqVO.getParentId(), createReqVO.getName());
+        // 校验分类名称的唯一性（全局唯一）
+        validateProductCategoryNameUnique(null, createReqVO.getName());
 
         // 插入
         ErpProductCategoryDO category = BeanUtils.toBean(createReqVO, ErpProductCategoryDO.class);
@@ -53,8 +53,8 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
         validateProductCategoryExists(updateReqVO.getId());
         // 校验父分类编号的有效性
         validateParentProductCategory(updateReqVO.getId(), updateReqVO.getParentId());
-        // 校验分类名称的唯一性
-        validateProductCategoryNameUnique(updateReqVO.getId(), updateReqVO.getParentId(), updateReqVO.getName());
+        // 校验分类名称的唯一性（全局唯一）
+        validateProductCategoryNameUnique(updateReqVO.getId(), updateReqVO.getName());
 
         // 更新
         ErpProductCategoryDO updateObj = BeanUtils.toBean(updateReqVO, ErpProductCategoryDO.class);
@@ -64,12 +64,16 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
     @Override
     public void deleteProductCategory(Long id) {
         // 1.1 校验存在
-        validateProductCategoryExists(id);
-        // 1.2 校验是否有子产品分类
+        ErpProductCategoryDO category = validateProductCategoryExists(id);
+        // 1.2 校验是否为默认分类
+        if (Boolean.TRUE.equals(category.getIsDefault())) {
+            throw exception(PRODUCT_CATEGORY_IS_DEFAULT);
+        }
+        // 1.3 校验是否有子产品分类
         if (erpProductCategoryMapper.selectCountByParentId(id) > 0) {
             throw exception(PRODUCT_CATEGORY_EXITS_CHILDREN);
         }
-        // 1.3 校验是否有产品
+        // 1.4 校验是否有产品
         if (productService.getProductCountByCategoryId(id) > 0) {
             throw exception(PRODUCT_CATEGORY_EXITS_PRODUCT);
         }
@@ -77,10 +81,12 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
         erpProductCategoryMapper.deleteById(id);
     }
 
-    private void validateProductCategoryExists(Long id) {
-        if (erpProductCategoryMapper.selectById(id) == null) {
+    private ErpProductCategoryDO validateProductCategoryExists(Long id) {
+        ErpProductCategoryDO category = erpProductCategoryMapper.selectById(id);
+        if (category == null) {
             throw exception(PRODUCT_CATEGORY_NOT_EXISTS);
         }
+        return category;
     }
 
     private void validateParentProductCategory(Long id, Long parentId) {
@@ -117,8 +123,8 @@ public class ErpProductCategoryServiceImpl implements ErpProductCategoryService 
         }
     }
 
-    private void validateProductCategoryNameUnique(Long id, Long parentId, String name) {
-        ErpProductCategoryDO productCategory = erpProductCategoryMapper.selectByParentIdAndName(parentId, name);
+    private void validateProductCategoryNameUnique(Long id, String name) {
+        ErpProductCategoryDO productCategory = erpProductCategoryMapper.selectByName(name);
         if (productCategory == null) {
             return;
         }

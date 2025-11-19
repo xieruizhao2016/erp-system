@@ -56,15 +56,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="子产品名称" prop="childProductName">
-        <el-input
-          v-model="queryParams.childProductName"
-          placeholder="请输入子产品名称"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="子产品规格" prop="childProductSpec">
         <el-input
           v-model="queryParams.childProductSpec"
@@ -91,24 +82,6 @@
           <el-option label="否" :value="false" />
         </el-select>
       </el-form-item>
-      <el-form-item label="替代料组" prop="alternativeGroup">
-        <el-input
-          v-model="queryParams.alternativeGroup"
-          placeholder="请输入替代料组"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="位号" prop="position">
-        <el-input
-          v-model="queryParams.position"
-          placeholder="请输入位号"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="工序" prop="processId">
         <el-select
           v-model="queryParams.processId"
@@ -124,15 +97,6 @@
             :value="item.processId"
           />
         </el-select>
-      </el-form-item>
-      <el-form-item label="备注" prop="remark">
-        <el-input
-          v-model="queryParams.remark"
-          placeholder="请输入备注"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
         <el-date-picker

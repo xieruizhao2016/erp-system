@@ -55,10 +55,15 @@ public class QualityInspectionServiceImpl implements QualityInspectionService {
 
     @Override
     public void updateQualityInspection(QualityInspectionSaveReqVO updateReqVO) {
-        // 校验存在
-        validateQualityInspectionExists(updateReqVO.getId());
+        // 校验存在，并获取现有质检记录（用于保持检验单号不变）
+        QualityInspectionDO existingInspection = qualityInspectionMapper.selectById(updateReqVO.getId());
+        if (existingInspection == null) {
+            throw exception(QUALITY_INSPECTION_NOT_EXISTS);
+        }
         // 更新
         QualityInspectionDO updateObj = BeanUtils.toBean(updateReqVO, QualityInspectionDO.class);
+        // 保持检验单号不变（检验单号创建后不允许修改）
+        updateObj.setInspectionNo(existingInspection.getInspectionNo());
         qualityInspectionMapper.updateById(updateObj);
     }
 

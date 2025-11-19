@@ -55,10 +55,15 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     public void updateWorkOrder(WorkOrderSaveReqVO updateReqVO) {
-        // 校验存在
-        validateWorkOrderExists(updateReqVO.getId());
+        // 校验存在，并获取现有工单（用于保持工单号不变）
+        WorkOrderDO existingWorkOrder = workOrderMapper.selectById(updateReqVO.getId());
+        if (existingWorkOrder == null) {
+            throw exception(WORK_ORDER_NOT_EXISTS);
+        }
         // 更新
         WorkOrderDO updateObj = BeanUtils.toBean(updateReqVO, WorkOrderDO.class);
+        // 保持工单号不变（工单号创建后不允许修改）
+        updateObj.setWorkOrderNo(existingWorkOrder.getWorkOrderNo());
         workOrderMapper.updateById(updateObj);
     }
 

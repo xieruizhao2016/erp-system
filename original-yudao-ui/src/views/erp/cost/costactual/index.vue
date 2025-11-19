@@ -65,87 +65,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="材料成本" prop="materialCost">
-        <el-input
-          v-model="queryParams.materialCost"
-          placeholder="请输入材料成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="材料成本调整" prop="materialCostAdjust">
-        <el-input
-          v-model="queryParams.materialCostAdjust"
-          placeholder="请输入材料成本调整"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="人工成本" prop="laborCost">
-        <el-input
-          v-model="queryParams.laborCost"
-          placeholder="请输入人工成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="人工成本调整" prop="laborCostAdjust">
-        <el-input
-          v-model="queryParams.laborCostAdjust"
-          placeholder="请输入人工成本调整"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="制造费用" prop="overheadCost">
-        <el-input
-          v-model="queryParams.overheadCost"
-          placeholder="请输入制造费用"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="制造费用调整" prop="overheadCostAdjust">
-        <el-input
-          v-model="queryParams.overheadCostAdjust"
-          placeholder="请输入制造费用调整"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总成本" prop="totalCost">
-        <el-input
-          v-model="queryParams.totalCost"
-          placeholder="请输入总成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="单位成本" prop="unitCost">
-        <el-input
-          v-model="queryParams.unitCost"
-          placeholder="请输入单位成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="成本币种" prop="costCurrency">
-        <el-input
-          v-model="queryParams.costCurrency"
-          placeholder="请输入成本币种"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="成本期间" prop="costPeriod">
         <el-input
           v-model="queryParams.costPeriod"
@@ -191,15 +110,6 @@
             :value="dict.value"
           />
         </el-select>
-      </el-form-item>
-      <el-form-item label="备注" prop="remark">
-        <el-input
-          v-model="queryParams.remark"
-          placeholder="请输入备注"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
         <el-date-picker

@@ -62,24 +62,6 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="标准人工成本" prop="standardLaborCost">
-        <el-input
-          v-model="queryParams.standardLaborCost"
-          placeholder="请输入标准人工成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="标准制造费用" prop="standardOverheadCost">
-        <el-input
-          v-model="queryParams.standardOverheadCost"
-          placeholder="请输入标准制造费用"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"

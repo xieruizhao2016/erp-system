@@ -2,7 +2,6 @@ package cn.iocoder.yudao.module.erp.controller.admin.product.vo.product;
 
 import cn.iocoder.yudao.framework.excel.core.annotations.DictFormat;
 import cn.iocoder.yudao.framework.excel.core.convert.DictConvert;
-import cn.iocoder.yudao.module.erp.enums.DictTypeConstants;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -72,11 +71,6 @@ public class ErpProductRespVO {
     @Schema(description = "最低价格，单位：元", example = "161.87")
     @ExcelProperty("最低价格，单位：元")
     private BigDecimal minPrice;
-
-    @Schema(description = "产品类型", example = "1")
-    @ExcelProperty(value = "产品类型", converter = DictConvert.class)
-    @DictFormat(DictTypeConstants.ERP_PRODUCT_TYPE)
-    private Integer productionType;
 
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")

@@ -1,5 +1,5 @@
 <template>
-  <Dialog :title="dialogTitle" v-model="dialogVisible">
+  <Dialog :title="dialogTitle" v-model="dialogVisible" width="800">
     <el-form
       ref="formRef"
       :model="formData"
@@ -37,16 +37,6 @@
           </el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="产品类型" prop="productionType">
-        <el-select v-model="formData.productionType" clearable placeholder="请选择产品类型" class="w-1/1">
-          <el-option
-            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_PRODUCT_TYPE)"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
-        </el-select>
-      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="submitForm" type="primary" :disabled="formLoading">确 定</el-button>
@@ -76,16 +66,14 @@ const formData = ref({
   name: undefined,
   code: undefined,
   sort: undefined,
-  status: CommonStatusEnum.ENABLE,
-  productionType: undefined
+  status: CommonStatusEnum.ENABLE
 })
 const formRules = reactive({
   parentId: [{ required: true, message: '上级编号不能为空', trigger: 'blur' }],
   name: [{ required: true, message: '名称不能为空', trigger: 'blur' }],
   code: [{ required: true, message: '编码不能为空', trigger: 'blur' }],
   sort: [{ required: true, message: '排序不能为空', trigger: 'blur' }],
-  status: [{ required: true, message: '状态不能为空', trigger: 'blur' }],
-  productionType: [{ required: true, message: '产品类型不能为空', trigger: 'blur' }]
+  status: [{ required: true, message: '状态不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
 const productCategoryTree = ref() // 树形结构
@@ -100,7 +88,16 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true
     try {
-      formData.value = await ProductCategoryApi.getProductCategory(id)
+      const categoryData = await ProductCategoryApi.getProductCategory(id)
+      // 只设置需要的字段，排除 productionType（已移除）
+      formData.value = {
+        id: categoryData.id,
+        parentId: categoryData.parentId,
+        name: categoryData.name,
+        code: categoryData.code,
+        sort: categoryData.sort,
+        status: categoryData.status
+      }
     } finally {
       formLoading.value = false
     }
@@ -117,7 +114,15 @@ const submitForm = async () => {
   // 提交请求
   formLoading.value = true
   try {
-    const data = formData.value as unknown as ProductCategoryVO
+    // 确保不包含 productionType 字段（已移除）
+    const data = {
+      id: formData.value.id,
+      parentId: formData.value.parentId,
+      name: formData.value.name,
+      code: formData.value.code,
+      sort: formData.value.sort,
+      status: formData.value.status
+    } as unknown as ProductCategoryVO
     if (formType.value === 'create') {
       await ProductCategoryApi.createProductCategory(data)
       message.success(t('common.createSuccess'))
@@ -141,8 +146,7 @@ const resetForm = () => {
     name: undefined,
     code: undefined,
     sort: undefined,
-    status: CommonStatusEnum.ENABLE,
-    productionType: undefined
+    status: CommonStatusEnum.ENABLE
   }
   formRef.value?.resetFields()
 }

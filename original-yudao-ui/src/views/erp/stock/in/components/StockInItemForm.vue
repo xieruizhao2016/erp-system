@@ -8,6 +8,23 @@
     :inline-message="true"
     :disabled="disabled"
   >
+    <!-- 产品分类选择器 -->
+    <el-row class="mb-3" v-if="!disabled">
+      <el-col :span="8">
+        <el-form-item label="产品分类" label-width="80px">
+          <el-tree-select
+            v-model="selectedCategoryId"
+            :data="productCategoryTree"
+            :props="defaultProps"
+            check-strictly
+            clearable
+            placeholder="请选择产品分类（不选则显示全部）"
+            class="w-1/1"
+            @change="handleCategoryChange"
+          />
+        </el-form-item>
+      </el-col>
+    </el-row>
     <el-table :data="formData" show-summary :summary-method="getSummaries" class="-mt-10px">
       <el-table-column label="序号" type="index" align="center" width="60" />
       <el-table-column label="仓库名称" min-width="125">
@@ -45,7 +62,7 @@
               placeholder="请选择产品"
             >
               <el-option
-                v-for="item in productList"
+                v-for="item in filteredProductList"
                 :key="item.id"
                 :label="item.name"
                 :value="item.id"
@@ -128,8 +145,10 @@
 </template>
 <script setup lang="ts">
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { ProductCategoryApi, ProductCategoryVO } from '@/api/erp/product/category'
 import { WarehouseApi, WarehouseVO } from '@/api/erp/stock/warehouse'
 import { StockApi } from '@/api/erp/stock/stock'
+import { defaultProps, handleTree } from '@/utils/tree'
 import {
   erpCountInputFormatter,
   erpPriceInputFormatter,
@@ -150,9 +169,20 @@ const formRules = reactive({
   count: [{ required: true, message: '产品数量不能为空', trigger: 'blur' }]
 })
 const formRef = ref([]) // 表单 Ref
-const productList = ref<ProductVO[]>([]) // 产品列表
+const productList = ref<ProductVO[]>([]) // 产品列表（全部）
+const selectedCategoryId = ref<number | undefined>(undefined) // 选中的分类ID
+const productCategoryTree = ref<any[]>([]) // 产品分类树
 const warehouseList = ref<WarehouseVO[]>([]) // 仓库列表
 const defaultWarehouse = ref<WarehouseVO>(undefined) // 默认仓库
+
+/** 根据分类过滤后的产品列表 */
+const filteredProductList = computed(() => {
+  if (!selectedCategoryId.value) {
+    return productList.value // 未选择分类，显示全部产品
+  }
+  // 选择分类后，只显示该分类下的产品
+  return productList.value.filter((product) => product.categoryId === selectedCategoryId.value)
+})
 
 /** 初始化设置入库项 */
 watch(
@@ -227,6 +257,26 @@ const onChangeWarehouse = (warehouseId, row) => {
   setStockCount(row)
 }
 
+/** 处理分类变更 */
+const handleCategoryChange = (categoryId: number | undefined) => {
+  // 当分类改变时，清空不在新分类下的产品选择
+  if (categoryId !== undefined) {
+    formData.value.forEach((row) => {
+      if (row.productId) {
+        const product = productList.value.find((item) => item.id === row.productId)
+        if (product && product.categoryId !== categoryId) {
+          // 如果已选择的产品不在新分类下，清空产品选择
+          row.productId = undefined
+          row.productUnitName = undefined
+          row.productBarCode = undefined
+          row.productPrice = undefined
+          row.stockCount = undefined
+        }
+      }
+    })
+  }
+}
+
 /** 处理产品变更 */
 const onChangeProduct = (productId, row) => {
   const product = productList.value.find((item) => item.id === productId)
@@ -254,9 +304,24 @@ const validate = () => {
 }
 defineExpose({ validate })
 
+/** 加载产品分类树 */
+const loadProductCategoryTree = async () => {
+  try {
+    const data = await ProductCategoryApi.getProductCategoryList()
+    const root: any = { id: 0, name: '顶级产品分类', children: [] }
+    root.children = handleTree(data, 'id', 'parentId')
+    productCategoryTree.value = [root]
+  } catch (error) {
+    console.error('加载产品分类失败:', error)
+  }
+}
+
 /** 初始化 */
 onMounted(async () => {
+  // 加载产品列表
   productList.value = await ProductApi.getProductSimpleList()
+  // 加载产品分类树
+  await loadProductCategoryTree()
   warehouseList.value = await WarehouseApi.getWarehouseSimpleList()
   defaultWarehouse.value = warehouseList.value.find((item) => item.defaultStatus)
   // 默认添加一个

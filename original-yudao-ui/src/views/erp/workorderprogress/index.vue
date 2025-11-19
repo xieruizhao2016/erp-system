@@ -194,15 +194,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="备注" prop="remark">
-        <el-input
-          v-model="queryParams.remark"
-          placeholder="请输入备注"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
         <el-date-picker
           v-model="queryParams.createTime"
@@ -421,17 +412,51 @@ const getList = async () => {
   loading.value = true
   try {
     // 构建查询参数，将工时和停机时间的范围转换为数组
-    const params = { ...queryParams }
+    const params: any = { ...queryParams }
+    
+    // 处理工时范围：确保数组长度为2或undefined
     if (params.workTimeMin !== undefined || params.workTimeMax !== undefined) {
-      params.workTime = [params.workTimeMin, params.workTimeMax].filter(v => v !== undefined)
+      const workTimeArray = [params.workTimeMin, params.workTimeMax]
+      // 如果两个值都存在，使用数组；否则设为undefined
+      if (workTimeArray[0] !== undefined && workTimeArray[1] !== undefined) {
+        params.workTime = workTimeArray
+      } else {
+        params.workTime = undefined
+      }
     } else {
       params.workTime = undefined
     }
+    
+    // 处理停机时间范围：确保数组长度为2或undefined
     if (params.downtimeMin !== undefined || params.downtimeMax !== undefined) {
-      params.downtime = [params.downtimeMin, params.downtimeMax].filter(v => v !== undefined)
+      const downtimeArray = [params.downtimeMin, params.downtimeMax]
+      // 如果两个值都存在，使用数组；否则设为undefined
+      if (downtimeArray[0] !== undefined && downtimeArray[1] !== undefined) {
+        params.downtime = downtimeArray
+      } else {
+        params.downtime = undefined
+      }
     } else {
       params.downtime = undefined
     }
+    
+    // 处理日期时间数组：空数组转换为undefined
+    if (Array.isArray(params.plannedStartTime) && params.plannedStartTime.length === 0) {
+      params.plannedStartTime = undefined
+    }
+    if (Array.isArray(params.plannedEndTime) && params.plannedEndTime.length === 0) {
+      params.plannedEndTime = undefined
+    }
+    if (Array.isArray(params.actualStartTime) && params.actualStartTime.length === 0) {
+      params.actualStartTime = undefined
+    }
+    if (Array.isArray(params.actualEndTime) && params.actualEndTime.length === 0) {
+      params.actualEndTime = undefined
+    }
+    if (Array.isArray(params.createTime) && params.createTime.length === 0) {
+      params.createTime = undefined
+    }
+    
     // 移除临时字段
     delete params.workTimeMin
     delete params.workTimeMax
@@ -441,9 +466,11 @@ const getList = async () => {
     const data = await WorkOrderProgressApi.getWorkOrderProgressPage(params)
     list.value = data.list || []
     total.value = data.total || 0
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取工单进度列表失败:', error)
-    message.error('获取工单进度列表失败，请稍后重试')
+    // 显示更详细的错误信息
+    const errorMsg = error?.response?.data?.msg || error?.message || '获取工单进度列表失败，请稍后重试'
+    message.error(errorMsg)
     list.value = []
     total.value = 0
   } finally {

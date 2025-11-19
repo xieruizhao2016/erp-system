@@ -84,6 +84,29 @@ public class WorkOrderProgressController {
     @Operation(summary = "获得ERP 工单进度分页")
     @PreAuthorize("@ss.hasPermission('erp:work-order-progress:query')")
     public CommonResult<PageResult<WorkOrderProgressRespVO>> getWorkOrderProgressPage(@Valid WorkOrderProgressPageReqVO pageReqVO) {
+        // 处理空数组，避免参数绑定错误
+        if (pageReqVO.getPlannedStartTime() != null && pageReqVO.getPlannedStartTime().length == 0) {
+            pageReqVO.setPlannedStartTime(null);
+        }
+        if (pageReqVO.getPlannedEndTime() != null && pageReqVO.getPlannedEndTime().length == 0) {
+            pageReqVO.setPlannedEndTime(null);
+        }
+        if (pageReqVO.getActualStartTime() != null && pageReqVO.getActualStartTime().length == 0) {
+            pageReqVO.setActualStartTime(null);
+        }
+        if (pageReqVO.getActualEndTime() != null && pageReqVO.getActualEndTime().length == 0) {
+            pageReqVO.setActualEndTime(null);
+        }
+        if (pageReqVO.getCreateTime() != null && pageReqVO.getCreateTime().length == 0) {
+            pageReqVO.setCreateTime(null);
+        }
+        if (pageReqVO.getWorkTime() != null && pageReqVO.getWorkTime().length == 0) {
+            pageReqVO.setWorkTime(null);
+        }
+        if (pageReqVO.getDowntime() != null && pageReqVO.getDowntime().length == 0) {
+            pageReqVO.setDowntime(null);
+        }
+        
         PageResult<WorkOrderProgressDO> pageResult = workOrderProgressService.getWorkOrderProgressPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, WorkOrderProgressRespVO.class));
     }

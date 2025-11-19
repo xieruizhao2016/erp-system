@@ -1,6 +1,6 @@
 <!-- ERP 产品的新增/修改 -->
 <template>
-  <Dialog :title="dialogTitle" v-model="dialogVisible">
+  <Dialog :title="dialogTitle" v-model="dialogVisible" width="70%">
     <el-form
       ref="formRef"
       :model="formData"

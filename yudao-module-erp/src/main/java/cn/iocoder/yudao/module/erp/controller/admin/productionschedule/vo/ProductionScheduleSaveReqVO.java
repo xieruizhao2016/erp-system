@@ -14,8 +14,7 @@ public class ProductionScheduleSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "19487")
     private Long id;
 
-    @Schema(description = "排程单号", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty(message = "排程单号不能为空")
+    @Schema(description = "排程单号（新增时由系统自动生成，修改时必填）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String scheduleNo;
 
     @Schema(description = "排程名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "李四")

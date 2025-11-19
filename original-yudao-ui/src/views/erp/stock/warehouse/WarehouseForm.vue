@@ -1,6 +1,6 @@
 <!-- ERP 仓库表单 -->
 <template>
-  <Dialog :title="dialogTitle" v-model="dialogVisible">
+  <Dialog :title="dialogTitle" v-model="dialogVisible" width="800">
     <el-form
       ref="formRef"
       :model="formData"

@@ -55,10 +55,15 @@ public class CostActualServiceImpl implements CostActualService {
 
     @Override
     public void updateCostActual(CostActualSaveReqVO updateReqVO) {
-        // 校验存在
-        validateCostActualExists(updateReqVO.getId());
+        // 校验存在，并获取现有成本单（用于保持成本单号不变）
+        CostActualDO existingCostActual = costActualMapper.selectById(updateReqVO.getId());
+        if (existingCostActual == null) {
+            throw exception(COST_ACTUAL_NOT_EXISTS);
+        }
         // 更新
         CostActualDO updateObj = BeanUtils.toBean(updateReqVO, CostActualDO.class);
+        // 保持成本单号不变（成本单号创建后不允许修改）
+        updateObj.setCostNo(existingCostActual.getCostNo());
         costActualMapper.updateById(updateObj);
     }
 

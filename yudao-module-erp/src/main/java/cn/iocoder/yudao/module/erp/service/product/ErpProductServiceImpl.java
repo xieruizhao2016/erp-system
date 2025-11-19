@@ -51,9 +51,8 @@ public class ErpProductServiceImpl implements ErpProductService {
         if (category == null) {
             throw exception(PRODUCT_NOT_EXISTS);
         }
-        // 插入产品，产品类型从分类中获取
+        // 插入产品
         ErpProductDO product = BeanUtils.toBean(createReqVO, ErpProductDO.class);
-        product.setProductionType(category.getProductionType());
         productMapper.insert(product);
         // 返回
         return product.getId();
@@ -68,9 +67,8 @@ public class ErpProductServiceImpl implements ErpProductService {
         }
         // 校验存在
         validateProductExists(updateReqVO.getId());
-        // 更新产品，产品类型从分类中获取
+        // 更新产品
         ErpProductDO updateObj = BeanUtils.toBean(updateReqVO, ErpProductDO.class);
-        updateObj.setProductionType(category.getProductionType());
         productMapper.updateById(updateObj);
     }
 
@@ -145,10 +143,6 @@ public class ErpProductServiceImpl implements ErpProductService {
             MapUtils.findAndThen(categoryMap, product.getCategoryId(),
                     category -> {
                         product.setCategoryName(category.getName());
-                        // 产品类型从分类中获取
-                        if (category.getProductionType() != null) {
-                            product.setProductionType(category.getProductionType());
-                        }
                     });
             MapUtils.findAndThen(unitMap, product.getUnitId(),
                     unit -> product.setUnitName(unit.getName()));

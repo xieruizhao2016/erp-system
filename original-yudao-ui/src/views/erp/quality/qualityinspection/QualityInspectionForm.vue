@@ -1,5 +1,5 @@
 <template>
-  <Dialog :title="dialogTitle" v-model="dialogVisible">
+  <Dialog :title="dialogTitle" v-model="dialogVisible" width="800">
     <el-form
       ref="formRef"
       :model="formData"
@@ -13,6 +13,18 @@
       <el-form-item label="批次号" prop="batchNo">
         <el-input v-model="formData.batchNo" placeholder="请输入批次号" />
       </el-form-item>
+      <el-form-item label="产品分类" prop="categoryId">
+        <el-tree-select
+          v-model="selectedCategoryId"
+          :data="productCategoryTree"
+          :props="defaultProps"
+          check-strictly
+          clearable
+          placeholder="请选择产品分类（不选则显示全部）"
+          class="!w-1/1"
+          @change="handleCategoryChange"
+        />
+      </el-form-item>
       <el-form-item label="产品" prop="productId">
         <el-select
           v-model="formData.productId"
@@ -22,7 +34,7 @@
           class="!w-1/1"
         >
           <el-option
-            v-for="item in productList"
+            v-for="item in filteredProductList"
             :key="item.id"
             :label="item.name"
             :value="item.id"
@@ -143,8 +155,10 @@
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { QualityInspectionApi, QualityInspection } from '@/api/erp/qualityinspection'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { ProductCategoryApi, ProductCategoryVO } from '@/api/erp/product/category'
 import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
 import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
+import { defaultProps, handleTree } from '@/utils/tree'
 import * as UserApi from '@/api/system/user'
 import { UserVO } from '@/api/system/user'
 
@@ -184,10 +198,44 @@ const formRules = reactive({
   inspectionTime: [{ required: true, message: '检验时间不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
-const productList = ref<ProductVO[]>([]) // 产品列表
+const productList = ref<ProductVO[]>([]) // 产品列表（全部）
+const selectedCategoryId = ref<number | undefined>(undefined) // 选中的分类ID
+const productCategoryTree = ref<any[]>([]) // 产品分类树
 const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
 const workOrderList = ref<WorkOrder[]>([]) // 工单列表
 const userList = ref<UserVO[]>([]) // 用户列表
+
+/** 根据分类过滤后的产品列表 */
+const filteredProductList = computed(() => {
+  if (!selectedCategoryId.value) {
+    return productList.value // 未选择分类，显示全部产品
+  }
+  // 选择分类后，只显示该分类下的产品
+  return productList.value.filter((product) => product.categoryId === selectedCategoryId.value)
+})
+
+/** 处理分类变更 */
+const handleCategoryChange = (categoryId: number | undefined) => {
+  // 当分类改变时，如果已选择的产品不在新分类下，清空产品选择
+  if (categoryId !== undefined && formData.value.productId) {
+    const product = productList.value.find((item) => item.id === formData.value.productId)
+    if (product && product.categoryId !== categoryId) {
+      formData.value.productId = undefined
+    }
+  }
+}
+
+/** 加载产品分类树 */
+const loadProductCategoryTree = async () => {
+  try {
+    const data = await ProductCategoryApi.getProductCategoryList()
+    const root: any = { id: 0, name: '顶级产品分类', children: [] }
+    root.children = handleTree(data, 'id', 'parentId')
+    productCategoryTree.value = [root]
+  } catch (error) {
+    console.error('加载产品分类失败:', error)
+  }
+}
 
 /** 加载列表数据 */
 const loadListData = async () => {
@@ -202,6 +250,8 @@ const loadListData = async () => {
     processRouteItemList.value = processRouteItemData.list || []
     workOrderList.value = workOrderData.list || []
     userList.value = users || []
+    // 加载产品分类树
+    await loadProductCategoryTree()
   } catch (error) {
     console.error('加载列表数据失败:', error)
   }
@@ -276,6 +326,7 @@ const resetForm = () => {
     equipment: undefined,
     remark: undefined
   }
+  selectedCategoryId.value = undefined // 重置分类选择
   formRef.value?.resetFields()
 }
 </script>

@@ -16,19 +16,16 @@ public class ProductionOrderSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "26384")
     private Long id;
 
-    @Schema(description = "生产订单号", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty(message = "生产订单号不能为空")
+    @Schema(description = "生产订单号（新增时由系统自动生成，修改时必填）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String no;
 
     @Schema(description = "客户ID（关联销售订单）", example = "3753")
     private Long customerId;
 
-    @Schema(description = "产品ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "32079")
-    @NotNull(message = "产品ID不能为空")
+    @Schema(description = "产品ID（兼容旧数据，如果 items 为空则必填）", example = "32079")
     private Long productId;
 
-    @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋艿")
-    @NotEmpty(message = "产品名称不能为空")
+    @Schema(description = "产品名称（兼容旧数据，如果 items 为空则必填）", example = "芋艿")
     private String productName;
 
     @Schema(description = "产品规格")
@@ -37,8 +34,7 @@ public class ProductionOrderSaveReqVO {
     @Schema(description = "单位ID", example = "16828")
     private Long unitId;
 
-    @Schema(description = "生产数量", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "生产数量不能为空")
+    @Schema(description = "生产数量（兼容旧数据，如果 items 为空则必填）")
     private BigDecimal quantity;
 
     @Schema(description = "已完成数量")
@@ -74,5 +70,40 @@ public class ProductionOrderSaveReqVO {
 
     @Schema(description = "备注", example = "随便")
     private String remark;
+
+    @Schema(description = "生产订单项列表")
+    private List<Item> items;
+
+    @Data
+    public static class Item {
+
+        @Schema(description = "订单项编号", example = "11756")
+        private Long id;
+
+        @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
+        @NotNull(message = "产品编号不能为空")
+        private Long productId;
+
+        @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "产品名称")
+        @NotEmpty(message = "产品名称不能为空")
+        private String productName;
+
+        @Schema(description = "产品规格", example = "规格")
+        private String productSpec;
+
+        @Schema(description = "单位编号", example = "3113")
+        private Long unitId;
+
+        @Schema(description = "生产数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
+        @NotNull(message = "生产数量不能为空")
+        private BigDecimal quantity;
+
+        @Schema(description = "已完成数量", example = "0.00")
+        private BigDecimal completedQuantity;
+
+        @Schema(description = "备注", example = "随便")
+        private String remark;
+
+    }
 
 }

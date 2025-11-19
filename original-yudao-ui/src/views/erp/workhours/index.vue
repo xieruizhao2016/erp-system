@@ -98,60 +98,6 @@
           class="!w-220px"
         />
       </el-form-item>
-      <el-form-item label="工作时长" prop="duration">
-        <el-input
-          v-model="queryParams.duration"
-          placeholder="请输入工作时长（分钟）"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="标准工时" prop="standardDuration">
-        <el-input
-          v-model="queryParams.standardDuration"
-          placeholder="请输入标准工时（分钟）"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="加班时长" prop="overtimeDuration">
-        <el-input
-          v-model="queryParams.overtimeDuration"
-          placeholder="请输入加班时长（分钟）"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="机时" prop="machineHours">
-        <el-input
-          v-model="queryParams.machineHours"
-          placeholder="请输入机时"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="人工成本" prop="laborCost">
-        <el-input
-          v-model="queryParams.laborCost"
-          placeholder="请输入人工成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="设备成本" prop="machineCost">
-        <el-input
-          v-model="queryParams.machineCost"
-          placeholder="请输入设备成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"
@@ -166,15 +112,6 @@
             :value="dict.value"
           />
         </el-select>
-      </el-form-item>
-      <el-form-item label="备注" prop="remark">
-        <el-input
-          v-model="queryParams.remark"
-          placeholder="请输入备注"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">
         <el-date-picker

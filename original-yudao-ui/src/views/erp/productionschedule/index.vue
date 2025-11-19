@@ -83,24 +83,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="总订单数" prop="totalOrders">
-        <el-input
-          v-model="queryParams.totalOrders"
-          placeholder="请输入总订单数"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总工时" prop="totalWorkHours">
-        <el-input
-          v-model="queryParams.totalWorkHours"
-          placeholder="请输入总工时"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="创建人" prop="createdBy">
         <el-input
           v-model="queryParams.createdBy"

@@ -27,6 +27,7 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
 import cn.iocoder.yudao.module.erp.controller.admin.productionorder.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.productionorder.ProductionOrderDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.productionorder.ProductionOrderItemDO;
 import cn.iocoder.yudao.module.erp.service.productionorder.ProductionOrderService;
 
 @Tag(name = "管理后台 - ERP 生产订单")
@@ -77,7 +78,11 @@ public class ProductionOrderController {
     @PreAuthorize("@ss.hasPermission('erp:production-order:query')")
     public CommonResult<ProductionOrderRespVO> getProductionOrder(@RequestParam("id") Long id) {
         ProductionOrderDO productionOrder = productionOrderService.getProductionOrder(id);
-        return success(BeanUtils.toBean(productionOrder, ProductionOrderRespVO.class));
+        ProductionOrderRespVO respVO = BeanUtils.toBean(productionOrder, ProductionOrderRespVO.class);
+        // 设置订单项列表
+        List<ProductionOrderItemDO> items = productionOrderService.getProductionOrderItemListByOrderId(id);
+        respVO.setItems(BeanUtils.toBean(items, ProductionOrderRespVO.Item.class));
+        return success(respVO);
     }
 
     @GetMapping("/page")

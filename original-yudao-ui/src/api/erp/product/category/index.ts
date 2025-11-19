@@ -8,6 +8,7 @@ export interface ProductCategoryVO {
   code: string // 分类编码
   sort: number // 分类排序
   status: number // 开启状态
+  isDefault?: boolean // 是否默认分类（默认分类不可删除）
 }
 
 // ERP 产品分类 API

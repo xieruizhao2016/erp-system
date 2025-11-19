@@ -16,8 +16,7 @@ public class WorkOrderSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "24340")
     private Long id;
 
-    @Schema(description = "工单号", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty(message = "工单号不能为空")
+    @Schema(description = "工单号（新增时由系统自动生成，修改时必填）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String workOrderNo;
 
     @Schema(description = "生产订单ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "14797")

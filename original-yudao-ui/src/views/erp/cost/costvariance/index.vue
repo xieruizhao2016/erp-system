@@ -40,96 +40,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="标准总成本" prop="standardTotalCost">
-        <el-input
-          v-model="queryParams.standardTotalCost"
-          placeholder="请输入标准总成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="实际总成本" prop="actualTotalCost">
-        <el-input
-          v-model="queryParams.actualTotalCost"
-          placeholder="请输入实际总成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总差异" prop="totalVariance">
-        <el-input
-          v-model="queryParams.totalVariance"
-          placeholder="请输入总差异"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总差异率" prop="totalVarianceRate">
-        <el-input
-          v-model="queryParams.totalVarianceRate"
-          placeholder="请输入总差异率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="材料成本差异" prop="materialVariance">
-        <el-input
-          v-model="queryParams.materialVariance"
-          placeholder="请输入材料成本差异"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="材料差异率" prop="materialVarianceRate">
-        <el-input
-          v-model="queryParams.materialVarianceRate"
-          placeholder="请输入材料差异率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="人工成本差异" prop="laborVariance">
-        <el-input
-          v-model="queryParams.laborVariance"
-          placeholder="请输入人工成本差异"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="人工差异率" prop="laborVarianceRate">
-        <el-input
-          v-model="queryParams.laborVarianceRate"
-          placeholder="请输入人工差异率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="制造费用差异" prop="overheadVariance">
-        <el-input
-          v-model="queryParams.overheadVariance"
-          placeholder="请输入制造费用差异"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="制造费用差异率" prop="overheadVarianceRate">
-        <el-input
-          v-model="queryParams.overheadVarianceRate"
-          placeholder="请输入制造费用差异率"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="差异类型" prop="varianceType">
         <el-select
           v-model="queryParams.varianceType"
@@ -154,24 +64,6 @@
           end-placeholder="结束日期"
           :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
           class="!w-220px"
-        />
-      </el-form-item>
-      <el-form-item label="差异原因" prop="varianceReason">
-        <el-input
-          v-model="queryParams.varianceReason"
-          placeholder="请输入差异原因"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="备注" prop="remark">
-        <el-input
-          v-model="queryParams.remark"
-          placeholder="请输入备注"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
         />
       </el-form-item>
       <el-form-item label="创建时间" prop="createTime">

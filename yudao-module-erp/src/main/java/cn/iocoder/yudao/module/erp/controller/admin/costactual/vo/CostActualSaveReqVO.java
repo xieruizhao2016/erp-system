@@ -16,8 +16,7 @@ public class CostActualSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "21625")
     private Long id;
 
-    @Schema(description = "成本单号", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty(message = "成本单号不能为空")
+    @Schema(description = "成本单号（新增时由系统自动生成，修改时必填）", requiredMode = Schema.RequiredMode.REQUIRED)
     private String costNo;
 
     @Schema(description = "工单ID", example = "4712")

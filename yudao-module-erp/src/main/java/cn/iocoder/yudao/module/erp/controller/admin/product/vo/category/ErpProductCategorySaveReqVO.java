@@ -33,8 +33,4 @@ public class ErpProductCategorySaveReqVO {
     @NotNull(message = "开启状态不能为空")
     private Integer status;
 
-    @Schema(description = "产品类型", example = "1")
-    @NotNull(message = "产品类型不能为空")
-    private Integer productionType;
-
 }

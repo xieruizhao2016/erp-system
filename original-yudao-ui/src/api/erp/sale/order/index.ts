@@ -1,5 +1,23 @@
 import request from '@/config/axios'
 
+// ERP 销售订单项 VO
+export interface SaleOrderItemVO {
+  id?: number // 订单项编号
+  productId?: number // 产品编号
+  productUnitId?: number // 产品单位编号
+  productPrice?: number // 产品单价
+  count?: number // 产品数量
+  taxPercent?: number // 税率，百分比
+  taxPrice?: number // 税额，单位：元
+  remark?: string // 备注
+  outCount?: number // 销售出库数量
+  returnCount?: number // 销售退货数量
+  productName?: string // 产品名称
+  productBarCode?: string // 产品条码
+  productUnitName?: string // 产品单位名称
+  stockCount?: number // 库存数量
+}
+
 // ERP 销售订单 VO
 export interface SaleOrderVO {
   id: number // 订单工单编号
@@ -12,6 +30,7 @@ export interface SaleOrderVO {
   remark: string // 备注
   outCount: number // 销售出库数量
   returnCount: number // 销售退货数量
+  items?: SaleOrderItemVO[] // 订单项列表
 }
 
 // ERP 销售订单 API

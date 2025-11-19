@@ -51,11 +51,10 @@ public class ErpProductCategoryDO extends BaseDO {
      */
     private Integer status;
     /**
-     * 产品类型
+     * 是否默认分类
      *
-     * 字典 {@link cn.iocoder.yudao.module.erp.enums.DictTypeConstants#ERP_PRODUCT_TYPE}
-     * 1-原材料，2-半成品，3-成品
+     * true-是（默认分类不可删除），false-否
      */
-    private Integer productionType;
+    private Boolean isDefault;
 
 }

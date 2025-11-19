@@ -72,13 +72,13 @@
       v-if="refreshTable"
     >
       <el-table-column label="编码" align="center" prop="code" />
-      <el-table-column label="名称" align="center" prop="name" />
-      <el-table-column label="排序" align="center" prop="sort" />
-      <el-table-column label="产品类型" align="center" prop="productionType">
+      <el-table-column label="名称" align="center" prop="name" min-width="150">
         <template #default="scope">
-          <dict-tag :type="DICT_TYPE.ERP_PRODUCT_TYPE" :value="scope.row.productionType" />
+          <span>{{ scope.row.name }}</span>
+          <el-tag v-if="scope.row.isDefault" type="info" size="small" class="ml-2">默认分类</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="排序" align="center" prop="sort" />
       <el-table-column label="状态" align="center" prop="status">
         <template #default="scope">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="scope.row.status" />
@@ -91,7 +91,7 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="操作" align="center">
+      <el-table-column label="操作" align="center" width="200">
         <template #default="scope">
           <el-button
             link
@@ -106,9 +106,11 @@
             type="danger"
             @click="handleDelete(scope.row.id)"
             v-hasPermi="['erp:product-category:delete']"
+            :disabled="!!scope.row.isDefault"
           >
             删除
           </el-button>
+          <el-tag v-if="scope.row.isDefault" type="info" size="small" class="ml-2">默认分类</el-tag>
         </template>
       </el-table-column>
     </el-table>
@@ -153,7 +155,25 @@ const getList = async () => {
   loading.value = true
   try {
     const data = await ProductCategoryApi.getProductCategoryList(queryParams)
-    list.value = handleTree(data, 'id', 'parentId')
+    // 确保 isDefault 字段正确传递（处理可能的 null 值、布尔值或数字类型）
+    const processedData = data.map(item => {
+      // 处理 isDefault 字段：可能是 true/false、1/0、null/undefined
+      // 注意：后端返回的 Boolean 类型在 JSON 中可能是 true/false，bit(1) 类型可能是 1/0
+      let isDefault = false
+      const rawValue = item.isDefault
+      if (rawValue === true || rawValue === 1 || rawValue === '1' || rawValue === 'true') {
+        isDefault = true
+      }
+      // 调试日志（开发环境可以查看）
+      if (isDefault) {
+        console.log('找到默认分类:', item.name, 'isDefault原始值:', rawValue, '处理后:', isDefault)
+      }
+      return {
+        ...item,
+        isDefault
+      }
+    })
+    list.value = handleTree(processedData, 'id', 'parentId')
   } finally {
     loading.value = false
   }
@@ -180,6 +200,24 @@ const openForm = (type: string, id?: number) => {
 /** 删除按钮操作 */
 const handleDelete = async (id: number) => {
   try {
+    // 检查是否为默认分类（需要递归查找，因为可能是树形结构）
+    const findCategory = (items: any[]): any => {
+      for (const item of items) {
+        if (item.id === id) {
+          return item
+        }
+        if (item.children && item.children.length > 0) {
+          const found = findCategory(item.children)
+          if (found) return found
+        }
+      }
+      return null
+    }
+    const category = findCategory(list.value)
+    if (category && category.isDefault) {
+      message.warning('默认分类不可删除')
+      return
+    }
     // 删除的二次确认
     await message.delConfirm()
     // 发起删除

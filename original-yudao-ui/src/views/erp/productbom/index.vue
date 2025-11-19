@@ -88,24 +88,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="标准成本" prop="standardCost">
-        <el-input
-          v-model="queryParams.standardCost"
-          placeholder="请输入标准成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
-      <el-form-item label="总材料成本" prop="totalMaterialCost">
-        <el-input
-          v-model="queryParams.totalMaterialCost"
-          placeholder="请输入总材料成本"
-          clearable
-          @keyup.enter="handleQuery"
-          class="!w-240px"
-        />
-      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select
           v-model="queryParams.status"

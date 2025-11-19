@@ -55,10 +55,15 @@ public class ProductionScheduleServiceImpl implements ProductionScheduleService 
 
     @Override
     public void updateProductionSchedule(ProductionScheduleSaveReqVO updateReqVO) {
-        // 校验存在
-        validateProductionScheduleExists(updateReqVO.getId());
+        // 校验存在，并获取现有排程（用于保持排程单号不变）
+        ProductionScheduleDO existingSchedule = productionScheduleMapper.selectById(updateReqVO.getId());
+        if (existingSchedule == null) {
+            throw exception(PRODUCTION_SCHEDULE_NOT_EXISTS);
+        }
         // 更新
         ProductionScheduleDO updateObj = BeanUtils.toBean(updateReqVO, ProductionScheduleDO.class);
+        // 保持排程单号不变（排程单号创建后不允许修改）
+        updateObj.setScheduleNo(existingSchedule.getScheduleNo());
         productionScheduleMapper.updateById(updateObj);
     }
 
