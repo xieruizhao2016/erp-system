@@ -101,4 +101,13 @@ public class MrpParamsController {
                         BeanUtils.toBean(list, MrpParamsRespVO.class));
     }
 
+    @PostMapping("/generate-default")
+    @Operation(summary = "生成默认MRP参数")
+    @PreAuthorize("@ss.hasPermission('erp:mrp-params:generate-default')")
+    @ApiAccessLog(operateType = OTHER)
+    public CommonResult<Integer> generateDefaultParams() {
+        Integer count = mrpParamsService.generateDefaultParams();
+        return success(count);
+    }
+
 }

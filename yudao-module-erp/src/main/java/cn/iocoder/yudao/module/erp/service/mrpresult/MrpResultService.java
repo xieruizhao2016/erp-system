@@ -59,4 +59,12 @@ public interface MrpResultService {
      */
     PageResult<MrpResultDO> getMrpResultPage(MrpResultPageReqVO pageReqVO);
 
+    /**
+     * 执行MRP运算
+     *
+     * @param calculationReqVO MRP运算请求参数
+     * @return MRP运算结果
+     */
+    MrpCalculationResultVO executeMrpCalculation(@Valid MrpCalculationReqVO calculationReqVO);
+
 }

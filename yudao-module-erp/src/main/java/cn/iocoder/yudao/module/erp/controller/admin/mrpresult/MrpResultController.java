@@ -24,6 +24,7 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
+import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.OTHER;
 
 import cn.iocoder.yudao.module.erp.controller.admin.mrpresult.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.mrpresult.MrpResultDO;
@@ -99,6 +100,15 @@ public class MrpResultController {
         // 导出 Excel
         ExcelUtils.write(response, "ERP MRP运算结果.xls", "数据", MrpResultRespVO.class,
                         BeanUtils.toBean(list, MrpResultRespVO.class));
+    }
+
+    @PostMapping("/execute")
+    @Operation(summary = "执行MRP运算")
+    @PreAuthorize("@ss.hasPermission('erp:mrp-result:execute')")
+    @ApiAccessLog(operateType = OTHER)
+    public CommonResult<MrpCalculationResultVO> executeMrpCalculation(@Valid @RequestBody MrpCalculationReqVO calculationReqVO) {
+        MrpCalculationResultVO result = mrpResultService.executeMrpCalculation(calculationReqVO);
+        return success(result);
     }
 
 }

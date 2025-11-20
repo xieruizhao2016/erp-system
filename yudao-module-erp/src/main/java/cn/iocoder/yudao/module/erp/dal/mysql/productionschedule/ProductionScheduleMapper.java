@@ -29,9 +29,9 @@ public interface ProductionScheduleMapper extends BaseMapperX<ProductionSchedule
                 .eqIfPresent(ProductionScheduleDO::getTotalOrders, reqVO.getTotalOrders())
                 .eqIfPresent(ProductionScheduleDO::getTotalQuantity, reqVO.getTotalQuantity())
                 .eqIfPresent(ProductionScheduleDO::getTotalWorkHours, reqVO.getTotalWorkHours())
-                .eqIfPresent(ProductionScheduleDO::getCreatedBy, reqVO.getCreatedBy())
+                .eqIfPresent(ProductionScheduleDO::getCreator, reqVO.getCreatedBy())
                 .betweenIfPresent(ProductionScheduleDO::getCreateTime, reqVO.getCreateTime())
-                .eqIfPresent(ProductionScheduleDO::getUpdatedBy, reqVO.getUpdatedBy())
+                .eqIfPresent(ProductionScheduleDO::getUpdater, reqVO.getUpdatedBy())
                 .orderByDesc(ProductionScheduleDO::getId));
     }
 

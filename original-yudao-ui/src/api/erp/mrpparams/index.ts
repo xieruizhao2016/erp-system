@@ -47,5 +47,10 @@ export const MrpParamsApi = {
   // 导出ERP MRP参数 Excel
   exportMrpParams: async (params) => {
     return await request.download({ url: `/erp/mrp-params/export-excel`, params })
+  },
+
+  // 生成默认MRP参数
+  generateDefaultParams: async () => {
+    return await request.post({ url: `/erp/mrp-params/generate-default` })
   }
 }

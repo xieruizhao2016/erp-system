@@ -49,22 +49,20 @@
       <el-form-item label="计划开始日期" prop="startDate">
         <el-date-picker
           v-model="queryParams.startDate"
-          value-format="YYYY-MM-DD HH:mm:ss"
+          value-format="YYYY-MM-DD"
           type="daterange"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
-          :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
           class="!w-220px"
         />
       </el-form-item>
       <el-form-item label="计划结束日期" prop="endDate">
         <el-date-picker
           v-model="queryParams.endDate"
-          value-format="YYYY-MM-DD HH:mm:ss"
+          value-format="YYYY-MM-DD"
           type="daterange"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
-          :default-time="[new Date('1 00:00:00'), new Date('1 23:59:59')]"
           class="!w-220px"
         />
       </el-form-item>

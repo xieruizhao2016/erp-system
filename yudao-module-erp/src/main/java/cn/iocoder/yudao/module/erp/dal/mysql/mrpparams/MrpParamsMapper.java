@@ -29,4 +29,8 @@ public interface MrpParamsMapper extends BaseMapperX<MrpParamsDO> {
                 .orderByDesc(MrpParamsDO::getId));
     }
 
+    default MrpParamsDO selectByParamCode(String paramCode) {
+        return selectOne(MrpParamsDO::getParamCode, paramCode);
+    }
+
 }

@@ -9,6 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 
 import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
+import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY;
 import java.time.LocalDate;
 
 @Schema(description = "管理后台 - ERP 生产排程主分页 Request VO")
@@ -28,11 +29,11 @@ public class ProductionSchedulePageReqVO extends PageParam {
     private Integer planningHorizonDays;
 
     @Schema(description = "计划开始日期")
-    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
+    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY)
     private LocalDate[] startDate;
 
     @Schema(description = "计划结束日期")
-    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
+    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY)
     private LocalDate[] endDate;
 
     @Schema(description = "状态：1-草稿，2-已发布，3-执行中，4-已完成", example = "1")

@@ -71,6 +71,15 @@
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
         <el-button
+          type="warning"
+          plain
+          @click="handleGenerateDefault"
+          :loading="generateLoading"
+          v-hasPermi="['erp:mrp-params:generate-default']"
+        >
+          <Icon icon="ep:magic-stick" class="mr-5px" /> 生成默认参数
+        </el-button>
+        <el-button
           type="primary"
           plain
           @click="openForm('create')"
@@ -193,6 +202,7 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const generateLoading = ref(false) // 生成默认参数的加载中
 
 /** 查询列表 */
 const getList = async () => {
@@ -266,6 +276,24 @@ const handleExport = async () => {
   } catch {
   } finally {
     exportLoading.value = false
+  }
+}
+
+/** 生成默认参数 */
+const handleGenerateDefault = async () => {
+  try {
+    // 二次确认
+    await message.confirm('确认要生成默认MRP参数吗？如果参数已存在则不会重复生成。', '系统提示')
+    // 发起请求
+    generateLoading.value = true
+    const count = await MrpParamsApi.generateDefaultParams()
+    message.success(`成功生成${count}个默认参数`)
+    // 刷新列表
+    await getList()
+  } catch (error) {
+    console.error('生成默认参数失败:', error)
+  } finally {
+    generateLoading.value = false
   }
 }
 

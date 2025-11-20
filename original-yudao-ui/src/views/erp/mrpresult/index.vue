@@ -211,6 +211,14 @@
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
         <el-button
+          type="warning"
+          plain
+          @click="openExecuteDialog"
+          v-hasPermi="['erp:mrp-result:execute']"
+        >
+          <Icon icon="ep:cpu" class="mr-5px" /> 执行MRP运算
+        </el-button>
+        <el-button
           type="primary"
           plain
           @click="openForm('create')"
@@ -328,6 +336,107 @@
 
   <!-- 表单弹窗：添加/修改 -->
   <MrpResultForm ref="formRef" @success="getList" />
+  
+  <!-- MRP运算参数对话框 -->
+  <Dialog title="执行MRP运算" v-model="executeDialogVisible" width="600px">
+    <el-form
+      ref="executeFormRef"
+      :model="executeFormData"
+      :rules="executeFormRules"
+      label-width="120px"
+      v-loading="executeLoading"
+    >
+      <el-form-item label="计划开始日期" prop="planStartDate">
+        <el-date-picker
+          v-model="executeFormData.planStartDate"
+          type="datetime"
+          value-format="x"
+          placeholder="选择计划开始日期"
+          style="width: 100%"
+        />
+      </el-form-item>
+      <el-form-item label="计划结束日期" prop="planEndDate">
+        <el-date-picker
+          v-model="executeFormData.planEndDate"
+          type="datetime"
+          value-format="x"
+          placeholder="选择计划结束日期"
+          style="width: 100%"
+        />
+      </el-form-item>
+      <el-form-item label="包含产品" prop="productIds">
+        <el-select
+          v-model="executeFormData.productIds"
+          placeholder="请选择产品（不选则计算所有）"
+          clearable
+          filterable
+          multiple
+          style="width: 100%"
+        >
+          <el-option
+            v-for="item in productList"
+            :key="item.id"
+            :label="item.name || `产品${item.id}`"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="考虑安全库存" prop="considerSafetyStock">
+        <el-switch v-model="executeFormData.considerSafetyStock" />
+      </el-form-item>
+      <el-form-item label="考虑在途数量" prop="considerInTransit">
+        <el-switch v-model="executeFormData.considerInTransit" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="handleExecuteMrp" type="primary" :loading="executeLoading" :disabled="executeLoading">
+        <Icon icon="ep:cpu" class="mr-5px" /> 开始运算
+      </el-button>
+      <el-button @click="executeDialogVisible = false">取 消</el-button>
+    </template>
+  </Dialog>
+  
+  <!-- MRP运算结果对话框 -->
+  <Dialog title="MRP运算结果" v-model="resultDialogVisible" width="1200px">
+    <el-descriptions :column="2" border>
+      <el-descriptions-item label="运算批次号">{{ mrpResult?.runNo }}</el-descriptions-item>
+      <el-descriptions-item label="运算状态">
+        <el-tag :type="mrpResult?.success ? 'success' : 'danger'">
+          {{ mrpResult?.success ? '成功' : '失败' }}
+        </el-tag>
+      </el-descriptions-item>
+      <el-descriptions-item label="运算耗时">{{ mrpResult?.calculationTime }}ms</el-descriptions-item>
+      <el-descriptions-item label="处理产品数">{{ mrpResult?.statistics?.totalProducts }}</el-descriptions-item>
+      <el-descriptions-item label="需要生产">{{ mrpResult?.statistics?.needProductionCount }}</el-descriptions-item>
+      <el-descriptions-item label="需要采购">{{ mrpResult?.statistics?.needPurchaseCount }}</el-descriptions-item>
+      <el-descriptions-item label="库存充足">{{ mrpResult?.statistics?.sufficientStockCount }}</el-descriptions-item>
+      <el-descriptions-item label="运算消息" :span="2">{{ mrpResult?.message }}</el-descriptions-item>
+    </el-descriptions>
+    
+    <el-divider content-position="left">运算明细</el-divider>
+    
+    <el-table :data="mrpResult?.results" border style="width: 100%" max-height="400">
+      <el-table-column prop="productName" label="产品名称" min-width="120" />
+      <el-table-column prop="grossRequirement" label="毛需求" width="100" align="right" />
+      <el-table-column prop="onHandInventory" label="现有库存" width="100" align="right" />
+      <el-table-column prop="scheduledReceipts" label="计划接收" width="100" align="right" />
+      <el-table-column prop="netRequirement" label="净需求" width="100" align="right" />
+      <el-table-column prop="plannedOrderReleases" label="计划订单" width="100" align="right" />
+      <el-table-column prop="orderType" label="订单类型" width="100" align="center">
+        <template #default="scope">
+          <el-tag :type="scope.row.orderType === 1 ? 'primary' : 'success'">
+            {{ scope.row.orderType === 1 ? '生产订单' : '采购订单' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="suggestion" label="建议操作" min-width="200" />
+    </el-table>
+    
+    <template #footer>
+      <el-button @click="resultDialogVisible = false">关 闭</el-button>
+      <el-button type="primary" @click="handleViewResults">查看运算结果</el-button>
+    </template>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -451,6 +560,90 @@ const handleExport = async () => {
   } finally {
     exportLoading.value = false
   }
+}
+
+// ==================== MRP运算相关 ====================
+
+// MRP运算对话框
+const executeDialogVisible = ref(false)
+const executeLoading = ref(false)
+const executeFormRef = ref()
+const executeFormData = ref({
+  planStartDate: undefined,
+  planEndDate: undefined,
+  productIds: [],
+  considerSafetyStock: true,
+  considerInTransit: true
+})
+const executeFormRules = reactive({
+  planStartDate: [{ required: true, message: '计划开始日期不能为空', trigger: 'change' }],
+  planEndDate: [{ required: true, message: '计划结束日期不能为空', trigger: 'change' }]
+})
+
+// MRP运算结果对话框
+const resultDialogVisible = ref(false)
+const mrpResult = ref<any>(null)
+
+/** 打开MRP运算对话框 */
+const openExecuteDialog = () => {
+  // 设置默认日期：当前日期到3个月后
+  const now = new Date()
+  const threeMonthsLater = new Date()
+  threeMonthsLater.setMonth(now.getMonth() + 3)
+  
+  executeFormData.value = {
+    planStartDate: now.getTime(),
+    planEndDate: threeMonthsLater.getTime(),
+    productIds: [],
+    considerSafetyStock: true,
+    considerInTransit: true
+  }
+  executeDialogVisible.value = true
+}
+
+/** 执行MRP运算 */
+const handleExecuteMrp = async () => {
+  // 校验表单
+  await executeFormRef.value.validate()
+  
+  try {
+    executeLoading.value = true
+    
+    // 转换时间格式
+    const requestData = {
+      planStartDate: new Date(executeFormData.value.planStartDate).toISOString().replace('T', ' ').substring(0, 19),
+      planEndDate: new Date(executeFormData.value.planEndDate).toISOString().replace('T', ' ').substring(0, 19),
+      productIds: executeFormData.value.productIds.length > 0 ? executeFormData.value.productIds : null,
+      considerSafetyStock: executeFormData.value.considerSafetyStock,
+      considerInTransit: executeFormData.value.considerInTransit
+    }
+    
+    // 调用API
+    const result = await MrpResultApi.executeMrpCalculation(requestData)
+    mrpResult.value = result
+    
+    // 关闭参数对话框，打开结果对话框
+    executeDialogVisible.value = false
+    resultDialogVisible.value = true
+    
+    if (result.success) {
+      message.success('MRP运算完成')
+    } else {
+      message.error(result.message || 'MRP运算失败')
+    }
+  } catch (error) {
+    console.error('MRP运算失败:', error)
+    message.error('MRP运算失败')
+  } finally {
+    executeLoading.value = false
+  }
+}
+
+/** 查看运算结果 */
+const handleViewResults = () => {
+  resultDialogVisible.value = false
+  // 刷新列表，显示新的运算结果
+  getList()
 }
 
 // 加载数据列表

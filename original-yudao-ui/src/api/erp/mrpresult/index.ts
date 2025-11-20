@@ -58,5 +58,10 @@ export const MrpResultApi = {
   // 导出ERP MRP运算结果 Excel
   exportMrpResult: async (params) => {
     return await request.download({ url: `/erp/mrp-result/export-excel`, params })
+  },
+
+  // 执行MRP运算
+  executeMrpCalculation: async (data: any) => {
+    return await request.post({ url: `/erp/mrp-result/execute`, data })
   }
 }

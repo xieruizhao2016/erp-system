@@ -69,14 +69,17 @@ public class ProductionScheduleDO extends BaseDO {
      * 总工时
      */
     private Integer totalWorkHours;
+    
     /**
-     * 创建人
+     * 创建人（覆盖BaseDO的creator字段，映射到数据库的created_by字段）
      */
-    private String createdBy;
+    @TableField(value = "created_by", fill = FieldFill.INSERT, jdbcType = org.apache.ibatis.type.JdbcType.VARCHAR)
+    private String creator;
+    
     /**
-     * 更新人
+     * 更新人（覆盖BaseDO的updater字段，映射到数据库的updated_by字段）
      */
-    private String updatedBy;
-
+    @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE, jdbcType = org.apache.ibatis.type.JdbcType.VARCHAR)
+    private String updater;
 
 }

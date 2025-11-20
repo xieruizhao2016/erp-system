@@ -59,4 +59,11 @@ public interface MrpParamsService {
      */
     PageResult<MrpParamsDO> getMrpParamsPage(MrpParamsPageReqVO pageReqVO);
 
+    /**
+     * 生成默认MRP参数
+     * 
+     * @return 生成的参数数量
+     */
+    Integer generateDefaultParams();
+
 }
