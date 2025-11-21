@@ -49,6 +49,14 @@ public class ErpProductDO extends BaseDO {
      */
     private Long unitId;
     /**
+     * 产品包装编号
+     */
+    private Long packageId;
+    /**
+     * 产品OEM编号
+     */
+    private Long oemId;
+    /**
      * 产品状态
      *
      * 枚举 {@link cn.iocoder.yudao.framework.common.enums.CommonStatusEnum}

@@ -75,6 +75,18 @@ public class ErpCustomerRespVO {
     @ExcelProperty("开户地址")
     private String bankAddress;
 
+    @Schema(description = "收货地址", example = "上海市浦东新区张江高科技园区")
+    @ExcelProperty("收货地址")
+    private String shippingAddress;
+
+    @Schema(description = "付款方式", example = "月结")
+    @ExcelProperty("付款方式")
+    private String paymentMethod;
+
+    @Schema(description = "客户要求", example = "需要提前通知发货")
+    @ExcelProperty("客户要求")
+    private String customerRequirements;
+
     @Schema(description = "创建时间", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;

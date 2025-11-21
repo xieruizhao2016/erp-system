@@ -45,6 +45,46 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
+          <el-form-item label="产品包装" prop="packageId">
+            <el-select
+              v-model="formData.packageId"
+              clearable
+              filterable
+              placeholder="请选择产品包装（可选）"
+              class="w-1/1"
+            >
+              <el-option
+                v-for="pkg in packageList"
+                :key="pkg.id"
+                :label="pkg.packageName"
+                :value="pkg.id"
+              >
+                <span>{{ pkg.packageCode }} - {{ pkg.packageName }}</span>
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="产品OEM" prop="oemId">
+            <el-select
+              v-model="formData.oemId"
+              clearable
+              filterable
+              placeholder="请选择产品OEM（可选）"
+              class="w-1/1"
+            >
+              <el-option
+                v-for="oem in oemList"
+                :key="oem.id"
+                :label="oem.oemName"
+                :value="oem.id"
+              >
+                <span>{{ oem.oemCode }} - {{ oem.oemName }}</span>
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-radio-group v-model="formData.status">
               <el-radio
@@ -133,6 +173,8 @@
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
 import { ProductCategoryApi, ProductCategoryVO } from '@/api/erp/product/category'
 import { ProductUnitApi, ProductUnitVO } from '@/api/erp/product/unit'
+import { ProductPackageApi, ProductPackageVO } from '@/api/erp/productpackage'
+import { ProductOemApi, ProductOemVO } from '@/api/erp/productoem'
 import { CommonStatusEnum } from '@/utils/constants'
 import { defaultProps, handleTree } from '@/utils/tree'
 import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
@@ -153,6 +195,9 @@ const formData = ref({
   barCode: undefined,
   categoryId: undefined,
   unitId: undefined,
+  skuId: undefined,
+  packageId: undefined,
+  oemId: undefined,
   status: undefined,
   standard: undefined,
   remark: undefined,
@@ -172,6 +217,8 @@ const formRules = reactive({
 const formRef = ref() // 表单 Ref
 const categoryList = ref<ProductCategoryVO[]>([]) // 产品分类列表
 const unitList = ref<ProductUnitVO[]>([]) // 产品单位列表
+const packageList = ref<ProductPackageVO[]>([]) // 产品包装列表
+const oemList = ref<ProductOemVO[]>([]) // 产品OEM列表
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
@@ -193,6 +240,19 @@ const open = async (type: string, id?: number) => {
   categoryList.value = handleTree(categoryData, 'id', 'parentId')
   // 产品单位
   unitList.value = await ProductUnitApi.getProductUnitSimpleList()
+  // 产品SKU列表
+  // 产品包装列表
+  try {
+    packageList.value = await ProductPackageApi.getSimpleList()
+  } catch (error) {
+    console.error('加载产品包装列表失败:', error)
+  }
+  // 产品OEM列表
+  try {
+    oemList.value = await ProductOemApi.getSimpleList()
+  } catch (error) {
+    console.error('加载产品OEM列表失败:', error)
+  }
 }
 defineExpose({ open }) // 提供 open 方法，用于打开弹窗
 
@@ -228,6 +288,9 @@ const resetForm = () => {
     barCode: undefined,
     categoryId: undefined,
     unitId: undefined,
+    skuId: undefined,
+    packageId: undefined,
+    oemId: undefined,
     status: CommonStatusEnum.ENABLE,
     standard: undefined,
     remark: undefined,

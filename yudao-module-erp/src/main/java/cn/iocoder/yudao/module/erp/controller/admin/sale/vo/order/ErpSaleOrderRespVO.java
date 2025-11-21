@@ -75,6 +75,14 @@ public class ErpSaleOrderRespVO {
     @ExcelProperty("备注")
     private String remark;
 
+    @Schema(description = "采购单号", example = "PO202511210001")
+    @ExcelProperty("采购单号")
+    private String purchaseOrderNo;
+
+    @Schema(description = "合同编号", example = "HT202511210001")
+    @ExcelProperty("合同编号")
+    private String contractNo;
+
     @Schema(description = "创建人", example = "芋道")
     private String creator;
     @Schema(description = "创建人名称", example = "芋道")

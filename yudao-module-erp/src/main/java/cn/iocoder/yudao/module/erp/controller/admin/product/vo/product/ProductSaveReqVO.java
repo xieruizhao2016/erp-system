@@ -30,6 +30,12 @@ public class ProductSaveReqVO {
     @NotNull(message = "单位编号不能为空")
     private Long unitId;
 
+    @Schema(description = "产品包装编号", example = "1")
+    private Long packageId;
+
+    @Schema(description = "产品OEM编号", example = "1")
+    private Long oemId;
+
     @Schema(description = "产品状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     @NotNull(message = "产品状态不能为空")
     private Integer status;

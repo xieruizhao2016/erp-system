@@ -146,6 +146,15 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     ErrorCode PRODUCT_UNIT_NAME_DUPLICATE = new ErrorCode(1_030_502_001, "已存在该名字的产品单位");
     ErrorCode PRODUCT_UNIT_EXITS_PRODUCT = new ErrorCode(1_030_502_002, "存在产品使用该单位，无法删除");
 
+    // ========== ERP 产品SKU 1-030-503-000 ==========
+    ErrorCode PRODUCT_SKU_NOT_EXISTS = new ErrorCode(1_030_503_000, "产品SKU不存在");
+
+    // ========== ERP 产品包装 1-030-504-000 ==========
+    ErrorCode PRODUCT_PACKAGE_NOT_EXISTS = new ErrorCode(1_030_504_000, "产品包装不存在");
+
+    // ========== ERP 产品OEM 1-030-505-000 ==========
+    ErrorCode PRODUCT_OEM_NOT_EXISTS = new ErrorCode(1_030_505_000, "产品OEM不存在");
+
     // ========== ERP 结算账户 1-030-600-000 ==========
     ErrorCode ACCOUNT_NOT_EXISTS = new ErrorCode(1_030_600_000, "结算账户不存在");
     ErrorCode ACCOUNT_NOT_ENABLE = new ErrorCode(1_030_600_001, "结算账户({})未启用");

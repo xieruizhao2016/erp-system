@@ -28,6 +28,8 @@ export interface SaleOrderVO {
   totalPrice: number // 合计金额，单位：元
   status: number // 状态
   remark: string // 备注
+  purchaseOrderNo: string // 采购单号
+  contractNo: string // 合同编号
   outCount: number // 销售出库数量
   returnCount: number // 销售退货数量
   items?: SaleOrderItemVO[] // 订单项列表

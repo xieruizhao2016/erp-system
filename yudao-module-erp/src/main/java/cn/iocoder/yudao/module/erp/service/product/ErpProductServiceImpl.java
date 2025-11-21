@@ -43,6 +43,12 @@ public class ErpProductServiceImpl implements ErpProductService {
     private ErpProductCategoryService productCategoryService;
     @Resource
     private ErpProductUnitService productUnitService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.productsku.ProductSkuService productSkuService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.productpackage.ProductPackageService productPackageService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.productoem.ProductOemService productOemService;
 
     @Override
     public Long createProduct(ProductSaveReqVO createReqVO) {
@@ -135,17 +141,36 @@ public class ErpProductServiceImpl implements ErpProductService {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
+        // 获取分类和单位Map
         Map<Long, ErpProductCategoryDO> categoryMap = productCategoryService.getProductCategoryMap(
                 convertSet(list, ErpProductDO::getCategoryId));
         Map<Long, ErpProductUnitDO> unitMap = productUnitService.getProductUnitMap(
                 convertSet(list, ErpProductDO::getUnitId));
+        
+        // 获取包装、OEM的编码Map
+        Map<Long, String> packageCodeMap = convertMap(
+                productPackageService.getProductPackageList(convertSet(list, ErpProductDO::getPackageId)),
+                cn.iocoder.yudao.module.erp.dal.dataobject.productpackage.ProductPackageDO::getId,
+                cn.iocoder.yudao.module.erp.dal.dataobject.productpackage.ProductPackageDO::getPackageCode);
+        Map<Long, String> oemCodeMap = convertMap(
+                productOemService.getProductOemList(convertSet(list, ErpProductDO::getOemId)),
+                cn.iocoder.yudao.module.erp.dal.dataobject.productoem.ProductOemDO::getId,
+                cn.iocoder.yudao.module.erp.dal.dataobject.productoem.ProductOemDO::getOemCode);
+        
         return BeanUtils.toBean(list, ErpProductRespVO.class, product -> {
+            // 设置分类和单位名称
             MapUtils.findAndThen(categoryMap, product.getCategoryId(),
-                    category -> {
-                        product.setCategoryName(category.getName());
-                    });
+                    category -> product.setCategoryName(category.getName()));
             MapUtils.findAndThen(unitMap, product.getUnitId(),
                     unit -> product.setUnitName(unit.getName()));
+            
+            // 设置包装、OEM编码
+            if (product.getPackageId() != null) {
+                product.setPackageCode(packageCodeMap.get(product.getPackageId()));
+            }
+            if (product.getOemId() != null) {
+                product.setOemCode(oemCodeMap.get(product.getOemId()));
+            }
         });
     }
 

@@ -61,6 +61,16 @@
             </el-select>
           </el-form-item>
         </el-col>
+        <el-col :span="8">
+          <el-form-item label="采购单号" prop="purchaseOrderNo">
+            <el-input v-model="formData.purchaseOrderNo" placeholder="请输入采购单号" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="合同编号" prop="contractNo">
+            <el-input v-model="formData.contractNo" placeholder="请输入合同编号" />
+          </el-form-item>
+        </el-col>
         <el-col :span="16">
           <el-form-item label="备注" prop="remark">
             <el-input
@@ -182,6 +192,8 @@ const formData = ref({
   discountPrice: 0,
   totalPrice: 0,
   depositPrice: 0,
+  purchaseOrderNo: undefined,
+  contractNo: undefined,
   items: [],
   no: undefined // 订单单号，后端返回
 })
@@ -282,6 +294,8 @@ const resetForm = () => {
     discountPrice: 0,
     totalPrice: 0,
     depositPrice: 0,
+    purchaseOrderNo: undefined,
+    contractNo: undefined,
     items: []
   }
   formRef.value?.resetFields()

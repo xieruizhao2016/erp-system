@@ -42,6 +42,12 @@ public class ErpSaleOrderSaveReqVO {
     @Schema(description = "备注", example = "你猜")
     private String remark;
 
+    @Schema(description = "采购单号", example = "PO202511210001")
+    private String purchaseOrderNo;
+
+    @Schema(description = "合同编号", example = "HT202511210001")
+    private String contractNo;
+
     @Schema(description = "订单清单列表")
     private List<Item> items;
 

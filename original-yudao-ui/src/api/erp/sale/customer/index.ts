@@ -17,6 +17,9 @@ export interface CustomerVO {
   bankName: string // 开户行
   bankAccount: string // 开户账号
   bankAddress: string // 开户地址
+  shippingAddress: string // 收货地址
+  paymentMethod: string // 付款方式
+  customerRequirements: string // 客户要求
 }
 
 // ERP 客户 API

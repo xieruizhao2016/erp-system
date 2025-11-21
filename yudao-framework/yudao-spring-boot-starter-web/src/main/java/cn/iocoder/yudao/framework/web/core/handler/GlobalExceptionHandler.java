@@ -398,17 +398,17 @@ public class GlobalExceptionHandler {
             return CommonResult.error(NOT_IMPLEMENTED.getCode(),
                     "[微信公众号 yudao-module-mp - 表结构未导入][参考 https://cloud.iocoder.cn/mp/build/ 开启]");
         }
-        // 4. 商城系统
-        if (StrUtil.containsAny(message, "product_", "promotion_", "trade_")) {
-            log.error("[商城系统 yudao-module-mall - 已禁用][参考 https://cloud.iocoder.cn/mall/build/ 开启]");
-            return CommonResult.error(NOT_IMPLEMENTED.getCode(),
-                    "[商城系统 yudao-module-mall - 已禁用][参考 https://cloud.iocoder.cn/mall/build/ 开启]");
-        }
-        // 5. ERP 系统
+        // 4. ERP 系统（优先检查，因为ERP表名可能包含product_等关键字）
         if (message.contains("erp_")) {
             log.error("[ERP 系统 yudao-module-erp - 表结构未导入][参考 https://cloud.iocoder.cn/erp/build/ 开启]");
             return CommonResult.error(NOT_IMPLEMENTED.getCode(),
                     "[ERP 系统 yudao-module-erp - 表结构未导入][参考 https://cloud.iocoder.cn/erp/build/ 开启]");
+        }
+        // 5. 商城系统（在ERP之后检查，避免误判erp_product_xxx表）
+        if (StrUtil.containsAny(message, "product_", "promotion_", "trade_")) {
+            log.error("[商城系统 yudao-module-mall - 已禁用][参考 https://cloud.iocoder.cn/mall/build/ 开启]");
+            return CommonResult.error(NOT_IMPLEMENTED.getCode(),
+                    "[商城系统 yudao-module-mall - 已禁用][参考 https://cloud.iocoder.cn/mall/build/ 开启]");
         }
         // 6. CRM 系统
         if (message.contains("crm_")) {

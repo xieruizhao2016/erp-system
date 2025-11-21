@@ -86,6 +86,7 @@
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductBomApi, ProductBom } from '@/api/erp/productbom'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import { formatDate } from '@/utils/formatTime'
 
 /** ERP BOM主 表单 */
 defineOptions({ name: 'ProductBomForm' })
@@ -117,6 +118,63 @@ const formRules = reactive({
 })
 const formRef = ref() // 表单 Ref
 const productList = ref<ProductVO[]>([]) // 产品列表
+
+/**
+ * 生成BOM编号
+ * 规则：BOM + 产品编号 + 日期(YYYYMMDD) + 序号(2位)
+ */
+const generateBomNo = (product: ProductVO): string => {
+  const dateStr = formatDate(new Date(), 'YYYYMMDD')
+  const productNo = product.code || product.id?.toString().padStart(4, '0') || '0000'
+  // 序号默认为01，实际使用中可以根据已有BOM数量递增
+  const seq = '01'
+  return `BOM-${productNo}-${dateStr}-${seq}`
+}
+
+/**
+ * 监听产品选择变化，自动填充默认值
+ * 仅在新增模式下生效
+ */
+watch(
+  () => formData.value.productId,
+  (newProductId) => {
+    // 只在新增模式下且productId有值时才自动填充
+    if (formType.value === 'create' && newProductId) {
+      const selectedProduct = productList.value.find((p) => p.id === newProductId)
+      if (selectedProduct) {
+        // 1. BOM编号：系统生成（可修改）
+        if (!formData.value.bomNo) {
+          formData.value.bomNo = generateBomNo(selectedProduct)
+        }
+        
+        // 2. BOM名称：默认"产品名称+BOM"（可修改）
+        if (!formData.value.bomName) {
+          formData.value.bomName = `${selectedProduct.name}-BOM`
+        }
+        
+        // 3. 版本号：默认1.0（可修改）
+        if (!formData.value.version) {
+          formData.value.version = '1.0'
+        }
+        
+        // 4. 状态：默认生效(2)（可修改）
+        if (formData.value.status === undefined) {
+          formData.value.status = 2 // 生效
+        }
+        
+        // 5. BOM类型：默认生产BOM(1)（可修改）
+        if (formData.value.bomType === undefined) {
+          formData.value.bomType = 1 // 生产BOM
+        }
+        
+        // 6. 生效日期：默认当前日期（可修改）
+        if (!formData.value.effectiveDate) {
+          formData.value.effectiveDate = new Date().getTime()
+        }
+      }
+    }
+  }
+)
 
 /** 加载列表数据 */
 const loadListData = async () => {

@@ -40,6 +40,18 @@ public class ErpProductRespVO {
     @ExcelProperty("单位")
     private String unitName;
 
+    @Schema(description = "产品包装编号", example = "1")
+    private Long packageId;
+    @Schema(description = "产品包装编码", example = "PKG001")
+    @ExcelProperty("产品包装编码")
+    private String packageCode;
+
+    @Schema(description = "产品OEM编号", example = "1")
+    private Long oemId;
+    @Schema(description = "产品OEM编码", example = "OEM001")
+    @ExcelProperty("产品OEM编码")
+    private String oemCode;
+
     @Schema(description = "产品状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     @ExcelProperty("产品状态")
     private Integer status;

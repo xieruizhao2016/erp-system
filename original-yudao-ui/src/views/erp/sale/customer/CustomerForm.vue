@@ -92,6 +92,25 @@
             <el-input v-model="formData.bankAddress" placeholder="请输入开户地址" />
           </el-form-item>
         </el-col>
+        <el-col :span="12">
+          <el-form-item label="收货地址" prop="shippingAddress">
+            <el-input v-model="formData.shippingAddress" placeholder="请输入收货地址" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="付款方式" prop="paymentMethod">
+            <el-select v-model="formData.paymentMethod" placeholder="请选择付款方式" class="!w-1/1">
+              <el-option label="现结" value="现结" />
+              <el-option label="月结" value="月结" />
+              <el-option label="年结" value="年结" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
+          <el-form-item label="客户要求" prop="customerRequirements">
+            <el-input type="textarea" v-model="formData.customerRequirements" placeholder="请输入客户要求" :rows="3" />
+          </el-form-item>
+        </el-col>
         <el-col :span="24">
           <el-form-item label="备注" prop="remark">
             <el-input type="textarea" v-model="formData.remark" placeholder="请输入备注" />
@@ -135,7 +154,10 @@ const formData = ref({
   taxPercent: undefined,
   bankName: undefined,
   bankAccount: undefined,
-  bankAddress: undefined
+  bankAddress: undefined,
+  shippingAddress: undefined,
+  paymentMethod: undefined,
+  customerRequirements: undefined
 })
 const formRules = reactive({
   name: [{ required: true, message: '客户名称不能为空', trigger: 'blur' }],
@@ -203,7 +225,10 @@ const resetForm = () => {
     taxPercent: undefined,
     bankName: undefined,
     bankAccount: undefined,
-    bankAddress: undefined
+    bankAddress: undefined,
+    shippingAddress: undefined,
+    paymentMethod: undefined,
+    customerRequirements: undefined
   }
   formRef.value?.resetFields()
 }

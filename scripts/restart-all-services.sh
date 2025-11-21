@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-PROJECT_ROOT="/Users/RUIZHAO/Documents/Project/erp-system"
+PROJECT_ROOT="/Users/xierui/Documents/Project/erp-system"
 
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}重启所有服务${NC}"

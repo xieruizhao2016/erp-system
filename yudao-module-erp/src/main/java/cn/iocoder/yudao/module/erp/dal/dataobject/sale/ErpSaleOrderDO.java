@@ -107,6 +107,15 @@ public class ErpSaleOrderDO extends BaseDO {
      */
     private String remark;
 
+    /**
+     * 采购单号
+     */
+    private String purchaseOrderNo;
+    /**
+     * 合同编号
+     */
+    private String contractNo;
+
     // ========== 销售出库 ==========
     /**
      * 销售出库数量

@@ -94,7 +94,7 @@
             v-model="scope.row.defaultStatus"
             :active-value="true"
             :inactive-value="false"
-            @change="handleDefaultStatusChange(scope.row)"
+            :before-change="(newValue: boolean) => handleDefaultStatusChange(scope.row, newValue)"
           />
         </template>
       </el-table-column>
@@ -105,7 +105,7 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="操作" align="center">
+      <el-table-column label="操作" align="center" width="150px" fixed="right">
         <template #default="scope">
           <el-button
             link
@@ -115,6 +115,7 @@
           >
             编辑
           </el-button>
+          <el-divider direction="vertical" />
           <el-button
             link
             type="danger"
@@ -164,16 +165,22 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const isInitializing = ref(false) // 是否正在初始化数据，用于防止数据加载时触发change事件
 
 /** 查询列表 */
 const getList = async () => {
   loading.value = true
+  isInitializing.value = true // 标记正在加载数据
   try {
     const data = await WarehouseApi.getWarehousePage(queryParams)
     list.value = data.list
     total.value = data.total
   } finally {
     loading.value = false
+    // 延迟一下再允许change事件，确保数据完全渲染完成
+    setTimeout(() => {
+      isInitializing.value = false
+    }, 100)
   }
 }
 
@@ -209,18 +216,23 @@ const handleDelete = async (id: number) => {
 }
 
 /** 修改默认状态 */
-const handleDefaultStatusChange = async (row: WarehouseVO) => {
+const handleDefaultStatusChange = async (row: WarehouseVO, newValue: boolean): Promise<boolean> => {
+  // 如果正在初始化数据，不处理change事件
+  if (isInitializing.value) {
+    return false
+  }
   try {
     // 修改状态的二次确认
-    const text = row.defaultStatus ? '设置' : '取消'
+    const text = newValue ? '设置' : '取消'
     await message.confirm('确认要' + text + '"' + row.name + '"默认吗?')
     // 发起修改状态
-    await WarehouseApi.updateWarehouseDefaultStatus(row.id, row.defaultStatus)
+    await WarehouseApi.updateWarehouseDefaultStatus(row.id, newValue)
     // 刷新列表
     await getList()
+    return true // 允许状态改变
   } catch (e) {
-    // 取消后，进行恢复按钮
-    row.defaultStatus = !row.defaultStatus
+    // 用户取消，不允许状态改变
+    return false
   }
 }
 
