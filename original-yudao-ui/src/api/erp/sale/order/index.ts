@@ -4,6 +4,7 @@ import request from '@/config/axios'
 export interface SaleOrderItemVO {
   id?: number // 订单项编号
   productId?: number // 产品编号
+  skuId?: number // SKU编号（当产品有多个SKU时必填）
   productUnitId?: number // 产品单位编号
   productPrice?: number // 产品单价
   count?: number // 产品数量

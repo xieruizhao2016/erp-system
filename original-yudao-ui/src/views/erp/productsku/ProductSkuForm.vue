@@ -9,26 +9,7 @@
       v-loading="formLoading"
     >
       <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="关联产品" prop="productId">
-            <el-select
-              v-model="formData.productId"
-              clearable
-              filterable
-              placeholder="请选择产品（必填）"
-              class="w-1/1"
-            >
-              <el-option
-                v-for="product in productList"
-                :key="product.id"
-                :label="product.name"
-                :value="product.id"
-              >
-                <span>{{ product.name }} ({{ product.code || product.barCode || '' }})</span>
-              </el-option>
-            </el-select>
-          </el-form-item>
-        </el-col>
+        <!-- 移除产品关联字段，改为多对多关系，在产品表单中管理 -->
         <el-col :span="12">
           <el-form-item label="SKU编码" prop="skuCode">
             <el-input v-model="formData.skuCode" placeholder="请输入SKU编码" />
@@ -47,8 +28,13 @@
         <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-radio-group v-model="formData.status">
-              <el-radio :value="1">启用</el-radio>
-              <el-radio :value="0">禁用</el-radio>
+              <el-radio
+                v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
+                :key="dict.value"
+                :value="dict.value"
+              >
+                {{ dict.label }}
+              </el-radio>
             </el-radio-group>
           </el-form-item>
         </el-col>
@@ -207,8 +193,10 @@
 import { ProductSkuApi, ProductSkuVO } from '@/api/erp/productsku'
 import { ProductCategoryApi, ProductCategoryVO } from '@/api/erp/product/category'
 import { ProductUnitApi, ProductUnitVO } from '@/api/erp/product/unit'
-import { ProductApi } from '@/api/erp/product'
+import { ProductApi } from '@/api/erp/product/product'
 import { defaultProps, handleTree } from '@/utils/tree'
+import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
+import { CommonStatusEnum } from '@/utils/constants'
 
 /** ERP 产品SKU表单 */
 defineOptions({ name: 'ProductSkuForm' })
@@ -225,7 +213,7 @@ const formData = ref({
   skuCode: '',
   skuName: '',
   description: '',
-  status: 1,
+  status: CommonStatusEnum.ENABLE,
   categoryId: undefined,
   barCode: '',
   standard: '',
@@ -319,7 +307,7 @@ const resetForm = () => {
     skuCode: '',
     skuName: '',
     description: '',
-    status: 1,
+    status: CommonStatusEnum.ENABLE,
     categoryId: undefined,
     barCode: '',
     standard: '',

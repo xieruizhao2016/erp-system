@@ -6,6 +6,7 @@ import lombok.Data;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Schema(description = "管理后台 - ERP 产品新增/修改 Request VO")
 @Data
@@ -60,6 +61,9 @@ public class ProductSaveReqVO {
 
     @Schema(description = "最低价格，单位：元", example = "161.87")
     private BigDecimal minPrice;
+
+    @Schema(description = "关联的SKU ID列表（多对多关系）", example = "[1, 2, 3]")
+    private List<Long> skuIds;
 
     // 注意：产品类型已从产品分类中获取，此处不再需要用户输入
     // @Schema(description = "产品类型", example = "1")

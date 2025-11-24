@@ -16,9 +16,11 @@ import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpCustomerDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOrderDO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOrderItemDO;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
+import cn.iocoder.yudao.module.erp.service.productsku.ProductSkuService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpCustomerService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpSaleOrderService;
 import cn.iocoder.yudao.module.erp.service.stock.ErpStockService;
+import cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import cn.iocoder.yudao.module.system.api.user.dto.AdminUserRespDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +40,7 @@ import java.util.Map;
 
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMultiMap;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
@@ -53,6 +56,8 @@ public class ErpSaleOrderController {
     private ErpStockService stockService;
     @Resource
     private ErpProductService productService;
+    @Resource
+    private ProductSkuService productSkuService;
     @Resource
     private ErpCustomerService customerService;
 
@@ -144,10 +149,13 @@ public class ErpSaleOrderController {
         // 1.2 产品信息
         Map<Long, ErpProductRespVO> productMap = productService.getProductVOMap(
                 convertSet(saleOrderItemList, ErpSaleOrderItemDO::getProductId));
-        // 1.3 客户信息
+        // 1.3 SKU信息
+        Map<Long, ProductSkuDO> skuMap = convertMap(productSkuService.getProductSkuList(
+                convertSet(saleOrderItemList, ErpSaleOrderItemDO::getSkuId, item -> item.getSkuId() != null)), ProductSkuDO::getId);
+        // 1.4 客户信息
         Map<Long, ErpCustomerDO> customerMap = customerService.getCustomerMap(
                 convertSet(pageResult.getList(), ErpSaleOrderDO::getCustomerId));
-        // 1.4 管理员信息
+        // 1.5 管理员信息
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
                 convertSet(pageResult.getList(), saleOrder -> Long.parseLong(saleOrder.getCreator())));
         // 2. 开始拼接
@@ -155,7 +163,20 @@ public class ErpSaleOrderController {
             saleOrder.setItems(BeanUtils.toBean(saleOrderItemMap.get(saleOrder.getId()), ErpSaleOrderRespVO.Item.class,
                     item -> MapUtils.findAndThen(productMap, item.getProductId(), product -> item.setProductName(product.getName())
                             .setProductBarCode(product.getBarCode()).setProductUnitName(product.getUnitName()))));
-            saleOrder.setProductNames(CollUtil.join(saleOrder.getItems(), "，", ErpSaleOrderRespVO.Item::getProductName));
+            // 生成产品信息：产品名称+SKU编号（如果有SKU）
+            saleOrder.setProductNames(CollUtil.join(saleOrder.getItems(), "，", item -> {
+                String productName = item.getProductName();
+                if (item.getSkuId() != null) {
+                    ProductSkuDO sku = skuMap.get(item.getSkuId());
+                    if (sku != null) {
+                        // 优先使用SKU编码，如果没有则使用SKU名称
+                        String skuInfo = sku.getSkuCode() != null ? sku.getSkuCode() : 
+                                        (sku.getSkuName() != null ? sku.getSkuName() : sku.getId().toString());
+                        return productName + "(" + skuInfo + ")";
+                    }
+                }
+                return productName;
+            }));
             MapUtils.findAndThen(customerMap, saleOrder.getCustomerId(), supplier -> saleOrder.setCustomerName(supplier.getName()));
             MapUtils.findAndThen(userMap, Long.parseLong(saleOrder.getCreator()), user -> saleOrder.setCreatorName(user.getNickname()));
         });

@@ -16,6 +16,8 @@ import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 import cn.iocoder.yudao.module.erp.enums.ErpAuditStatus;
 import cn.iocoder.yudao.module.erp.service.finance.ErpAccountService;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
+import cn.iocoder.yudao.module.erp.service.productsku.ProductSkuService;
+import cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +59,8 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
     private ErpCustomerService customerService;
     @Resource
     private ErpAccountService accountService;
+    @Resource
+    private ProductSkuService productSkuService;
 
     @Resource
     private AdminUserApi adminUserApi;
@@ -169,7 +173,24 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
         List<ErpProductDO> productList = productService.validProductList(
                 convertSet(list, ErpSaleOrderSaveReqVO.Item::getProductId));
         Map<Long, ErpProductDO> productMap = convertMap(productList, ErpProductDO::getId);
-        // 2. 转化为 ErpSaleOrderItemDO 列表
+        // 2. 校验SKU（如果产品有多个SKU，skuId必填）
+        for (ErpSaleOrderSaveReqVO.Item item : list) {
+            if (item.getProductId() != null) {
+                List<ProductSkuDO> skuList = productSkuService.getProductSkuListByProductId(item.getProductId());
+                if (skuList != null && skuList.size() > 1) {
+                    // 如果产品有多个SKU，skuId必填
+                    if (item.getSkuId() == null) {
+                        throw exception(SALE_ORDER_ITEM_SKU_ID_REQUIRED, productMap.get(item.getProductId()).getName());
+                    }
+                    // 校验skuId是否属于该产品
+                    boolean skuExists = skuList.stream().anyMatch(sku -> sku.getId().equals(item.getSkuId()));
+                    if (!skuExists) {
+                        throw exception(SALE_ORDER_ITEM_SKU_INVALID, item.getSkuId(), productMap.get(item.getProductId()).getName());
+                    }
+                }
+            }
+        }
+        // 3. 转化为 ErpSaleOrderItemDO 列表
         return convertList(list, o -> BeanUtils.toBean(o, ErpSaleOrderItemDO.class, item -> {
             item.setProductUnitId(productMap.get(item.getProductId()).getUnitId());
             item.setTotalPrice(MoneyUtils.priceMultiply(item.getProductPrice(), item.getCount()));

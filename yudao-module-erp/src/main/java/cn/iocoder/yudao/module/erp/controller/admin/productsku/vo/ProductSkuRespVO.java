@@ -32,8 +32,8 @@ public class ProductSkuRespVO {
     @ExcelProperty("SKU描述")
     private String description;
 
-    @Schema(description = "状态：0-禁用，1-启用", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
-    @ExcelProperty("状态：0-禁用，1-启用")
+    @Schema(description = "状态：0-开启，1-关闭", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
+    @ExcelProperty("状态：0-开启，1-关闭")
     private Integer status;
 
     @Schema(description = "分类编号", example = "1")

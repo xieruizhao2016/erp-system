@@ -46,8 +46,8 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable class="!w-240px">
-          <el-option label="启用" :value="1" />
-          <el-option label="禁用" :value="0" />
+          <el-option label="开启" :value="0" />
+          <el-option label="关闭" :value="1" />
         </el-select>
       </el-form-item>
       <el-form-item>

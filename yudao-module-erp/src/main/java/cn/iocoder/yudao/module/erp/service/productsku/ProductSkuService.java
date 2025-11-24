@@ -75,11 +75,19 @@ public interface ProductSkuService {
     List<ProductSkuDO> getProductSkuList(Collection<Long> ids);
 
     /**
-     * 根据产品ID获得产品SKU列表
+     * 根据产品ID获得产品SKU列表（只返回启用的SKU）
      *
      * @param productId 产品ID
-     * @return 产品SKU列表
+     * @return 产品SKU列表（只包含启用的）
      */
     List<ProductSkuDO> getProductSkuListByProductId(Long productId);
+
+    /**
+     * 根据产品ID获得产品SKU列表（包含所有状态的SKU，用于编辑产品时显示）
+     *
+     * @param productId 产品ID
+     * @return 产品SKU列表（包含所有状态）
+     */
+    List<ProductSkuDO> getProductSkuListByProductIdAll(Long productId);
 
 }

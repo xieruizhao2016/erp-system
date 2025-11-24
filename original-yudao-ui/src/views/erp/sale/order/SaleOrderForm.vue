@@ -261,10 +261,15 @@ const submitForm = async () => {
   // 校验表单
   await formRef.value.validate()
   await itemFormRef.value.validate()
+  // 从子组件获取最新的订单项数据
+  const items = itemFormRef.value.getItems()
   // 提交请求
   formLoading.value = true
   try {
-    const data = formData.value as unknown as SaleOrderVO
+    const data = {
+      ...formData.value,
+      items
+    } as unknown as SaleOrderVO
     if (formType.value === 'create') {
       await SaleOrderApi.createSaleOrder(data)
       message.success(t('common.createSuccess'))

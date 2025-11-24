@@ -29,8 +29,8 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable class="!w-240px">
-          <el-option label="启用" :value="1" />
-          <el-option label="禁用" :value="0" />
+          <el-option label="开启" :value="0" />
+          <el-option label="关闭" :value="1" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -82,9 +82,7 @@
       />
       <el-table-column label="状态" align="center" prop="status" width="80">
         <template #default="scope">
-          <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
-            {{ scope.row.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
+          <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="排序" align="center" prop="sort" width="80" />
@@ -135,6 +133,8 @@ import download from '@/utils/download'
 import { ProductSkuApi, ProductSkuVO } from '@/api/erp/productsku'
 import ProductSkuForm from './ProductSkuForm.vue'
 import { erpPriceTableColumnFormatter } from '@/utils'
+import { DICT_TYPE } from '@/utils/dict'
+import { ElMessage } from 'element-plus'
 
 /** ERP 产品SKU列表 */
 defineOptions({ name: 'ErpProductSku' })
@@ -162,6 +162,16 @@ const getList = async () => {
     const data = await ProductSkuApi.getPage(queryParams)
     list.value = data.list
     total.value = data.total
+  } catch (error: any) {
+    // 如果API调用失败，显示错误信息
+    console.error('加载SKU列表失败:', error)
+    if (error?.response?.status === 404) {
+      ElMessage.error('SKU管理接口未找到，请检查后端服务配置')
+    } else {
+      ElMessage.error('加载SKU列表失败，请稍后重试')
+    }
+    list.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }

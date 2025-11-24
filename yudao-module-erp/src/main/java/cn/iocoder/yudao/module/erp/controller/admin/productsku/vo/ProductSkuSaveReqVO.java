@@ -13,8 +13,7 @@ public class ProductSkuSaveReqVO {
     @Schema(description = "SKU编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "23545")
     private Long id;
 
-    @Schema(description = "产品编号（关联产品）", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
-    @NotNull(message = "产品编号不能为空")
+    @Schema(description = "产品编号（关联产品，可选，支持多对多关系）", example = "1")
     private Long productId;
 
     @Schema(description = "SKU编码", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -28,8 +27,8 @@ public class ProductSkuSaveReqVO {
     @Schema(description = "SKU描述", example = "随便")
     private String description;
 
-    @Schema(description = "状态：0-禁用，1-启用", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
-    @NotNull(message = "状态：0-禁用，1-启用不能为空")
+    @Schema(description = "状态：0-开启，1-关闭", requiredMode = Schema.RequiredMode.REQUIRED, example = "0")
+    @NotNull(message = "状态不能为空")
     private Integer status;
 
     @Schema(description = "分类编号", example = "1")

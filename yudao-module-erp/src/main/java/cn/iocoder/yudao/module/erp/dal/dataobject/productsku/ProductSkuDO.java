@@ -50,7 +50,8 @@ public class ProductSkuDO extends BaseDO {
      */
     private String description;
     /**
-     * 状态：0-禁用，1-启用
+     * 状态：0-开启，1-关闭
+     * 关联 {@link cn.iocoder.yudao.framework.common.enums.CommonStatusEnum}
      */
     private Integer status;
     /**

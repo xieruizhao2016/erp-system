@@ -9,16 +9,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import cn.iocoder.yudao.module.erp.controller.admin.productsku.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuRelationDO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.productsku.ProductSkuMapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapperX;
+import cn.iocoder.yudao.module.erp.dal.mysql.productsku.ProductSkuRelationMapper;
+import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
 
 /**
@@ -32,6 +35,9 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     @Resource
     private ProductSkuMapper productSkuMapper;
+
+    @Resource
+    private ProductSkuRelationMapper productSkuRelationMapper;
 
     @Override
     public Long createProductSku(ProductSkuSaveReqVO createReqVO) {
@@ -101,13 +107,40 @@ public class ProductSkuServiceImpl implements ProductSkuService {
         if (productId == null) {
             return Collections.emptyList();
         }
-        return productSkuMapper.selectList(
-            new LambdaQueryWrapperX<ProductSkuDO>()
-                .eq(ProductSkuDO::getProductId, productId)
-                .eq(ProductSkuDO::getStatus, 1) // 只返回启用的SKU
-                .orderByAsc(ProductSkuDO::getSort)
-                .orderByDesc(ProductSkuDO::getId)
-        );
+        // 通过关联表查询SKU列表
+        List<ProductSkuRelationDO> relations = productSkuRelationMapper.selectListByProductId(productId);
+        if (CollUtil.isEmpty(relations)) {
+            return Collections.emptyList();
+        }
+        Set<Long> skuIdsSet = convertSet(relations, ProductSkuRelationDO::getSkuId);
+        List<Long> skuIds = new java.util.ArrayList<>(skuIdsSet);
+        List<ProductSkuDO> skuList = productSkuMapper.selectBatchIds(skuIds);
+        // 过滤启用的SKU并排序（CommonStatusEnum.ENABLE = 0）
+        return skuList.stream()
+                .filter(sku -> sku.getStatus() != null && sku.getStatus() == 0)
+                .sorted(Comparator.comparing(ProductSkuDO::getSort, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(ProductSkuDO::getId, Comparator.reverseOrder()))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public List<ProductSkuDO> getProductSkuListByProductIdAll(Long productId) {
+        if (productId == null) {
+            return Collections.emptyList();
+        }
+        // 通过关联表查询SKU列表（包含所有状态）
+        List<ProductSkuRelationDO> relations = productSkuRelationMapper.selectListByProductId(productId);
+        if (CollUtil.isEmpty(relations)) {
+            return Collections.emptyList();
+        }
+        Set<Long> skuIdsSet = convertSet(relations, ProductSkuRelationDO::getSkuId);
+        List<Long> skuIds = new java.util.ArrayList<>(skuIdsSet);
+        List<ProductSkuDO> skuList = productSkuMapper.selectBatchIds(skuIds);
+        // 排序（不过滤状态）
+        return skuList.stream()
+                .sorted(Comparator.comparing(ProductSkuDO::getSort, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(ProductSkuDO::getId, Comparator.reverseOrder()))
+                .collect(java.util.stream.Collectors.toList());
     }
 
 }

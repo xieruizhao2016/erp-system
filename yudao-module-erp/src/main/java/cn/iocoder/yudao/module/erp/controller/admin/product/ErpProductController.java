@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.erp.controller.admin.product;
 
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import lombok.extern.slf4j.Slf4j;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -23,12 +24,16 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+
+import cn.hutool.core.collection.CollUtil;
 
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
 
+@Slf4j
 @Tag(name = "管理后台 - ERP 产品")
 @RestController
 @RequestMapping("/erp/product")
@@ -37,11 +42,17 @@ public class ErpProductController {
 
     @Resource
     private ErpProductService productService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.productsku.ProductSkuService productSkuService;
 
     @PostMapping("/create")
     @Operation(summary = "创建产品")
     @PreAuthorize("@ss.hasPermission('erp:product:create')")
     public CommonResult<Long> createProduct(@Valid @RequestBody ProductSaveReqVO createReqVO) {
+        log.info("创建产品: productName={}, skuIds={}, skuIdsSize={}", 
+                createReqVO.getName(), 
+                createReqVO.getSkuIds(), 
+                createReqVO.getSkuIds() != null ? createReqVO.getSkuIds().size() : 0);
         return success(productService.createProduct(createReqVO));
     }
 
@@ -49,6 +60,10 @@ public class ErpProductController {
     @Operation(summary = "更新产品")
     @PreAuthorize("@ss.hasPermission('erp:product:update')")
     public CommonResult<Boolean> updateProduct(@Valid @RequestBody ProductSaveReqVO updateReqVO) {
+        log.info("更新产品: productId={}, skuIds={}, skuIdsSize={}", 
+                updateReqVO.getId(), 
+                updateReqVO.getSkuIds(), 
+                updateReqVO.getSkuIds() != null ? updateReqVO.getSkuIds().size() : 0);
         productService.updateProduct(updateReqVO);
         return success(true);
     }
@@ -68,7 +83,22 @@ public class ErpProductController {
     @PreAuthorize("@ss.hasPermission('erp:product:query')")
     public CommonResult<ErpProductRespVO> getProduct(@RequestParam("id") Long id) {
         ErpProductDO product = productService.getProduct(id);
-        return success(BeanUtils.toBean(product, ErpProductRespVO.class));
+        if (product == null) {
+            return success(null);
+        }
+        // 使用Service的方法构建VO，确保所有字段都正确填充
+        List<ErpProductRespVO> productVOList = productService.getProductVOList(Collections.singletonList(id));
+        ErpProductRespVO productVO = CollUtil.isNotEmpty(productVOList) ? productVOList.get(0) : null;
+        // 编辑产品时需要显示所有状态的SKU（包括禁用的），使用 getProductSkuListByProductIdAll
+        if (productVO != null) {
+            List<cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO> skuList = 
+                    productSkuService.getProductSkuListByProductIdAll(id);
+            if (skuList != null && !skuList.isEmpty()) {
+                productVO.setSkuList(BeanUtils.toBean(skuList, 
+                        cn.iocoder.yudao.module.erp.controller.admin.productsku.vo.ProductSkuRespVO.class));
+            }
+        }
+        return success(productVO);
     }
 
     @GetMapping("/page")
@@ -86,6 +116,8 @@ public class ErpProductController {
                 .setName(product.getName()).setBarCode(product.getBarCode())
                 .setCategoryId(product.getCategoryId()).setCategoryName(product.getCategoryName())
                 .setUnitId(product.getUnitId()).setUnitName(product.getUnitName())
+                .setPackageId(product.getPackageId()).setPackageCode(product.getPackageCode())
+                .setOemId(product.getOemId()).setOemCode(product.getOemCode())
                 .setPurchasePrice(product.getPurchasePrice()).setSalePrice(product.getSalePrice()).setMinPrice(product.getMinPrice())));
     }
 

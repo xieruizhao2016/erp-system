@@ -61,6 +61,9 @@ public class ErpSaleOrderSaveReqVO {
         @NotNull(message = "产品编号不能为空")
         private Long productId;
 
+        @Schema(description = "SKU编号（当产品有多个SKU时必填）", example = "3114")
+        private Long skuId;
+
         @Schema(description = "产品单位单位", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
         @NotNull(message = "产品单位单位不能为空")
         private Long productUnitId;

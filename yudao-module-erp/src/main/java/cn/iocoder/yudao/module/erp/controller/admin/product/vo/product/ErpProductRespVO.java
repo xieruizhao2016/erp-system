@@ -88,4 +88,7 @@ public class ErpProductRespVO {
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
 
+    @Schema(description = "关联的SKU列表（多对多关系）")
+    private java.util.List<cn.iocoder.yudao.module.erp.controller.admin.productsku.vo.ProductSkuRespVO> skuList;
+
 }

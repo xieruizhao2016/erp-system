@@ -64,6 +64,22 @@
       <el-table-column label="单位" align="center" prop="unitName" />
       <el-table-column label="包装编码" align="center" prop="packageCode" />
       <el-table-column label="OEM编码" align="center" prop="oemCode" />
+      <el-table-column label="SKU" align="center" min-width="200">
+        <template #default="scope">
+          <div v-if="scope.row.skuList && scope.row.skuList.length > 0" class="flex flex-wrap gap-1">
+            <el-tag
+              v-for="sku in scope.row.skuList"
+              :key="sku.id"
+              size="small"
+              type="info"
+              class="mb-1"
+            >
+              {{ sku.skuCode || sku.skuName || `SKU-${sku.id}` }}
+            </el-tag>
+          </div>
+          <span v-else class="text-gray-400">-</span>
+        </template>
+      </el-table-column>
       <el-table-column
         label="采购价格"
         align="center"
@@ -133,6 +149,7 @@ import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
 import { ProductCategoryApi, ProductCategoryVO } from '@/api/erp/product/category'
+import { ProductSkuVO } from '@/api/erp/productsku'
 import ProductForm from './ProductForm.vue'
 import { DICT_TYPE } from '@/utils/dict'
 import { defaultProps, handleTree } from '@/utils/tree'
@@ -164,6 +181,7 @@ const getList = async () => {
     const data = await ProductApi.getProductPage(queryParams)
     list.value = data.list
     total.value = data.total
+    // 后端已经在分页查询时返回了SKU列表，无需单独加载
   } finally {
     loading.value = false
   }

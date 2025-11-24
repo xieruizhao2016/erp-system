@@ -118,6 +118,9 @@ public class ErpSaleOrderRespVO {
         @Schema(description = "产品编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
         private Long productId;
 
+        @Schema(description = "SKU编号（当产品有多个SKU时）", example = "3114")
+        private Long skuId;
+
         @Schema(description = "产品单位单位", requiredMode = Schema.RequiredMode.REQUIRED, example = "3113")
         private Long productUnitId;
 

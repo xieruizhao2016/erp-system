@@ -69,6 +69,27 @@
           </el-form-item>
         </template>
       </el-table-column>
+      <el-table-column label="SKU" min-width="150">
+        <template #default="{ row }">
+          <el-form-item class="mb-0px!">
+            <el-input disabled :value="getSkuDisplay(row)" />
+          </el-form-item>
+        </template>
+      </el-table-column>
+      <el-table-column label="OEM" min-width="120">
+        <template #default="{ row }">
+          <el-form-item class="mb-0px!">
+            <el-input disabled :value="row.productOemCode || '-'" />
+          </el-form-item>
+        </template>
+      </el-table-column>
+      <el-table-column label="产品包装" min-width="120">
+        <template #default="{ row }">
+          <el-form-item class="mb-0px!">
+            <el-input disabled :value="row.productPackageCode || '-'" />
+          </el-form-item>
+        </template>
+      </el-table-column>
       <el-table-column label="生产数量" prop="quantity" fixed="right" min-width="140">
         <template #default="{ row, $index }">
           <el-form-item :prop="`${$index}.quantity`" :rules="formRules.quantity" class="mb-0px!">
@@ -138,6 +159,23 @@ watch(
   async (val) => {
     if (val) {
       formData.value = val
+      // 为每个产品项加载完整的产品信息（包括 SKU、OEM、包装）
+      for (const row of formData.value) {
+        if (row.productId) {
+          try {
+            const product = await ProductApi.getProduct(row.productId)
+            if (product) {
+              row.productOemCode = product.oemCode
+              row.productPackageCode = product.packageCode
+              if (product.skuList && product.skuList.length > 0) {
+                row.productSkuList = product.skuList
+              }
+            }
+          } catch (error) {
+            console.error(`加载产品 ${row.productId} 的详细信息失败:`, error)
+          }
+        }
+      }
     } else {
       formData.value = []
     }
@@ -173,6 +211,9 @@ const handleAdd = () => {
     productUnitName: undefined, // 产品单位
     productBarCode: undefined, // 产品条码
     stockCount: undefined, // 库存数量
+    productSkuList: undefined, // SKU列表
+    productOemCode: undefined, // OEM编码
+    productPackageCode: undefined, // 产品包装编码
     quantity: 1, // 生产数量
     remark: undefined // 备注
   }
@@ -197,6 +238,9 @@ const handleCategoryChange = (categoryId: number | undefined) => {
           row.productUnitName = undefined
           row.productBarCode = undefined
           row.stockCount = undefined
+          row.productSkuList = undefined
+          row.productOemCode = undefined
+          row.productPackageCode = undefined
         }
       }
     })
@@ -204,20 +248,51 @@ const handleCategoryChange = (categoryId: number | undefined) => {
 }
 
 /** 处理产品变更 */
-const onChangeProduct = (productId: number | undefined, row: any) => {
+const onChangeProduct = async (productId: number | undefined, row: any) => {
   if (!productId) {
     row.productUnitName = undefined
     row.productBarCode = undefined
     row.stockCount = undefined
+    row.productSkuList = undefined
+    row.productOemCode = undefined
+    row.productPackageCode = undefined
     return
   }
   const product = productList.value.find((item) => item.id === productId)
   if (product) {
     row.productUnitName = product.unitName
     row.productBarCode = product.barCode
+    row.productOemCode = product.oemCode
+    row.productPackageCode = product.packageCode
+    // 如果产品有 SKU 列表，加载 SKU 信息
+    if (product.skuList && product.skuList.length > 0) {
+      row.productSkuList = product.skuList
+    } else {
+      // 如果没有，尝试从 API 获取完整产品信息
+      try {
+        const fullProduct = await ProductApi.getProduct(productId)
+        if (fullProduct && fullProduct.skuList) {
+          row.productSkuList = fullProduct.skuList
+        }
+      } catch (error) {
+        console.error('加载产品SKU信息失败:', error)
+        row.productSkuList = []
+      }
+    }
   }
   // 加载库存
   setStockCount(row)
+}
+
+/** 获取SKU显示文本 */
+const getSkuDisplay = (row: any) => {
+  if (!row.productSkuList || row.productSkuList.length === 0) {
+    return '-'
+  }
+  // 显示所有SKU，用逗号分隔
+  return row.productSkuList
+    .map((sku: any) => sku.skuCode || sku.skuName || `SKU-${sku.id}`)
+    .join('，')
 }
 
 /** 加载库存 */

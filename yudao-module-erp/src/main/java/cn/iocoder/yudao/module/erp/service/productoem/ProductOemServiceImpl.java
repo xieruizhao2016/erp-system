@@ -81,7 +81,7 @@ public class ProductOemServiceImpl implements ProductOemService {
     public List<ProductOemDO> getProductOemSimpleList() {
         return productOemMapper.selectList(
             new LambdaQueryWrapperX<ProductOemDO>()
-                .eq(ProductOemDO::getStatus, 1) // 只返回启用的OEM
+                .eq(ProductOemDO::getStatus, cn.iocoder.yudao.framework.common.enums.CommonStatusEnum.ENABLE.getStatus()) // 只返回开启的OEM
                 .orderByAsc(ProductOemDO::getSort)
                 .orderByDesc(ProductOemDO::getId)
         );

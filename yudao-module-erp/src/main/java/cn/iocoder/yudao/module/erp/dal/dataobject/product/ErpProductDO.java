@@ -49,6 +49,12 @@ public class ErpProductDO extends BaseDO {
      */
     private Long unitId;
     /**
+     * SKU编号
+     *
+     * 关联 {@link cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO#getId()}
+     */
+    private Long skuId;
+    /**
      * 产品包装编号
      */
     private Long packageId;
