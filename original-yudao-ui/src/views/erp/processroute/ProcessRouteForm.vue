@@ -33,11 +33,12 @@
         <el-input v-model="formData.version" placeholder="请输入版本号" />
       </el-form-item>
       <el-form-item label="标准周期时间" prop="standardCycleTime">
-        <el-date-picker
+        <el-input-number
           v-model="formData.standardCycleTime"
-          type="date"
-          value-format="x"
-          placeholder="选择标准周期时间（分钟）"
+          :min="0"
+          :precision="0"
+          placeholder="请输入标准周期时间（分钟）"
+          style="width: 100%"
         />
       </el-form-item>
       <el-form-item label="标准人工成本" prop="standardLaborCost">
@@ -57,6 +58,14 @@
           </el-radio>
         </el-radio-group>
       </el-form-item>
+      <!-- 明细列表 -->
+      <ContentWrap>
+        <el-tabs v-model="subTabsName" class="-mt-15px -mb-10px">
+          <el-tab-pane label="工序明细" name="item">
+            <ProcessRouteItemForm ref="itemFormRef" :items="formData.items" />
+          </el-tab-pane>
+        </el-tabs>
+      </ContentWrap>
     </el-form>
     <template #footer>
       <el-button @click="submitForm" type="primary" :disabled="formLoading">确 定</el-button>
@@ -68,6 +77,7 @@
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteApi, ProcessRoute } from '@/api/erp/processroute'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
+import ProcessRouteItemForm from './components/ProcessRouteItemForm.vue'
 
 /** ERP 工艺路线主 表单 */
 defineOptions({ name: 'ProcessRouteForm' })
@@ -88,7 +98,8 @@ const formData = ref({
   standardCycleTime: undefined,
   standardLaborCost: undefined,
   standardOverheadCost: undefined,
-  status: undefined
+  status: undefined,
+  items: [] as any[] // 工艺路线明细列表
 })
 const formRules = reactive({
   routeNo: [{ required: true, message: '工艺路线编号不能为空', trigger: 'blur' }],
@@ -96,6 +107,8 @@ const formRules = reactive({
   productId: [{ required: true, message: '产品不能为空', trigger: 'change' }]
 })
 const formRef = ref() // 表单 Ref
+const itemFormRef = ref() // 明细表单 Ref
+const subTabsName = ref('item') // 子表Tab名称
 const productList = ref<ProductVO[]>([]) // 产品列表
 
 /** 加载列表数据 */
@@ -118,11 +131,32 @@ const open = async (type: string, id?: number) => {
   dialogTitle.value = t('action.' + type)
   formType.value = type
   resetForm()
+  // 新增时，自动生成工艺路线编号和默认版本号
+  if (type === 'create') {
+    // 默认版本号为 1.0.0
+    formData.value.version = '1.0.0'
+    // 默认状态为生效(2)
+    formData.value.status = 2
+    // 尝试生成工艺路线编号，如果失败则留空让用户手动输入
+    try {
+      const routeNo = await ProcessRouteApi.generateRouteNo()
+      if (routeNo) {
+        formData.value.routeNo = routeNo
+      }
+    } catch (error) {
+      console.error('生成工艺路线编号失败，请手动输入:', error)
+      // 接口调用失败时，不设置routeNo，让用户手动输入
+    }
+  }
   // 修改时，设置数据
   if (id) {
     formLoading.value = true
     try {
-      formData.value = await ProcessRouteApi.getProcessRoute(id)
+      const data = await ProcessRouteApi.getProcessRoute(id)
+      formData.value = {
+        ...data,
+        items: data.items || []
+      }
     } finally {
       formLoading.value = false
     }
@@ -133,12 +167,21 @@ defineExpose({ open }) // 提供 open 方法，用于打开弹窗
 /** 提交表单 */
 const emit = defineEmits(['success']) // 定义 success 事件，用于操作成功后的回调
 const submitForm = async () => {
-  // 校验表单
+  // 校验主表单
   await formRef.value.validate()
+  // 校验明细表单
+  if (itemFormRef.value) {
+    await itemFormRef.value.validate()
+  }
+  // 获取明细数据
+  const items = itemFormRef.value?.formData || []
   // 提交请求
   formLoading.value = true
   try {
-    const data = formData.value as unknown as ProcessRoute
+    const data = {
+      ...formData.value,
+      items: items
+    } as unknown as ProcessRoute
     if (formType.value === 'create') {
       await ProcessRouteApi.createProcessRoute(data)
       message.success(t('common.createSuccess'))
@@ -165,7 +208,8 @@ const resetForm = () => {
     standardCycleTime: undefined,
     standardLaborCost: undefined,
     standardOverheadCost: undefined,
-    status: undefined
+    status: undefined,
+    items: []
   }
   formRef.value?.resetFields()
 }

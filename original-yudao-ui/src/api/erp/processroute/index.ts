@@ -12,6 +12,25 @@ export interface ProcessRoute {
           standardLaborCost: number; // 标准人工成本
           standardOverheadCost: number; // 标准制造费用
           status: number; // 状态：1-草稿，2-生效，3-失效
+          items?: Item[]; // 工艺路线明细列表
+  }
+
+/** ERP 工艺路线明细信息 */
+export interface Item {
+          id?: number; // 明细编号
+          processId?: number; // 工序ID
+          sequence?: number; // 序号
+          operationName?: string; // 工序名称
+          standardTime?: number; // 标准工时（分钟）
+          setupTime?: number; // 准备时间（分钟）
+          workerCount?: number; // 人员数量
+          equipmentId?: number; // 设备ID
+          workCenterId?: number; // 工作中心ID
+          laborRate?: number; // 人工费率
+          overheadRate?: number; // 制造费率
+          isBottleneck?: boolean; // 是否瓶颈工序
+          qualityCheckRequired?: boolean; // 是否需要质检
+          remark?: string; // 备注
   }
 
 // ERP 工艺路线主 API
@@ -49,5 +68,10 @@ export const ProcessRouteApi = {
   // 导出ERP 工艺路线主 Excel
   exportProcessRoute: async (params) => {
     return await request.download({ url: `/erp/process-route/export-excel`, params })
+  },
+
+  // 生成默认工艺路线编号
+  generateRouteNo: async () => {
+    return await request.get({ url: `/erp/process-route/generate-route-no` })
   }
 }

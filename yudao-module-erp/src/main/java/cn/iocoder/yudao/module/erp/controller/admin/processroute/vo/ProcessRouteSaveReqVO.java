@@ -40,4 +40,58 @@ public class ProcessRouteSaveReqVO {
     @Schema(description = "状态：1-草稿，2-生效，3-失效", example = "2")
     private Integer status;
 
+    @Schema(description = "工艺路线明细列表")
+    private List<Item> items;
+
+    @Data
+    public static class Item {
+
+        @Schema(description = "明细编号", example = "1")
+        private Long id;
+
+        @Schema(description = "工序ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+        @NotNull(message = "工序ID不能为空")
+        private Long processId;
+
+        @Schema(description = "序号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+        @NotNull(message = "序号不能为空")
+        private Integer sequence;
+
+        @Schema(description = "工序名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "切割")
+        @NotEmpty(message = "工序名称不能为空")
+        private String operationName;
+
+        @Schema(description = "标准工时（分钟）", requiredMode = Schema.RequiredMode.REQUIRED, example = "30")
+        @NotNull(message = "标准工时不能为空")
+        private Integer standardTime;
+
+        @Schema(description = "准备时间（分钟）", example = "5")
+        private Integer setupTime;
+
+        @Schema(description = "人员数量", example = "2")
+        private Integer workerCount;
+
+        @Schema(description = "设备ID", example = "1")
+        private Long equipmentId;
+
+        @Schema(description = "工作中心ID", example = "1")
+        private Long workCenterId;
+
+        @Schema(description = "人工费率")
+        private java.math.BigDecimal laborRate;
+
+        @Schema(description = "制造费率")
+        private java.math.BigDecimal overheadRate;
+
+        @Schema(description = "是否瓶颈工序", example = "false")
+        private Boolean isBottleneck;
+
+        @Schema(description = "是否需要质检", example = "false")
+        private Boolean qualityCheckRequired;
+
+        @Schema(description = "备注")
+        private String remark;
+
+    }
+
 }

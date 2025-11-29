@@ -110,8 +110,14 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         if (!token.startsWith(securityProperties.getMockSecret())) {
             return null;
         }
+        // 提取用户ID部分
+        String userIdStr = token.substring(securityProperties.getMockSecret().length());
+        // 如果用户ID为空，返回null，避免NumberFormatException
+        if (StrUtil.isEmpty(userIdStr)) {
+            return null;
+        }
         // 构建模拟用户
-        Long userId = Long.valueOf(token.substring(securityProperties.getMockSecret().length()));
+        Long userId = Long.valueOf(userIdStr);
         return new LoginUser().setId(userId).setUserType(userType)
                 .setTenantId(WebFrameworkUtils.getTenantId(request));
     }

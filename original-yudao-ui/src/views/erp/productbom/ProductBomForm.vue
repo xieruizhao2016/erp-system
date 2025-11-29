@@ -152,9 +152,9 @@ watch(
           formData.value.bomName = `${selectedProduct.name}-BOM`
         }
         
-        // 3. 版本号：默认1.0（可修改）
+        // 3. 版本号：默认1.0.0（可修改）
         if (!formData.value.version) {
-          formData.value.version = '1.0'
+          formData.value.version = '1.0.0'
         }
         
         // 4. 状态：默认生效(2)（可修改）

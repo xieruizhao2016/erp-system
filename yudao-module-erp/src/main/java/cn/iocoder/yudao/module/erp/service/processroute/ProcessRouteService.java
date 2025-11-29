@@ -59,4 +59,11 @@ public interface ProcessRouteService {
      */
     PageResult<ProcessRouteDO> getProcessRoutePage(ProcessRoutePageReqVO pageReqVO);
 
+    /**
+     * 生成默认工艺路线编号
+     *
+     * @return 工艺路线编号
+     */
+    String generateRouteNo();
+
 }

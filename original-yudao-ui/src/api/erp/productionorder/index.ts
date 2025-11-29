@@ -1,6 +1,18 @@
 import request from '@/config/axios'
 import type { Dayjs } from 'dayjs';
 
+/** ERP 生产订单项 */
+export interface ProductionOrderItem {
+  id?: number; // 编号
+  productId: number; // 产品ID
+  productName?: string; // 产品名称
+  productSpec?: string; // 产品规格
+  unitId?: number; // 单位ID
+  quantity?: number; // 生产数量
+  completedQuantity?: number; // 已完成数量
+  remark?: string; // 备注
+}
+
 /** ERP 生产订单 DO
  *信息 */
 export interface ProductionOrder {
@@ -23,6 +35,7 @@ export interface ProductionOrder {
           sourceId: number; // 来源单据ID
           description: string; // 生产说明
           remark: string; // 备注
+          items?: ProductionOrderItem[]; // 生产订单项列表
   }
 
 /** ERP 生产订单 API */

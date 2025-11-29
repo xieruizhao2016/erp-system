@@ -31,4 +31,8 @@ public interface ProcessRouteMapper extends BaseMapperX<ProcessRouteDO> {
                 .orderByDesc(ProcessRouteDO::getId));
     }
 
+    default ProcessRouteDO selectByRouteNo(String routeNo) {
+        return selectOne(ProcessRouteDO::getRouteNo, routeNo);
+    }
+
 }

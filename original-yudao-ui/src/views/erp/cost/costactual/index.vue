@@ -44,7 +44,7 @@
           <el-option
             v-for="item in productionOrderList"
             :key="item.id"
-            :label="item.orderNo || `订单${item.id}`"
+            :label="item.no || `订单${item.id}`"
             :value="item.id"
           />
         </el-select>
@@ -390,7 +390,7 @@ const getWorkOrderName = (id?: number) => {
 const getProductionOrderName = (id?: number) => {
   if (!id) return '-'
   const order = productionOrderList.value.find(item => item.id === id)
-  return order?.orderNo || `订单${id}`
+  return order?.no || `订单${id}`
 }
 
 /** 获取产品名称 */

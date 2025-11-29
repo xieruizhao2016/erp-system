@@ -337,6 +337,7 @@ import ProductionOrderForm from './ProductionOrderForm.vue'
 import { CustomerApi, CustomerVO } from '@/api/erp/sale/customer'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
 import { ProductUnitApi, ProductUnitVO } from '@/api/erp/product/unit'
+import { useRoute } from 'vue-router'
 
 /** ERP 生产订单 DO
  * 列表 */
@@ -344,6 +345,7 @@ defineOptions({ name: 'ProductionOrder' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
+const route = useRoute() // 路由
 
 const loading = ref(true) // 列表的加载中
 const list = ref<ProductionOrder[]>([]) // 列表的数据
@@ -398,8 +400,8 @@ const resetQuery = () => {
 
 /** 添加/修改操作 */
 const formRef = ref()
-const openForm = (type: string, id?: number) => {
-  formRef.value.open(type, id)
+const openForm = (type: string, id?: number, initialData?: { productId?: number; quantity?: number }) => {
+  formRef.value.open(type, id, initialData)
 }
 
 /** 删除按钮操作 */
@@ -497,8 +499,30 @@ onMounted(async () => {
     customerList.value = customerData.list || []
     productList.value = products || []
     productUnitList.value = unitData.list || []
+    
+    // 检查是否从MRP运算结果跳转过来
+    if (route.query.fromMrp === 'true' && route.query.productId) {
+      // 延迟一下，确保formRef已经初始化
+      setTimeout(() => {
+        openFormWithMrpData()
+      }, 500)
+    }
   } catch (error) {
     console.error('加载列表数据失败:', error)
   }
 })
+
+/** 从MRP运算结果打开新增表单并填充数据 */
+const openFormWithMrpData = () => {
+  const productId = route.query.productId ? Number(route.query.productId) : undefined
+  const quantity = route.query.quantity ? Number(route.query.quantity) : undefined
+  
+  if (productId && quantity) {
+    // 打开新增表单
+    formRef.value.open('create', undefined, {
+      productId,
+      quantity
+    })
+  }
+}
 </script>

@@ -227,7 +227,31 @@ const submitForm = async () => {
   // 提交请求
   formLoading.value = true
   try {
-    const data = formData.value as unknown as ProductBomItem
+    // 构建提交数据，确保类型正确
+    const data: ProductBomItem = {
+      ...formData.value,
+      // 确保 unitId 是数字类型，如果是 undefined、null 或空字符串则设为 undefined
+      unitId: formData.value.unitId && formData.value.unitId !== '' 
+        ? Number(formData.value.unitId) 
+        : undefined,
+      // 确保其他数字字段也是正确的类型
+      quantity: formData.value.quantity && formData.value.quantity !== '' 
+        ? Number(formData.value.quantity) 
+        : undefined,
+      lossRate: formData.value.lossRate && formData.value.lossRate !== '' 
+        ? Number(formData.value.lossRate) 
+        : undefined,
+      effectiveQuantity: formData.value.effectiveQuantity && formData.value.effectiveQuantity !== '' 
+        ? Number(formData.value.effectiveQuantity) 
+        : undefined,
+      position: formData.value.position && formData.value.position !== '' 
+        ? Number(formData.value.position) 
+        : undefined,
+      processId: formData.value.processId && formData.value.processId !== '' 
+        ? Number(formData.value.processId) 
+        : undefined
+    }
+    
     if (formType.value === 'create') {
       await ProductBomItemApi.createProductBomItem(data)
       message.success(t('common.createSuccess'))
@@ -238,6 +262,11 @@ const submitForm = async () => {
     dialogVisible.value = false
     // 发送操作成功的事件
     emit('success')
+  } catch (error: any) {
+    // 处理错误信息
+    const errorMessage = error?.response?.data?.msg || error?.message || '操作失败，请稍后重试'
+    message.error(errorMessage)
+    console.error('提交BOM明细失败:', error)
   } finally {
     formLoading.value = false
   }

@@ -20,9 +20,9 @@
       <el-form-item label="工序" prop="processId">
         <el-select v-model="formData.processId" placeholder="请选择工序" clearable filterable style="width: 100%">
           <el-option
-            v-for="item in processRouteItemList"
+            v-for="item in processList"
             :key="item.id"
-            :label="item.operationName || `工序${item.id}`"
+            :label="item.processName || `工序${item.id}`"
             :value="item.id"
           />
         </el-select>
@@ -34,19 +34,21 @@
         <el-input v-model="formData.operationName" placeholder="请输入工序名称" />
       </el-form-item>
       <el-form-item label="标准工时" prop="standardTime">
-        <el-date-picker
+        <el-input-number
           v-model="formData.standardTime"
-          type="date"
-          value-format="x"
-          placeholder="选择标准工时（分钟）"
+          :min="0"
+          :precision="0"
+          placeholder="请输入标准工时（分钟）"
+          style="width: 100%"
         />
       </el-form-item>
       <el-form-item label="准备时间" prop="setupTime">
-        <el-date-picker
+        <el-input-number
           v-model="formData.setupTime"
-          type="date"
-          value-format="x"
-          placeholder="选择准备时间（分钟）"
+          :min="0"
+          :precision="0"
+          placeholder="请输入准备时间（分钟）"
+          style="width: 100%"
         />
       </el-form-item>
       <el-form-item label="人员数量" prop="workerCount">
@@ -98,6 +100,7 @@ import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
 import { ProcessRouteApi } from '@/api/erp/processroute'
 import { EquipmentApi } from '@/api/erp/equipment'
+import { ProcessApi } from '@/api/erp/process'
 
 /** ERP 工艺路线明细 表单 */
 defineOptions({ name: 'ProcessRouteItemForm' })
@@ -137,7 +140,7 @@ const formRef = ref() // 表单 Ref
 
 // 数据列表
 const processRouteList = ref<any[]>([]) // 工艺路线列表
-const processRouteItemList = ref<any[]>([]) // 工艺路线明细列表（用于工序）
+const processList = ref<any[]>([]) // 工序列表
 const equipmentList = ref<any[]>([]) // 设备列表
 
 // 加载数据列表
@@ -147,9 +150,9 @@ const loadListData = async () => {
     const processRouteData = await ProcessRouteApi.getProcessRoutePage({ pageNo: 1, pageSize: 100 })
     processRouteList.value = processRouteData.list || []
 
-    // 加载工艺路线明细列表（用于工序）
-    const processRouteItemData = await ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 })
-    processRouteItemList.value = processRouteItemData.list || []
+    // 加载工序列表
+    const processData = await ProcessApi.getProcessList()
+    processList.value = processData || []
 
     // 加载设备列表
     const equipmentData = await EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 })

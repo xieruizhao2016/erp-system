@@ -128,14 +128,6 @@
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
         <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
         <el-button
-          type="primary"
-          plain
-          @click="openForm('create')"
-          v-hasPermi="['erp:process-route-item:create']"
-        >
-          <Icon icon="ep:plus" class="mr-5px" /> 新增
-        </el-button>
-        <el-button
           type="success"
           plain
           @click="handleExport"
@@ -155,6 +147,19 @@
         </el-button>
       </el-form-item>
     </el-form>
+  </ContentWrap>
+
+  <!-- 提示信息 -->
+  <ContentWrap>
+    <el-alert
+      type="info"
+      :closable="false"
+      show-icon
+    >
+      <template #title>
+        <span>💡 提示：新增工序明细请在「工艺路线」主表单的「工序明细」标签页中操作，此处主要用于查看、编辑和删除已有明细。</span>
+      </template>
+    </el-alert>
   </ContentWrap>
 
   <!-- 列表 -->

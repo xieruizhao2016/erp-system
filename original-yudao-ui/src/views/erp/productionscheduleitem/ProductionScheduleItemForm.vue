@@ -22,7 +22,7 @@
           <el-option
             v-for="item in productionOrderList"
             :key="item.id"
-            :label="item.orderNo || `生产订单${item.id}`"
+            :label="item.no || `生产订单${item.id}`"
             :value="item.id"
           />
         </el-select>

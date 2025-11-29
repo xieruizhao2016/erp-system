@@ -188,6 +188,7 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     // ========== ERP 工艺路线（1-030-702-000） ==========
     ErrorCode PROCESS_ROUTE_NOT_EXISTS = new ErrorCode(1_030_702_000, "工艺路线不存在");
     ErrorCode PROCESS_ROUTE_ITEM_NOT_EXISTS = new ErrorCode(1_030_702_001, "工艺路线明细不存在");
+    ErrorCode PROCESS_ROUTE_NO_EXISTS = new ErrorCode(1_030_702_002, "工艺路线编号已存在");
 
     // ========== ERP 生产排程（1-030-703-000） ==========
     ErrorCode PRODUCTION_SCHEDULE_NOT_EXISTS = new ErrorCode(1_030_703_000, "生产排程不存在");
@@ -231,5 +232,9 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
 
     // ========== ERP 生产看板配置（1-030-712-000） ==========
     ErrorCode PRODUCTION_DASHBOARD_CONFIG_NOT_EXISTS = new ErrorCode(1_030_712_000, "生产看板配置不存在");
+
+    // ========== ERP 工序（1-030-713-000） ==========
+    ErrorCode PROCESS_NOT_EXISTS = new ErrorCode(1_030_713_000, "工序不存在");
+    ErrorCode PROCESS_NO_DUPLICATE = new ErrorCode(1_030_713_001, "工序编号已存在");
 
 }

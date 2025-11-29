@@ -135,12 +135,14 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { nextTick } from 'vue'
 import { PurchaseOrderApi, PurchaseOrderVO } from '@/api/erp/purchase/order'
 import PurchaseOrderItemForm from './components/PurchaseOrderItemForm.vue'
 import { SupplierApi, SupplierVO } from '@/api/erp/purchase/supplier'
 import { erpPriceInputFormatter, erpPriceMultiply } from '@/utils'
 import * as UserApi from '@/api/system/user'
 import { AccountApi, AccountVO } from '@/api/erp/finance/account'
+import { ProductApi } from '@/api/erp/product/product'
 
 /** ERP 销售订单表单 */
 defineOptions({ name: 'PurchaseOrderForm' })
@@ -197,7 +199,7 @@ watch(
 )
 
 /** 打开弹窗 */
-const open = async (type: string, id?: number) => {
+const open = async (type: string, id?: number, initialData?: { productId?: number; quantity?: number }) => {
   dialogVisible.value = true
   dialogTitle.value = t('action.' + type)
   formType.value = type
@@ -220,6 +222,33 @@ const open = async (type: string, id?: number) => {
   const defaultAccount = accountList.value.find((item) => item.defaultStatus)
   if (defaultAccount) {
     formData.value.accountId = defaultAccount.id
+  }
+  
+  // 如果有初始数据（从MRP跳转过来），填充到表单
+  if (initialData && initialData.productId && initialData.quantity) {
+    // 等待子表单组件加载完成
+    await nextTick()
+    // 直接添加产品项到items数组
+    if (formData.value.items) {
+      // 查找产品信息
+      const product = await ProductApi.getProduct(initialData.productId)
+      if (product) {
+        formData.value.items.push({
+          id: undefined,
+          productId: initialData.productId,
+          productUnitId: product.unitId,
+          productUnitName: product.unitName,
+          productBarCode: product.barCode,
+          productPrice: product.purchasePrice || 0,
+          count: initialData.quantity,
+          totalProductPrice: (product.purchasePrice || 0) * initialData.quantity,
+          taxPercent: 0,
+          taxPrice: 0,
+          totalPrice: (product.purchasePrice || 0) * initialData.quantity,
+          remark: undefined
+        })
+      }
+    }
   }
 }
 defineExpose({ open }) // 提供 open 方法，用于打开弹窗

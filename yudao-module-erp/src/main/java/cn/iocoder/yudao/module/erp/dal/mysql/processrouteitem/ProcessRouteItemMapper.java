@@ -37,4 +37,15 @@ public interface ProcessRouteItemMapper extends BaseMapperX<ProcessRouteItemDO> 
                 .orderByDesc(ProcessRouteItemDO::getId));
     }
 
+    default List<ProcessRouteItemDO> selectListByRouteId(Long routeId) {
+        return selectList(new LambdaQueryWrapperX<ProcessRouteItemDO>()
+                .eq(ProcessRouteItemDO::getRouteId, routeId)
+                .orderByAsc(ProcessRouteItemDO::getSequence));
+    }
+
+    default void deleteByRouteId(Long routeId) {
+        delete(new LambdaQueryWrapperX<ProcessRouteItemDO>()
+                .eq(ProcessRouteItemDO::getRouteId, routeId));
+    }
+
 }

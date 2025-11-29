@@ -55,19 +55,44 @@ export const useUserStore = defineStore('admin-user', {
       }
       let userInfo = wsCache.get(CACHE_KEY.USER)
       if (!userInfo) {
-        userInfo = await getInfo()
+        // 如果没有缓存，尝试获取用户信息
+        try {
+          userInfo = await getInfo()
+        } catch (error) {
+          // 如果获取失败（如token过期），清除token并重置状态
+          console.error('获取用户信息失败:', error)
+          removeToken()
+          deleteUserCache()
+          this.resetState()
+          return null
+        }
       } else {
         // 特殊：在有缓存的情况下，进行加载。但是即使加载失败，也不影响后续的操作，保证可以进入系统
         try {
           userInfo = await getInfo()
-        } catch (error) {}
+        } catch (error) {
+          // 如果获取失败，使用缓存的数据，但记录错误
+          console.warn('获取用户信息失败，使用缓存数据:', error)
+          // 如果缓存数据无效，清除并重置
+          if (!userInfo || !userInfo.user) {
+            removeToken()
+            deleteUserCache()
+            this.resetState()
+            return null
+          }
+        }
+      }
+      // 确保 userInfo 存在且有效
+      if (!userInfo || !userInfo.user) {
+        this.resetState()
+        return null
       }
       this.permissions = new Set(userInfo.permissions || []) // 兜底为 [] https://t.zsxq.com/xCJew
-      this.roles = userInfo.roles
+      this.roles = userInfo.roles || []
       this.user = userInfo.user
       this.isSetUser = true
       wsCache.set(CACHE_KEY.USER, userInfo)
-      wsCache.set(CACHE_KEY.ROLE_ROUTERS, userInfo.menus)
+      wsCache.set(CACHE_KEY.ROLE_ROUTERS, userInfo.menus || [])
     },
     async setUserAvatarAction(avatar: string) {
       const userInfo = wsCache.get(CACHE_KEY.USER)

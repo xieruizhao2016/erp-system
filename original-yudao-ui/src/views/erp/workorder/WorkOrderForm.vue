@@ -17,11 +17,12 @@
           filterable
           placeholder="请选择生产订单"
           class="!w-1/1"
+          @change="handleProductionOrderChange"
         >
           <el-option
             v-for="item in productionOrderList"
             :key="item.id"
-            :label="item.orderNo || `订单${item.id}`"
+            :label="item.no || `订单${item.id}`"
             :value="item.id"
           />
         </el-select>
@@ -98,22 +99,6 @@
           placeholder="选择计划结束时间"
         />
       </el-form-item>
-      <el-form-item label="实际开始时间" prop="actualStartTime">
-        <el-date-picker
-          v-model="formData.actualStartTime"
-          type="date"
-          value-format="x"
-          placeholder="选择实际开始时间"
-        />
-      </el-form-item>
-      <el-form-item label="实际结束时间" prop="actualEndTime">
-        <el-date-picker
-          v-model="formData.actualEndTime"
-          type="date"
-          value-format="x"
-          placeholder="选择实际结束时间"
-        />
-      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
           <el-radio
@@ -173,9 +158,10 @@ const formData = ref({
   supervisorId: undefined,
   plannedStartTime: undefined,
   plannedEndTime: undefined,
-  actualStartTime: undefined,
-  actualEndTime: undefined,
-  status: undefined,
+  // 实际开始时间和实际结束时间由系统根据状态自动设置，不在表单中显示
+  // actualStartTime: undefined,
+  // actualEndTime: undefined,
+  status: 1, // 默认状态：1-已创建
   priority: undefined,
   instruction: undefined,
   remark: undefined
@@ -195,21 +181,69 @@ const selectedCategoryId = ref<number | undefined>(undefined) // 选中的分类
 const productCategoryTree = ref<any[]>([]) // 产品分类树
 const userList = ref<UserVO[]>([]) // 用户列表
 
-/** 根据分类过滤后的产品列表 */
+/** 生产订单关联的产品ID列表 */
+const productionOrderProductIds = ref<number[]>([])
+
+/** 根据分类和生产订单过滤后的产品列表 */
 const filteredProductList = computed(() => {
-  if (!selectedCategoryId.value) {
-    return productList.value // 未选择分类，显示全部产品
+  let filtered = productList.value
+  
+  // 如果选择了生产订单，只显示该订单下的产品
+  if (productionOrderProductIds.value.length > 0) {
+    filtered = filtered.filter((product) => productionOrderProductIds.value.includes(product.id))
   }
-  // 选择分类后，只显示该分类下的产品
-  return productList.value.filter((product) => product.categoryId === selectedCategoryId.value)
+  
+  // 如果选择了分类，进一步过滤
+  if (selectedCategoryId.value) {
+    filtered = filtered.filter((product) => product.categoryId === selectedCategoryId.value)
+  }
+  
+  return filtered
 })
+
+/** 处理生产订单变更 */
+const handleProductionOrderChange = async (productionOrderId: number | undefined) => {
+  // 清空之前的产品过滤
+  productionOrderProductIds.value = []
+  formData.value.productId = undefined
+  
+  if (!productionOrderId) {
+    return
+  }
+  
+  try {
+    // 获取生产订单详情，包含产品列表
+    const orderDetail = await ProductionOrderApi.getProductionOrder(productionOrderId)
+    
+    // 如果订单有items，提取产品ID列表
+    if (orderDetail.items && orderDetail.items.length > 0) {
+      const productIds = orderDetail.items
+        .map((item: any) => item.productId)
+        .filter((id: number) => id != null)
+      
+      productionOrderProductIds.value = productIds
+      
+      // 如果只有一个产品，自动选中
+      if (productIds.length === 1) {
+        formData.value.productId = productIds[0]
+      }
+    } else if (orderDetail.productId) {
+      // 兼容旧数据：如果订单有productId字段，也加入过滤列表
+      productionOrderProductIds.value = [orderDetail.productId]
+      formData.value.productId = orderDetail.productId
+    }
+  } catch (error) {
+    console.error('获取生产订单详情失败:', error)
+    message.error('获取生产订单详情失败，请重试')
+  }
+}
 
 /** 处理分类变更 */
 const handleCategoryChange = (categoryId: number | undefined) => {
   // 当分类改变时，如果已选择的产品不在新分类下，清空产品选择
   if (categoryId !== undefined && formData.value.productId) {
-    const product = productList.value.find((item) => item.id === formData.value.productId)
-    if (product && product.categoryId !== categoryId) {
+    const product = filteredProductList.value.find((item) => item.id === formData.value.productId)
+    if (!product) {
       formData.value.productId = undefined
     }
   }
@@ -275,7 +309,9 @@ const submitForm = async () => {
   // 提交请求
   formLoading.value = true
   try {
-    const data = formData.value as unknown as WorkOrder
+    // 复制表单数据，排除实际开始时间和实际结束时间（由系统根据状态自动设置）
+    const { actualStartTime, actualEndTime, ...submitData } = formData.value
+    const data = submitData as unknown as WorkOrder
     if (formType.value === 'create') {
       await WorkOrderApi.createWorkOrder(data)
       message.success(t('common.createSuccess'))
@@ -305,14 +341,16 @@ const resetForm = () => {
     supervisorId: undefined,
     plannedStartTime: undefined,
     plannedEndTime: undefined,
-    actualStartTime: undefined,
-    actualEndTime: undefined,
-    status: undefined,
+    // 实际开始时间和实际结束时间由系统根据状态自动设置，不在表单中显示
+    // actualStartTime: undefined,
+    // actualEndTime: undefined,
+    status: 1, // 默认状态：1-已创建
     priority: undefined,
     instruction: undefined,
     remark: undefined
   }
   selectedCategoryId.value = undefined // 重置分类选择
+  productionOrderProductIds.value = [] // 重置生产订单产品过滤
   formRef.value?.resetFields()
 }
 </script>

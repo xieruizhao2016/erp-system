@@ -102,6 +102,7 @@
   </Dialog>
 </template>
 <script setup lang="ts">
+import { nextTick } from 'vue'
 import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
 import { CustomerApi, CustomerVO } from '@/api/erp/sale/customer'
@@ -166,22 +167,62 @@ const loadListData = async () => {
 /** 加载未完成的销售订单 */
 const loadUncompletedSaleOrders = async () => {
   try {
-    // 查询状态为已审核的销售订单（状态为20表示已审核）
-    // 使用最大允许的 pageSize: 100
-    const data = await SaleOrderApi.getSaleOrderPage({
-      pageNo: 1,
-      pageSize: 100,
-      status: 20 // 已审核状态
+    saleOrderList.value = []
+    let pageNo = 1
+    const pageSize = 100
+    let hasMore = true
+
+    // 循环查询所有页，直到没有更多数据
+    while (hasMore) {
+      // 查询状态为已审核的销售订单（不传 outStatus，查询所有已审核订单）
+      const data = await SaleOrderApi.getSaleOrderPage({
+        pageNo,
+        pageSize,
+        status: 20 // 已审核状态（20）
+      })
+
+      const list = data.list || []
+      
+      // 过滤未完成的订单：已审核且未全部出库的订单
+      // 处理 null/undefined 的情况，确保比较逻辑正确
+      const uncompletedOrders = list.filter((order: SaleOrderVO) => {
+        // 确保状态为已审核
+        if (order.status !== 20) {
+          return false
+        }
+        
+        // 获取出库数量和总数量，处理 null/undefined 的情况
+        const outCount = order.outCount ?? 0
+        const totalCount = order.totalCount ?? 0
+        
+        // 如果总数量为0或未设置，跳过该订单
+        if (!totalCount || totalCount <= 0) {
+          return false
+        }
+        
+        // 未全部出库的订单（出库数量小于总数量）
+        return outCount < totalCount
+      })
+      
+      saleOrderList.value.push(...uncompletedOrders)
+      
+      // 判断是否还有更多数据：如果当前页数据量等于 pageSize，说明可能还有下一页
+      const currentPageSize = list.length
+      hasMore = currentPageSize === pageSize
+      pageNo++
+    }
+
+    // 去重（按 id），避免重复订单
+    const orderMap = new Map<number, SaleOrderVO>()
+    saleOrderList.value.forEach((order) => {
+      if (order.id && !orderMap.has(order.id)) {
+        orderMap.set(order.id, order)
+      }
     })
-    // 过滤未完成的订单：已审核且出库数量小于总数量（未全部出库）
-    saleOrderList.value = (data.list || []).filter((order: SaleOrderVO) => {
-      const outCount = order.outCount || 0
-      const totalCount = order.totalCount || 0
-      // 已审核且未全部出库的订单
-      return order.status === 20 && outCount < totalCount
-    })
+    saleOrderList.value = Array.from(orderMap.values())
   } catch (error) {
     console.error('加载销售订单列表失败:', error)
+    message.error('加载销售订单列表失败，请稍后重试')
   }
 }
 
@@ -298,7 +339,7 @@ const handleSourceIdChange = async (sourceId: number | undefined) => {
 }
 
 /** 打开弹窗 */
-const open = async (type: string, id?: number) => {
+const open = async (type: string, id?: number, initialData?: { productId?: number; quantity?: number }) => {
   // 首次打开时加载列表数据
   if (customerList.value.length === 0) {
     await loadListData()
@@ -339,6 +380,28 @@ const open = async (type: string, id?: number) => {
       }
     } finally {
       formLoading.value = false
+    }
+  }
+  
+  // 如果有初始数据（从MRP跳转过来），填充到表单
+  if (initialData && initialData.productId && initialData.quantity && type === 'create') {
+    // 等待组件加载完成
+    await nextTick()
+    // 添加产品项
+    if (formData.value.items) {
+      // 查找产品信息
+      const product = await ProductApi.getProduct(initialData.productId)
+      if (product) {
+        formData.value.items.push({
+          id: undefined,
+          productId: initialData.productId,
+          productName: product.name,
+          productSpec: product.standard,
+          unitId: product.unitId,
+          quantity: initialData.quantity,
+          remark: undefined
+        })
+      }
     }
   }
 }

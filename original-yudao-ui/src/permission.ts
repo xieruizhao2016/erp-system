@@ -73,19 +73,32 @@ router.beforeEach(async (to, from, next) => {
       }
       if (!userStore.getIsSetUser) {
         isRelogin.show = true
-        await userStore.setUserInfoAction()
-        isRelogin.show = false
-        // 后端过滤菜单
-        await permissionStore.generateRoutes()
-        permissionStore.getAddRouters.forEach((route) => {
-          router.addRoute(route as unknown as RouteRecordRaw) // 动态添加可访问路由表
-        })
-        const redirectPath = from.query.redirect || to.path
-        // 修复跳转时不带参数的问题
-        const redirect = decodeURIComponent(redirectPath as string)
-        const { paramsObject: query } = parseURL(redirect)
-        const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect, query }
-        next(nextData)
+        try {
+          const result = await userStore.setUserInfoAction()
+          // 如果获取用户信息失败（返回null），说明token无效，跳转到登录页
+          if (result === null) {
+            isRelogin.show = false
+            next(`/login?redirect=${to.fullPath}`)
+            return
+          }
+          isRelogin.show = false
+          // 后端过滤菜单
+          await permissionStore.generateRoutes()
+          permissionStore.getAddRouters.forEach((route) => {
+            router.addRoute(route as unknown as RouteRecordRaw) // 动态添加可访问路由表
+          })
+          const redirectPath = from.query.redirect || to.path
+          // 修复跳转时不带参数的问题
+          const redirect = decodeURIComponent(redirectPath as string)
+          const { paramsObject: query } = parseURL(redirect)
+          const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect, query }
+          next(nextData)
+        } catch (error) {
+          // 如果发生错误，清除token并跳转到登录页
+          console.error('获取用户信息时发生错误:', error)
+          isRelogin.show = false
+          next(`/login?redirect=${to.fullPath}`)
+        }
       } else {
         next()
       }

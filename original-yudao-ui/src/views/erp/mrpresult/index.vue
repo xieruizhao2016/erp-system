@@ -271,8 +271,8 @@
           {{ getWarehouseName(scope.row.warehouseId) }}
         </template>
       </el-table-column>
-      <el-table-column label="周期开始日期" align="center" prop="periodStartDate" />
-      <el-table-column label="周期结束日期" align="center" prop="periodEndDate" />
+      <el-table-column label="周期开始日期" align="center" prop="periodStartDate" :formatter="dateFormatter" />
+      <el-table-column label="周期结束日期" align="center" prop="periodEndDate" :formatter="dateFormatter" />
       <el-table-column label="毛需求" align="center" prop="grossRequirement" />
       <el-table-column label="计划接收量" align="center" prop="scheduledReceipts" />
       <el-table-column label="现有库存" align="center" prop="onHandInventory" />
@@ -296,7 +296,7 @@
           <dict-tag :type="DICT_TYPE.ERP_MRP_ORDER_STATUS" :value="scope.row.orderStatus" />
         </template>
       </el-table-column>
-      <el-table-column label="需求日期" align="center" prop="dueDate" />
+      <el-table-column label="需求日期" align="center" prop="dueDate" :formatter="dateFormatter" />
       <el-table-column
         label="创建时间"
         align="center"
@@ -304,7 +304,7 @@
         :formatter="dateFormatter"
         width="180px"
       />
-      <el-table-column label="操作" align="center" min-width="120px">
+      <el-table-column label="操作" align="center" width="280px" fixed="right">
         <template #default="scope">
           <el-button
             link
@@ -321,6 +321,24 @@
             v-hasPermi="['erp:mrp-result:delete']"
           >
             删除
+          </el-button>
+          <el-button
+            v-if="scope.row.orderType === 1 && scope.row.netRequirement > 0"
+            link
+            type="success"
+            @click="handleCreateOrder(scope.row, 'production')"
+            v-hasPermi="['erp:production-order:create']"
+          >
+            创建生产订单
+          </el-button>
+          <el-button
+            v-if="scope.row.orderType === 2 && scope.row.netRequirement > 0"
+            link
+            type="warning"
+            @click="handleCreateOrder(scope.row, 'purchase')"
+            v-hasPermi="['erp:purchase-order:create']"
+          >
+            创建采购订单
           </el-button>
         </template>
       </el-table-column>
@@ -448,12 +466,14 @@ import { MrpResultApi, MrpResult } from '@/api/erp/mrpresult'
 import { ProductApi } from '@/api/erp/product/product'
 import { WarehouseApi } from '@/api/erp/stock/warehouse'
 import MrpResultForm from './MrpResultForm.vue'
+import { useRouter } from 'vue-router'
 
 /** ERP MRP运算结果 列表 */
 defineOptions({ name: 'MrpResult' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
+const router = useRouter() // 路由
 
 const loading = ref(true) // 列表的加载中
 const list = ref<MrpResult[]>([]) // 列表的数据
@@ -545,6 +565,56 @@ const handleDeleteBatch = async () => {
 const checkedIds = ref<number[]>([])
 const handleRowCheckboxChange = (records: MrpResult[]) => {
   checkedIds.value = records.map((item) => item.id!);
+}
+
+/** 创建订单（跳转到采购订单或生产订单页面） */
+const handleCreateOrder = (row: MrpResult, orderType: 'purchase' | 'production') => {
+  // 构建跳转参数
+  const params: any = {
+    fromMrp: 'true',
+    productId: row.productId?.toString(),
+    quantity: (row.plannedOrderReleases || row.netRequirement)?.toString(),
+    dueDate: row.dueDate
+  }
+  
+  // 根据订单类型跳转到对应页面
+  if (orderType === 'purchase') {
+    // 跳转到采购订单页面 - 先尝试路由名称，失败则使用路径
+    router.push({
+      name: 'ErpPurchaseOrder',
+      query: params
+    }).catch(() => {
+      // 如果路由名称失败，尝试使用路径
+      router.push({
+        path: '/erp/purchase/order',
+        query: params
+      }).catch((err) => {
+        console.error('跳转采购订单页面失败:', err)
+        message.error('跳转失败，请手动进入采购订单页面')
+      })
+    })
+  } else if (orderType === 'production') {
+    // 跳转到生产订单页面 - 先尝试路由名称，失败则使用路径
+    router.push({
+      name: 'ProductionOrder',
+      query: params
+    }).catch(() => {
+      // 如果路由名称失败，尝试使用路径
+      router.push({
+        path: '/erp/productionorder',
+        query: params
+      }).catch(() => {
+        // 尝试其他可能的路径
+        router.push({
+          path: '/erp/production-order',
+          query: params
+        }).catch((err) => {
+          console.error('跳转生产订单页面失败:', err)
+          message.error('跳转失败，请手动进入生产订单页面')
+        })
+      })
+    })
+  }
 }
 
 /** 导出按钮操作 */

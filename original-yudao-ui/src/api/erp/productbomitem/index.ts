@@ -3,22 +3,22 @@ import type { Dayjs } from 'dayjs';
 
 /** ERP BOM明细信息 */
 export interface ProductBomItem {
-          id: number; // 编号
+          id?: number; // 编号
           bomId?: number; // BOM ID
           parentProductId?: number; // 父产品ID
           childProductId?: number; // 子产品ID
           childProductName?: string; // 子产品名称
-          childProductSpec: string; // 子产品规格
-          unitId: number; // 单位ID
+          childProductSpec?: string; // 子产品规格
+          unitId?: number; // 单位ID
           quantity?: number; // 用量
-          lossRate: number; // 损耗率
-          effectiveQuantity: number; // 有效用量
-          isKeyMaterial: boolean; // 是否关键物料
-          isAlternative: boolean; // 是否替代料
-          alternativeGroup: string; // 替代料组
-          position: number; // 位号
-          processId: number; // 工序ID
-          remark: string; // 备注
+          lossRate?: number; // 损耗率
+          effectiveQuantity?: number; // 有效用量
+          isKeyMaterial?: boolean; // 是否关键物料
+          isAlternative?: boolean; // 是否替代料
+          alternativeGroup?: string; // 替代料组
+          position?: number; // 位号
+          processId?: number; // 工序ID
+          remark?: string; // 备注
   }
 
 // ERP BOM明细 API

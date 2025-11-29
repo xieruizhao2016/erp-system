@@ -277,12 +277,14 @@ import { UserVO } from '@/api/system/user'
 import * as UserApi from '@/api/system/user'
 import { erpCountTableColumnFormatter, erpPriceTableColumnFormatter } from '@/utils'
 import { SupplierApi, SupplierVO } from '@/api/erp/purchase/supplier'
+import { useRoute } from 'vue-router'
 
 /** ERP 销售订单列表 */
 defineOptions({ name: 'ErpPurchaseOrder' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
+const route = useRoute() // 路由
 
 const loading = ref(true) // 列表的加载中
 const list = ref<PurchaseOrderVO[]>([]) // 列表的数据
@@ -332,8 +334,8 @@ const resetQuery = () => {
 
 /** 添加/修改操作 */
 const formRef = ref()
-const openForm = (type: string, id?: number) => {
-  formRef.value.open(type, id)
+const openForm = (type: string, id?: number, initialData?: { productId?: number; quantity?: number }) => {
+  formRef.value.open(type, id, initialData)
 }
 
 /** 删除按钮操作 */
@@ -391,7 +393,29 @@ onMounted(async () => {
   productList.value = await ProductApi.getProductSimpleList()
   supplierList.value = await SupplierApi.getSupplierSimpleList()
   userList.value = await UserApi.getSimpleUserList()
+  
+  // 检查是否从MRP运算结果跳转过来
+  if (route.query.fromMrp === 'true' && route.query.productId) {
+    // 延迟一下，确保formRef已经初始化
+    setTimeout(() => {
+      openFormWithMrpData()
+    }, 500)
+  }
 })
+
+/** 从MRP运算结果打开新增表单并填充数据 */
+const openFormWithMrpData = () => {
+  const productId = route.query.productId ? Number(route.query.productId) : undefined
+  const quantity = route.query.quantity ? Number(route.query.quantity) : undefined
+  
+  if (productId && quantity) {
+    // 打开新增表单
+    formRef.value.open('create', undefined, {
+      productId,
+      quantity
+    })
+  }
+}
 // TODO 芋艿：可优化功能：列表界面，支持导入
 // TODO 芋艿：可优化功能：详情界面，支持打印
 </script>

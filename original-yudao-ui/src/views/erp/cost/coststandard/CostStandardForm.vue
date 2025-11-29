@@ -206,6 +206,10 @@ const open = async (type: string, id?: number) => {
   dialogTitle.value = t('action.' + type)
   formType.value = type
   resetForm()
+  // 新增时，默认版本号为 1.0.0
+  if (type === 'create') {
+    formData.value.version = '1.0.0'
+  }
   // 修改时，设置数据
   if (id) {
     formLoading.value = true

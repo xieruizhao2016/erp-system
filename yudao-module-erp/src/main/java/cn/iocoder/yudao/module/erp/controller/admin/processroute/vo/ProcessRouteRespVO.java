@@ -54,4 +54,54 @@ public class ProcessRouteRespVO {
     @ExcelProperty("创建时间")
     private LocalDateTime createTime;
 
+    @Schema(description = "工艺路线明细列表")
+    private List<Item> items;
+
+    @Data
+    public static class Item {
+
+        @Schema(description = "明细编号", example = "1")
+        private Long id;
+
+        @Schema(description = "工序ID", example = "1")
+        private Long processId;
+
+        @Schema(description = "序号", example = "1")
+        private Integer sequence;
+
+        @Schema(description = "工序名称", example = "切割")
+        private String operationName;
+
+        @Schema(description = "标准工时（分钟）", example = "30")
+        private Integer standardTime;
+
+        @Schema(description = "准备时间（分钟）", example = "5")
+        private Integer setupTime;
+
+        @Schema(description = "人员数量", example = "2")
+        private Integer workerCount;
+
+        @Schema(description = "设备ID", example = "1")
+        private Long equipmentId;
+
+        @Schema(description = "工作中心ID", example = "1")
+        private Long workCenterId;
+
+        @Schema(description = "人工费率")
+        private BigDecimal laborRate;
+
+        @Schema(description = "制造费率")
+        private BigDecimal overheadRate;
+
+        @Schema(description = "是否瓶颈工序", example = "false")
+        private Boolean isBottleneck;
+
+        @Schema(description = "是否需要质检", example = "false")
+        private Boolean qualityCheckRequired;
+
+        @Schema(description = "备注")
+        private String remark;
+
+    }
+
 }
