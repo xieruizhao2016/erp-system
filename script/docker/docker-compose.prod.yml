@@ -1,0 +1,129 @@
+version: "3.4"
+
+name: yudao-system-prod
+
+services:
+  mysql:
+    container_name: yudao-mysql-prod
+    image: mysql:8
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ruoyi-vue-pro}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql/
+      - ../../sql/mysql/ruoyi-vue-pro.sql:/docker-entrypoint-initdb.d/ruoyi-vue-pro.sql:ro
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    container_name: yudao-redis-prod
+    image: redis:6-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-} --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  server:
+    container_name: yudao-server-prod
+    build:
+      context: ../../yudao-server
+      dockerfile: Dockerfile
+    image: yudao-server:latest
+    restart: unless-stopped
+    ports:
+      - "48080:48080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms1024m -Xmx2048m -Djava.security.egd=file:/dev/./urandom}
+      TZ: Asia/Shanghai
+      ARGS: |
+        --spring.datasource.dynamic.datasource.master.url=${MASTER_DATASOURCE_URL:-jdbc:mysql://mysql:3306/ruoyi-vue-pro?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true}
+        --spring.datasource.dynamic.datasource.master.username=${MASTER_DATASOURCE_USERNAME:-root}
+        --spring.datasource.dynamic.datasource.master.password=${MASTER_DATASOURCE_PASSWORD}
+        --spring.datasource.dynamic.datasource.slave.url=${SLAVE_DATASOURCE_URL:-jdbc:mysql://mysql:3306/ruoyi-vue-pro?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true}
+        --spring.datasource.dynamic.datasource.slave.username=${SLAVE_DATASOURCE_USERNAME:-root}
+        --spring.datasource.dynamic.datasource.slave.password=${SLAVE_DATASOURCE_PASSWORD}
+        --spring.redis.host=${REDIS_HOST:-redis}
+        --spring.redis.port=${REDIS_PORT:-6379}
+        --spring.redis.password=${REDIS_PASSWORD:-}
+        --spring.redis.database=${REDIS_DATABASE:-1}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:48080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  admin:
+    container_name: yudao-admin-prod
+    build:
+      context: ../../original-yudao-ui
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV:-production}
+        PUBLIC_PATH: ${PUBLIC_PATH:-/}
+        VUE_APP_TITLE: ${VUE_APP_TITLE:-ERP管理系统}
+        VUE_APP_BASE_API: ${VUE_APP_BASE_API:-/prod-api}
+        VUE_APP_APP_NAME: ${VUE_APP_APP_NAME:-/}
+        VUE_APP_TENANT_ENABLE: ${VUE_APP_TENANT_ENABLE:-true}
+        VUE_APP_CAPTCHA_ENABLE: ${VUE_APP_CAPTCHA_ENABLE:-true}
+        VUE_APP_DOC_ENABLE: ${VUE_APP_DOC_ENABLE:-true}
+    image: yudao-admin:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  erp-network:
+    driver: bridge
+
