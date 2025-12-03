@@ -1,11 +1,15 @@
 # 构建阶段
-FROM node:16-alpine AS builder
+FROM node:18-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
 
 # 安装pnpm
 RUN npm install -g pnpm
+
+# 配置npm镜像源（解决网络问题）
+RUN npm config set registry https://registry.npmmirror.com
+RUN pnpm config set registry https://registry.npmmirror.com
 
 # 复制package文件
 COPY package.json pnpm-lock.yaml ./
