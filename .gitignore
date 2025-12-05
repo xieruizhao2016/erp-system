@@ -12,6 +12,11 @@
 *password*
 *credential*
 
+# SSH 密钥文件
+*.pem
+*.pub
+*.key
+
 # 但前端的 ForgetPasswordForm.vue 是源代码，不应该被忽略
 !original-yudao-ui/src/views/Login/components/ForgetPasswordForm.vue
 
