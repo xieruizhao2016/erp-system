@@ -16,7 +16,7 @@
         </el-form-item>
       </el-col>
       <el-col :span="24" class="px-10px">
-        <el-form-item v-if="loginData.tenantEnable === 'true'" prop="tenantName">
+        <el-form-item v-if="loginData.tenantEnable === 'true' && showTenantInput" prop="tenantName">
           <el-input
             v-model="loginData.loginForm.tenantName"
             :placeholder="t('login.tenantNamePlaceholder')"
@@ -32,6 +32,7 @@
             v-model="loginData.loginForm.username"
             :placeholder="t('login.usernamePlaceholder')"
             :prefix-icon="iconAvatar"
+            autocomplete="off"
           />
         </el-form-item>
       </el-col>
@@ -43,6 +44,7 @@
             :prefix-icon="iconLock"
             show-password
             type="password"
+            autocomplete="new-password"
             @keyup.enter="getCode()"
           />
         </el-form-item>
@@ -125,16 +127,28 @@ const LoginRules = {
   username: [required],
   password: [required]
 }
+// 控制租户输入框显示/隐藏
+const showTenantInput = ref(false) // 默认隐藏
+
 const loginData = reactive({
   isShowPassword: false,
   captchaEnable: import.meta.env.VITE_APP_CAPTCHA_ENABLE,
   tenantEnable: import.meta.env.VITE_APP_TENANT_ENABLE,
   loginForm: {
-    tenantName: import.meta.env.VITE_APP_DEFAULT_LOGIN_TENANT || '',
-    username: import.meta.env.VITE_APP_DEFAULT_LOGIN_USERNAME || '',
-    password: import.meta.env.VITE_APP_DEFAULT_LOGIN_PASSWORD || '',
+    // 默认租户名设置为"广州中鑫汽车配件有限公司"
+    tenantName: '广州中鑫汽车配件有限公司',
+    // 账号和密码不默认填充，提高安全性
+    username: '',
+    password: '',
     captchaVerification: '',
     rememberMe: true // 默认记录我。如果不需要，可手动修改
+  }
+})
+
+// 切换租户输入框显示/隐藏的方法（供父组件调用）
+defineExpose({
+  toggleTenantInput: () => {
+    showTenantInput.value = !showTenantInput.value
   }
 })
 
@@ -160,12 +174,20 @@ const getTenantId = async () => {
 const getLoginFormCache = () => {
   const loginForm = authUtil.getLoginForm()
   if (loginForm) {
+    // 只恢复"记住我"选项和租户名，不恢复账号密码（提高安全性）
     loginData.loginForm = {
       ...loginData.loginForm,
-      username: loginForm.username ? loginForm.username : loginData.loginForm.username,
-      password: loginForm.password ? loginForm.password : loginData.loginForm.password,
+      // 账号和密码不自动填充，需要用户手动输入
+      username: '',
+      password: '',
       rememberMe: loginForm.rememberMe,
+      // 如果缓存中有租户名则使用，否则保持默认值"广州中鑫汽车配件有限公司"
       tenantName: loginForm.tenantName ? loginForm.tenantName : loginData.loginForm.tenantName
+    }
+  } else {
+    // 如果没有缓存，确保使用默认值
+    if (!loginData.loginForm.tenantName) {
+      loginData.loginForm.tenantName = '广州中鑫汽车配件有限公司'
     }
   }
 }
@@ -177,6 +199,16 @@ const getTenantByWebsite = async () => {
     if (res) {
       loginData.loginForm.tenantName = res.name
       authUtil.setTenantId(res.id)
+    } else {
+      // 如果根据域名没有获取到租户，确保使用默认值
+      if (!loginData.loginForm.tenantName || loginData.loginForm.tenantName === '芋道源码') {
+        loginData.loginForm.tenantName = '广州中鑫汽车配件有限公司'
+      }
+    }
+  } else {
+    // 如果租户功能未启用，也设置默认值
+    if (!loginData.loginForm.tenantName || loginData.loginForm.tenantName === '芋道源码') {
+      loginData.loginForm.tenantName = '广州中鑫汽车配件有限公司'
     }
   }
 }

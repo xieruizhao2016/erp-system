@@ -20,7 +20,15 @@
             tag="div"
           >
             <img key="1" alt="" class="w-350px" src="@/assets/svgs/login-box-bg.svg" />
-            <div key="2" class="text-3xl text-white">{{ t('login.welcome') }}</div>
+            <div key="2" class="text-3xl text-white relative">
+              <span>{{ t('login.welcome') }}</span>
+              <button
+                class="absolute inset-0 cursor-pointer bg-transparent border-none p-0"
+                style="background: transparent; outline: none;"
+                @click="toggleTenantInput"
+                title="点击切换租户输入框"
+              ></button>
+            </div>
             <div key="3" class="mt-5 text-14px font-normal text-white">
               {{ t('login.message') }}
             </div>
@@ -50,7 +58,7 @@
             class="m-auto h-[calc(100%-60px)] w-[100%] flex items-center at-2xl:max-w-500px at-lg:max-w-500px at-md:max-w-500px at-xl:max-w-500px"
           >
             <!-- 账号登录 -->
-            <LoginForm class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
+            <LoginForm ref="loginFormRef" class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
             <!-- 手机登录 -->
             <MobileForm class="m-auto h-auto p-20px lt-xl:(rounded-3xl light:bg-white)" />
             <!-- 二维码登录 -->
@@ -83,6 +91,16 @@ const { t } = useI18n()
 const appStore = useAppStore()
 const { getPrefixCls } = useDesign()
 const prefixCls = getPrefixCls('login')
+
+// 登录表单引用
+const loginFormRef = ref()
+
+// 切换租户输入框显示/隐藏
+const toggleTenantInput = () => {
+  if (loginFormRef.value && loginFormRef.value.toggleTenantInput) {
+    loginFormRef.value.toggleTenantInput()
+  }
+}
 </script>
 
 <style lang="scss" scoped>
