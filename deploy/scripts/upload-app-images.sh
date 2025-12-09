@@ -13,7 +13,14 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 默认配置
-DEFAULT_SSH_KEY="$HOME/Documents/huoshan-ssh.pem"
+# 优先使用项目目录下的私钥，其次使用用户目录下的私钥
+if [ -f "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/huoshan-ssh.pem" ]; then
+    DEFAULT_SSH_KEY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/huoshan-ssh.pem"
+elif [ -f "$HOME/Documents/huoshan-ssh.pem" ]; then
+    DEFAULT_SSH_KEY="$HOME/Documents/huoshan-ssh.pem"
+else
+    DEFAULT_SSH_KEY=""
+fi
 DEFAULT_SERVER="root@115.190.240.137"
 DEFAULT_REMOTE_PATH="/tmp"
 
@@ -54,8 +61,10 @@ SERVER="${2:-$DEFAULT_SERVER}"
 
 # 检查SSH密钥
 SSH_KEY=""
-if [ -f "$DEFAULT_SSH_KEY" ]; then
+if [ -n "$DEFAULT_SSH_KEY" ] && [ -f "$DEFAULT_SSH_KEY" ]; then
     SSH_KEY="-i $DEFAULT_SSH_KEY"
+    # 确保私钥权限正确
+    chmod 400 "$DEFAULT_SSH_KEY" 2>/dev/null || true
 elif [ -f "$HOME/.ssh/id_rsa" ]; then
     SSH_KEY="-i $HOME/.ssh/id_rsa"
 fi

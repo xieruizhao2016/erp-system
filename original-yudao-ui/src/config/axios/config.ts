@@ -14,9 +14,9 @@ const config: {
   result_code: 200,
 
   /**
-   * 接口请求超时时间
+   * 接口请求超时时间（手机网络可能较慢，增加到60秒）
    */
-  request_timeout: 30000,
+  request_timeout: 60000,
 
   /**
    * 默认接口请求类型

@@ -4,7 +4,10 @@
 # 如果Java未在PATH中，请设置JAVA_HOME环境变量
 # 例如：export JAVA_HOME=/path/to/java/home
 
-cd "$(dirname "$0")"
+# 切换到项目根目录（脚本在 scripts/dev/ 目录下，需要向上两级）
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT"
 
 # 自动查找Java的函数
 find_java() {

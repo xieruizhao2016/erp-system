@@ -1,0 +1,52 @@
+# 依赖目录（会在容器内重新安装）
+node_modules
+.pnpm-store
+
+# 构建产物
+dist
+dist-*
+dist-prod
+
+# 开发相关
+.vscode
+.idea
+*.log
+*.local
+
+# Git 相关
+.git
+.gitignore
+.gitattributes
+
+# 文档和说明
+README.md
+*.md
+docs/
+
+# 测试相关
+coverage
+.nyc_output
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# 环境变量文件（敏感信息）
+.env.local
+.env.*.local
+
+# 临时文件
+*.tmp
+*.temp
+.cache
+.temp
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 其他
+*.swp
+*.swo
+*~
+

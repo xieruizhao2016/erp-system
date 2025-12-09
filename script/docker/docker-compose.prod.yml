@@ -1,7 +1,5 @@
 version: "3.4"
 
-name: yudao-system-prod
-
 services:
   mysql:
     container_name: yudao-mysql-prod
@@ -53,12 +51,18 @@ services:
     image: yudao-server:latest
     restart: unless-stopped
     ports:
-      - "48080:48080"
+      - "48080:8080"  # 外部48080端口映射到容器内8080端口
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       JAVA_OPTS: ${JAVA_OPTS:--Xms1024m -Xmx2048m -Djava.security.egd=file:/dev/./urandom}
       TZ: Asia/Shanghai
       ARGS: |
+        --yudao.captcha.enable=false
+        --wx.mp.app-id=wx0000000000000000
+        --wx.mp.secret=00000000000000000000000000000000
+        --wx.miniapp.appid=wx0000000000000000
+        --wx.miniapp.secret=00000000000000000000000000000000
+        --justauth.enabled=false
         --spring.datasource.dynamic.datasource.master.url=${MASTER_DATASOURCE_URL:-jdbc:mysql://mysql:3306/ruoyi-vue-pro?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true}
         --spring.datasource.dynamic.datasource.master.username=${MASTER_DATASOURCE_USERNAME:-root}
         --spring.datasource.dynamic.datasource.master.password=${MASTER_DATASOURCE_PASSWORD}
@@ -96,12 +100,14 @@ services:
       args:
         NODE_ENV: ${NODE_ENV:-production}
         PUBLIC_PATH: ${PUBLIC_PATH:-/}
-        VUE_APP_TITLE: ${VUE_APP_TITLE:-ERP管理系统}
-        VUE_APP_BASE_API: ${VUE_APP_BASE_API:-/prod-api}
-        VUE_APP_APP_NAME: ${VUE_APP_APP_NAME:-/}
-        VUE_APP_TENANT_ENABLE: ${VUE_APP_TENANT_ENABLE:-true}
-        VUE_APP_CAPTCHA_ENABLE: ${VUE_APP_CAPTCHA_ENABLE:-true}
-        VUE_APP_DOC_ENABLE: ${VUE_APP_DOC_ENABLE:-true}
+        VITE_APP_TITLE: ${VITE_APP_TITLE:-ERP管理系统}
+        VITE_APP_BASE_API: ${VITE_APP_BASE_API:-/prod-api}
+        VITE_APP_APP_NAME: ${VITE_APP_APP_NAME:-/}
+        VITE_APP_TENANT_ENABLE: ${VITE_APP_TENANT_ENABLE:-true}
+        VITE_APP_CAPTCHA_ENABLE: ${VITE_APP_CAPTCHA_ENABLE:-false}
+        VITE_APP_DOC_ENABLE: ${VITE_APP_DOC_ENABLE:-true}
+          VITE_BASE_URL: ${VITE_BASE_URL:-}
+        VITE_API_URL: ${VITE_API_URL:-/prod-api}
     image: yudao-admin:latest
     restart: unless-stopped
     ports:

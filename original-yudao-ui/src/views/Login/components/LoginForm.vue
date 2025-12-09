@@ -128,15 +128,15 @@ const LoginRules = {
   password: [required]
 }
 // 控制租户输入框显示/隐藏
-const showTenantInput = ref(false) // 默认隐藏
+const showTenantInput = ref(true) // 默认显示
 
 const loginData = reactive({
   isShowPassword: false,
   captchaEnable: import.meta.env.VITE_APP_CAPTCHA_ENABLE,
   tenantEnable: import.meta.env.VITE_APP_TENANT_ENABLE,
   loginForm: {
-    // 默认租户名设置为"广州中鑫汽车配件有限公司"
-    tenantName: '广州中鑫汽车配件有限公司',
+    // 默认租户名设置为"芋道源码"
+    tenantName: '芋道源码',
     // 账号和密码不默认填充，提高安全性
     username: '',
     password: '',
@@ -166,8 +166,36 @@ const getCode = async () => {
 // 获取租户 ID
 const getTenantId = async () => {
   if (loginData.tenantEnable === 'true') {
-    const res = await LoginApi.getTenantIdByName(loginData.loginForm.tenantName)
-    authUtil.setTenantId(res)
+    try {
+      const res = await LoginApi.getTenantIdByName(loginData.loginForm.tenantName)
+      if (res == null || res === undefined) {
+        // 如果租户不存在，使用默认租户"芋道源码"（ID=1）
+        console.warn(`租户"${loginData.loginForm.tenantName}"不存在，使用默认租户"芋道源码"`)
+        authUtil.setTenantId(1)
+        // 更新租户名为"芋道源码"，确保一致性
+        loginData.loginForm.tenantName = '芋道源码'
+      } else {
+        authUtil.setTenantId(res)
+        console.log(`✅ 成功获取租户ID: ${res} (租户名: ${loginData.loginForm.tenantName})`)
+      }
+    } catch (error: any) {
+      // 如果获取租户ID失败（网络错误等），使用默认租户"芋道源码"（ID=1）
+      console.warn('获取租户ID失败，使用默认租户"芋道源码":', error)
+      authUtil.setTenantId(1)
+      // 更新租户名为"芋道源码"，确保一致性
+      loginData.loginForm.tenantName = '芋道源码'
+    }
+    // 确保租户ID已设置（双重保险）
+    if (!authUtil.getTenantId()) {
+      console.warn('租户ID未设置，强制设置为默认租户"芋道源码"（ID=1）')
+      authUtil.setTenantId(1)
+      loginData.loginForm.tenantName = '芋道源码'
+    }
+  } else {
+    // 如果租户功能未启用，也确保有默认值
+    if (!authUtil.getTenantId()) {
+      authUtil.setTenantId(1)
+    }
   }
 }
 // 记住我
@@ -181,34 +209,43 @@ const getLoginFormCache = () => {
       username: '',
       password: '',
       rememberMe: loginForm.rememberMe,
-      // 如果缓存中有租户名则使用，否则保持默认值"广州中鑫汽车配件有限公司"
+      // 如果缓存中有租户名则使用，否则保持默认值"芋道源码"
       tenantName: loginForm.tenantName ? loginForm.tenantName : loginData.loginForm.tenantName
     }
   } else {
     // 如果没有缓存，确保使用默认值
     if (!loginData.loginForm.tenantName) {
-      loginData.loginForm.tenantName = '广州中鑫汽车配件有限公司'
+      loginData.loginForm.tenantName = '芋道源码'
     }
   }
 }
 // 根据域名，获得租户信息
 const getTenantByWebsite = async () => {
   if (loginData.tenantEnable === 'true') {
-    const website = location.host
-    const res = await LoginApi.getTenantByWebsite(website)
-    if (res) {
-      loginData.loginForm.tenantName = res.name
-      authUtil.setTenantId(res.id)
-    } else {
-      // 如果根据域名没有获取到租户，确保使用默认值
-      if (!loginData.loginForm.tenantName || loginData.loginForm.tenantName === '芋道源码') {
-        loginData.loginForm.tenantName = '广州中鑫汽车配件有限公司'
+    try {
+      const website = location.host
+      const res = await LoginApi.getTenantByWebsite(website)
+      if (res) {
+        loginData.loginForm.tenantName = res.name
+        authUtil.setTenantId(res.id)
+      } else {
+        // 如果根据域名没有获取到租户，确保使用默认值
+        if (!loginData.loginForm.tenantName) {
+          loginData.loginForm.tenantName = '芋道源码'
+        }
+      }
+    } catch (error) {
+      // 静默处理错误，不显示错误提示，因为这是可选的 API 调用
+      // 如果失败，使用默认租户名即可
+      console.warn('获取租户信息失败，使用默认租户:', error)
+      if (!loginData.loginForm.tenantName) {
+        loginData.loginForm.tenantName = '芋道源码'
       }
     }
   } else {
     // 如果租户功能未启用，也设置默认值
-    if (!loginData.loginForm.tenantName || loginData.loginForm.tenantName === '芋道源码') {
-      loginData.loginForm.tenantName = '广州中鑫汽车配件有限公司'
+    if (!loginData.loginForm.tenantName) {
+      loginData.loginForm.tenantName = '芋道源码'
     }
   }
 }
@@ -217,7 +254,15 @@ const loading = ref() // ElLoading.service 返回的实例
 const handleLogin = async (params: any) => {
   loginLoading.value = true
   try {
+    // 先获取租户ID（如果失败会使用默认值，不会抛出错误）
     await getTenantId()
+    // 再次确认租户ID已设置
+    const tenantId = authUtil.getTenantId()
+    if (!tenantId && loginData.tenantEnable === 'true') {
+      console.error('登录前租户ID未设置，强制设置为默认租户"芋道源码"（ID=1）')
+      authUtil.setTenantId(1)
+      loginData.loginForm.tenantName = '芋道源码'
+    }
     const data = await validForm()
     if (!data) {
       return

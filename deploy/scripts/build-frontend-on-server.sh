@@ -40,8 +40,24 @@ docker images | grep -E "node.*18|nginx.*alpine" || {
 }
 
 echo ""
-echo -e "${YELLOW}步骤3: 开始构建前端镜像${NC}"
-echo "这可能需要5-15分钟，请耐心等待..."
+echo -e "${YELLOW}步骤3: 启用 BuildKit 加速构建${NC}"
+# 启用 BuildKit 以使用缓存挂载等高级功能
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
+if docker buildx version &> /dev/null; then
+    echo -e "${GREEN}✅ BuildKit 已启用，将使用缓存加速构建${NC}"
+else
+    echo -e "${YELLOW}⚠️  BuildKit 不可用，构建速度可能较慢${NC}"
+    echo -e "${YELLOW}建议升级 Docker 到 18.09+ 版本以启用 BuildKit${NC}"
+fi
+echo ""
+
+echo -e "${YELLOW}步骤4: 开始构建前端镜像${NC}"
+echo "优化后预计时间："
+echo "  - 首次构建：5-10 分钟"
+echo "  - 增量构建：1-3 分钟（依赖未变化时）"
+echo "  - 仅代码变化：30 秒-2 分钟"
 echo ""
 
 # 构建前端镜像
@@ -53,10 +69,10 @@ if [ $BUILD_STATUS -eq 0 ]; then
     echo ""
     echo -e "${GREEN}✅ 前端镜像构建成功！${NC}"
     echo ""
-    echo -e "${YELLOW}步骤4: 检查镜像${NC}"
+    echo -e "${YELLOW}步骤5: 检查镜像${NC}"
     docker images | grep yudao-admin
     echo ""
-    echo -e "${GREEN}步骤5: 启动前端服务${NC}"
+    echo -e "${GREEN}步骤6: 启动前端服务${NC}"
     docker compose -f docker-compose.prod.yml --env-file .env up -d admin
     echo ""
     echo -e "${GREEN}✅ 前端服务已启动！${NC}"

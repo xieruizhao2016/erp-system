@@ -5,9 +5,10 @@ import { config } from './config'
 const { default_headers } = config
 
 const request = (option: any) => {
-  const { headersType, headers, ...otherOption } = option
+  const { headersType, headers, skipErrorHandler, ...otherOption } = option
   return service({
     ...otherOption,
+    skipErrorHandler, // 传递skipErrorHandler到axios config
     headers: {
       'Content-Type': headersType || default_headers,
       ...headers

@@ -1,5 +1,5 @@
 server:
-  port: 48080
+  port: 8080  # 容器内端口，通过 Docker 映射到外部 48080
 
 --- #################### 数据库相关配置 ####################
 
@@ -168,12 +168,34 @@ wx: # 参见 https://github.com/Wechat-Group/WxJava/blob/develop/spring-boot-sta
 
 # 芋道配置项，设置当前项目所有自定义的配置
 yudao:
+  captcha:
+    enable: false # 禁用验证码
   pay:
     order-notify-url: http://101.33.244.240:48080/admin-api/pay/notify/order # 支付渠道的【支付】回调地址
     refund-notify-url: http://101.33.244.240:48080/admin-api/pay/notify/refund # 支付渠道的【退款】回调地址
     transfer-notify-url: http://101.33.244.240:48080/admin-api/pay/notify/transfer # 支付渠道的【转账】回调地址
   demo: false # 开启演示模式
   tencent-lbs-key: ${TENCENT_LBS_KEY:TVDBZ-TDILD-4ON4B-PFDZA-RNLKH-VVF6E} # QQ 地图的密钥 https://lbs.qq.com/service/staticV2/staticGuide/staticDoc
+  tenant: # 多租户相关配置项
+    enable: true
+    ignore-urls:
+      - /jmreport/* # 积木报表，无法携带租户编号
+    ignore-visit-urls:
+      - /admin-api/system/user/profile/**
+      - /admin-api/system/auth/**
+    ignore-tables:
+      - system_tenant # 租户表本身需要忽略租户过滤
+      - system_tenant_package # 租户套餐表也需要忽略
+    ignore-caches:
+      - user_role_ids
+      - permission_menu_ids
+      - oauth_client
+      - notify_template
+      - mail_account
+      - mail_template
+      - sms_template
+      - iot:device
+      - iot:thing_model_list
 
 justauth:
   enabled: true

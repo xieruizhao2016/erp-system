@@ -241,11 +241,16 @@ const getTenantId = async () => {
 // 根据域名，获得租户信息
 const getTenantByWebsite = async () => {
   if (registerData.tenantEnable === 'true') {
-    const website = location.host
-    const res = await LoginApi.getTenantByWebsite(website)
-    if (res) {
-      registerData.registerForm.tenantName = res.name
-      authUtil.setTenantId(res.id)
+    try {
+      const website = location.host
+      const res = await LoginApi.getTenantByWebsite(website)
+      if (res) {
+        registerData.registerForm.tenantName = res.name
+        authUtil.setTenantId(res.id)
+      }
+    } catch (error) {
+      // 静默处理错误，不显示错误提示，因为这是可选的 API 调用
+      console.warn('获取租户信息失败:', error)
     }
   }
 }

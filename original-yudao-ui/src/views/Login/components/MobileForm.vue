@@ -177,13 +177,51 @@ watch(
 // 获取租户 ID
 const getTenantId = async () => {
   if (loginData.tenantEnable === 'true') {
+    try {
     const res = await getTenantIdByName(loginData.loginForm.tenantName)
+      if (res == null || res === undefined) {
+        // 如果租户不存在，抛出错误，让用户知道
+        const errorMsg = `租户"${loginData.loginForm.tenantName}"不存在，请检查租户名称是否正确`
+        console.error(errorMsg)
+        message.error(errorMsg)
+        throw new Error(errorMsg)
+      } else {
     setTenantId(res)
+        console.log(`✅ 成功获取租户ID: ${res} (租户名: ${loginData.loginForm.tenantName})`)
+      }
+    } catch (error: any) {
+      // 如果获取租户ID失败（网络错误等），记录详细错误信息
+      const errorMessage = error?.message || '获取租户ID失败，请检查网络连接或租户名称'
+      console.error('获取租户ID失败:', {
+        error,
+        tenantName: loginData.loginForm.tenantName,
+        userAgent: navigator.userAgent,
+        errorMessage
+      })
+      // 如果错误消息不是我们自定义的，显示通用错误
+      if (!error?.message || !error.message.includes('不存在')) {
+        message.error(errorMessage)
+      }
+      throw error
+    }
   }
 }
 // 登录
 const signIn = async () => {
+  try {
+    // 先获取租户ID，如果失败会抛出错误
   await getTenantId()
+  } catch (error: any) {
+    // 获取租户ID失败，记录详细错误信息用于调试
+    console.error('登录前获取租户ID失败:', {
+      error,
+      tenantName: loginData.loginForm.tenantName,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString()
+    })
+    // 重新抛出错误，让上层处理
+    throw error
+  }
   const data = await validForm()
   if (!data) return
   ElLoading.service({

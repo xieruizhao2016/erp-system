@@ -76,9 +76,25 @@ main() {
     # 进入docker目录
     cd "$DOCKER_DIR"
     
+    # 启用 BuildKit 以使用缓存挂载等高级功能
+    export DOCKER_BUILDKIT=1
+    export COMPOSE_DOCKER_CLI_BUILD=1
+    
+    log_step "检查 BuildKit 支持..."
+    if docker buildx version &> /dev/null; then
+        log_info "✅ BuildKit 已启用，将使用缓存加速构建"
+    else
+        log_warn "⚠️  BuildKit 不可用，构建速度可能较慢"
+        log_warn "建议升级 Docker 到 18.09+ 版本以启用 BuildKit"
+    fi
+    echo ""
+    
     # 构建前端镜像
     log_step "开始构建前端Docker镜像..."
-    log_info "这可能需要几分钟时间，请耐心等待..."
+    log_info "优化后预计时间："
+    log_info "  - 首次构建：5-10 分钟"
+    log_info "  - 增量构建：1-3 分钟（依赖未变化时）"
+    log_info "  - 仅代码变化：30 秒-2 分钟"
     echo ""
     
     if [ -f "$ENV_FILE" ]; then

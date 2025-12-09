@@ -98,26 +98,29 @@ public class TenantServiceImpl implements TenantService {
     @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
     @DataPermission(enable = false) // 参见 https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1154 说明
     public Long createTenant(TenantSaveReqVO createReqVO) {
-        // 校验租户名称是否重复
-        validTenantNameDuplicate(createReqVO.getName(), null);
-        // 校验租户域名是否重复
-        validTenantWebsiteDuplicate(createReqVO.getWebsites(), null);
-        // 校验套餐被禁用
-        TenantPackageDO tenantPackage = tenantPackageService.validTenantPackage(createReqVO.getPackageId());
+        // 创建租户时，需要忽略租户过滤，因为此时还没有租户ID
+        return TenantUtils.executeIgnore(() -> {
+            // 校验租户名称是否重复
+            validTenantNameDuplicate(createReqVO.getName(), null);
+            // 校验租户域名是否重复
+            validTenantWebsiteDuplicate(createReqVO.getWebsites(), null);
+            // 校验套餐被禁用
+            TenantPackageDO tenantPackage = tenantPackageService.validTenantPackage(createReqVO.getPackageId());
 
-        // 创建租户
-        TenantDO tenant = BeanUtils.toBean(createReqVO, TenantDO.class);
-        tenantMapper.insert(tenant);
-        // 创建租户的管理员
-        TenantUtils.execute(tenant.getId(), () -> {
-            // 创建角色
-            Long roleId = createRole(tenantPackage);
-            // 创建用户，并分配角色
-            Long userId = createUser(roleId, createReqVO);
-            // 修改租户的管理员
-            tenantMapper.updateById(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
+            // 创建租户
+            TenantDO tenant = BeanUtils.toBean(createReqVO, TenantDO.class);
+            tenantMapper.insert(tenant);
+            // 创建租户的管理员
+            TenantUtils.execute(tenant.getId(), () -> {
+                // 创建角色
+                Long roleId = createRole(tenantPackage);
+                // 创建用户，并分配角色
+                Long userId = createUser(roleId, createReqVO);
+                // 修改租户的管理员
+                tenantMapper.updateById(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
+            });
+            return tenant.getId();
         });
-        return tenant.getId();
     }
 
     private Long createUser(Long roleId, TenantSaveReqVO createReqVO) {

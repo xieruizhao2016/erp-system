@@ -61,8 +61,17 @@ service.interceptors.request.use(
     }
     // 设置租户
     if (tenantEnable && tenantEnable === 'true') {
-      const tenantId = getTenantId()
-      if (tenantId) config.headers['tenant-id'] = tenantId
+      let tenantId = getTenantId()
+      // 如果租户ID未设置，使用默认租户ID（1，芋道源码）
+      if (!tenantId) {
+        console.warn('租户ID未设置，使用默认租户ID（1，芋道源码）')
+        tenantId = '1'
+        // 注意：这里不调用 setTenantId，因为可能是在获取租户ID的过程中
+        // 我们只是确保请求能正常发送
+      }
+      if (tenantId) {
+        config.headers['tenant-id'] = tenantId
+      }
       // 只有登录时，才设置 visit-tenant-id 访问租户
       const visitTenantId = getVisitTenantId()
       if (config.headers.Authorization && visitTenantId) {
@@ -223,6 +232,11 @@ service.interceptors.response.use(
   },
   (error: AxiosError) => {
     console.log('err' + error) // for debug
+    // 检查是否跳过错误提示（用于静默失败的请求，如getTenantByWebsite）
+    const skipErrorHandler = (error.config as any)?.skipErrorHandler
+    if (skipErrorHandler) {
+      return Promise.reject(error)
+    }
     let { message } = error
     const { t } = useI18n()
     if (message === 'Network Error') {

@@ -34,10 +34,6 @@ public class ProductSkuDO extends BaseDO {
     @TableId
     private Long id;
     /**
-     * 产品编号（关联产品）
-     */
-    private Long productId;
-    /**
      * SKU编码
      */
     private String skuCode;
