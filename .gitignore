@@ -92,3 +92,4 @@ nohup.out
 # 代码生成器生成的压缩包
 *.zip
 codegen-downloads-*/
+server-config-backup/

@@ -39,4 +39,9 @@ public interface ProductSkuMapper extends BaseMapperX<ProductSkuDO> {
                 .orderByDesc(ProductSkuDO::getId));
     }
 
+    default ProductSkuDO selectBySkuCode(String skuCode) {
+        return selectOne(new LambdaQueryWrapperX<ProductSkuDO>()
+                .eq(ProductSkuDO::getSkuCode, skuCode));
+    }
+
 }

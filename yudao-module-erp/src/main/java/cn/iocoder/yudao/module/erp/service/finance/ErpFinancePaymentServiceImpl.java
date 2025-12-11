@@ -20,6 +20,7 @@ import cn.iocoder.yudao.module.erp.enums.common.ErpBizTypeEnum;
 import cn.iocoder.yudao.module.erp.service.purchase.ErpPurchaseInService;
 import cn.iocoder.yudao.module.erp.service.purchase.ErpPurchaseReturnService;
 import cn.iocoder.yudao.module.erp.service.purchase.ErpSupplierService;
+import cn.iocoder.yudao.module.erp.service.finance.payable.ErpFinancePayableService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +63,8 @@ public class ErpFinancePaymentServiceImpl implements ErpFinancePaymentService {
     private ErpPurchaseInService purchaseInService;
     @Resource
     private ErpPurchaseReturnService purchaseReturnService;
+    @Resource
+    private ErpFinancePayableService financePayableService;
 
     @Resource
     private AdminUserApi adminUserApi;
@@ -153,6 +156,11 @@ public class ErpFinancePaymentServiceImpl implements ErpFinancePaymentService {
                 new ErpFinancePaymentDO().setStatus(status));
         if (updateCount == 0) {
             throw exception(approve ? FINANCE_PAYMENT_APPROVE_FAIL : FINANCE_PAYMENT_PROCESS_FAIL);
+        }
+
+        // 3. 审核通过后，核销应付账款
+        if (approve && payment.getPaymentPrice() != null && payment.getPaymentPrice().compareTo(BigDecimal.ZERO) > 0) {
+            financePayableService.writeOff(payment.getSupplierId(), payment.getPaymentPrice());
         }
     }
 

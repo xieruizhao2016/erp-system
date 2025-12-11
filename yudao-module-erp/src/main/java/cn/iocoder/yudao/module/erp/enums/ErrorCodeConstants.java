@@ -150,6 +150,7 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
 
     // ========== ERP 产品SKU 1-030-503-000 ==========
     ErrorCode PRODUCT_SKU_NOT_EXISTS = new ErrorCode(1_030_503_000, "产品SKU不存在");
+    ErrorCode PRODUCT_SKU_CODE_DUPLICATE = new ErrorCode(1_030_503_001, "SKU编码({})已存在");
 
     // ========== ERP 产品包装 1-030-504-000 ==========
     ErrorCode PRODUCT_PACKAGE_NOT_EXISTS = new ErrorCode(1_030_504_000, "产品包装不存在");
@@ -236,5 +237,31 @@ ErrorCode PURCHASE_ORDER_ITEM_RETURN_FAIL_IN_EXCEED = new ErrorCode(1_030_101_00
     // ========== ERP 工序（1-030-713-000） ==========
     ErrorCode PROCESS_NOT_EXISTS = new ErrorCode(1_030_713_000, "工序不存在");
     ErrorCode PROCESS_NO_DUPLICATE = new ErrorCode(1_030_713_001, "工序编号已存在");
+
+    // ========== ERP 财务模块（1-030-714-000） ==========
+    // ========== ERP 资产负债表（1-030-714-000） ==========
+    ErrorCode FINANCE_BALANCE_SHEET_NOT_EXISTS = new ErrorCode(1_030_714_000, "资产负债表不存在");
+    
+    // ========== ERP 应收账款（1-030-714-100） ==========
+    ErrorCode FINANCE_RECEIVABLE_NOT_EXISTS = new ErrorCode(1_030_714_100, "应收账款不存在");
+    
+    // ========== ERP 应付账款（1-030-714-200） ==========
+    ErrorCode FINANCE_PAYABLE_NOT_EXISTS = new ErrorCode(1_030_714_200, "应付账款不存在");
+    
+    // ========== ERP 预付款（1-030-714-300） ==========
+    ErrorCode FINANCE_PREPAYMENT_NOT_EXISTS = new ErrorCode(1_030_714_300, "预付款不存在");
+    
+    // ========== ERP 预收款（1-030-714-400） ==========
+    ErrorCode FINANCE_PRERECEIPT_NOT_EXISTS = new ErrorCode(1_030_714_400, "预收款不存在");
+    
+    // ========== ERP 利润表（1-030-714-500） ==========
+    ErrorCode FINANCE_PROFIT_STATEMENT_NOT_EXISTS = new ErrorCode(1_030_714_500, "利润表不存在");
+    
+    // ========== ERP 内部出入库（1-030-715-000） ==========
+    // ========== ERP 内部入库（1-030-715-000） ==========
+    ErrorCode STOCK_INTERNAL_IN_NOT_EXISTS = new ErrorCode(1_030_715_000, "内部入库单不存在");
+    
+    // ========== ERP 内部出库（1-030-715-100） ==========
+    ErrorCode STOCK_INTERNAL_OUT_NOT_EXISTS = new ErrorCode(1_030_715_100, "内部出库单不存在");
 
 }

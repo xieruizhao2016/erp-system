@@ -104,6 +104,22 @@ public class ErpNoRedisDAO {
      * 收款单 {@link cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpFinanceReceiptDO}
      */
     public static final String FINANCE_RECEIPT_NO_PREFIX = "SKD";
+    /**
+     * 应收账款 {@link cn.iocoder.yudao.module.erp.dal.dataobject.finance.receivable.ErpFinanceReceivableDO}
+     */
+    public static final String FINANCE_RECEIVABLE_NO_PREFIX = "YSZK";
+    /**
+     * 应付账款 {@link cn.iocoder.yudao.module.erp.dal.dataobject.finance.payable.ErpFinancePayableDO}
+     */
+    public static final String FINANCE_PAYABLE_NO_PREFIX = "YFZK";
+    /**
+     * 内部入库 {@link cn.iocoder.yudao.module.erp.dal.dataobject.stock.internalin.ErpStockInternalInDO}
+     */
+    public static final String STOCK_INTERNAL_IN_NO_PREFIX = "NBRK";
+    /**
+     * 内部出库 {@link cn.iocoder.yudao.module.erp.dal.dataobject.stock.internalout.ErpStockInternalOutDO}
+     */
+    public static final String STOCK_INTERNAL_OUT_NO_PREFIX = "NBCK";
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;

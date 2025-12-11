@@ -15,6 +15,7 @@ import cn.iocoder.yudao.module.erp.dal.mysql.sale.ErpSaleOrderMapper;
 import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 import cn.iocoder.yudao.module.erp.enums.ErpAuditStatus;
 import cn.iocoder.yudao.module.erp.service.finance.ErpAccountService;
+import cn.iocoder.yudao.module.erp.service.finance.receivable.ErpFinanceReceivableService;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
 import cn.iocoder.yudao.module.erp.service.productsku.ProductSkuService;
 import cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO;
@@ -59,6 +60,8 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
     private ErpCustomerService customerService;
     @Resource
     private ErpAccountService accountService;
+    @Resource
+    private ErpFinanceReceivableService financeReceivableService;
     @Resource
     private ProductSkuService productSkuService;
 
@@ -165,6 +168,14 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
                 new ErpSaleOrderDO().setStatus(status));
         if (updateCount == 0) {
             throw exception(approve ? SALE_ORDER_APPROVE_FAIL : SALE_ORDER_PROCESS_FAIL);
+        }
+
+        // 3. 审核通过时，自动创建应收账款
+        if (approve) {
+            financeReceivableService.createReceivableFromSaleOrder(saleOrder);
+        } else {
+            // 反审核时，删除应收账款（如果存在且未审核）
+            financeReceivableService.deleteReceivableByOrderId(id);
         }
     }
 

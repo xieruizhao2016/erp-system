@@ -20,6 +20,7 @@ import cn.iocoder.yudao.module.erp.enums.common.ErpBizTypeEnum;
 import cn.iocoder.yudao.module.erp.service.sale.ErpCustomerService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpSaleOutService;
 import cn.iocoder.yudao.module.erp.service.sale.ErpSaleReturnService;
+import cn.iocoder.yudao.module.erp.service.finance.receivable.ErpFinanceReceivableService;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +63,8 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
     private ErpSaleOutService saleOutService;
     @Resource
     private ErpSaleReturnService saleReturnService;
+    @Resource
+    private ErpFinanceReceivableService financeReceivableService;
 
     @Resource
     private AdminUserApi adminUserApi;
@@ -153,6 +156,11 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
                 new ErpFinanceReceiptDO().setStatus(status));
         if (updateCount == 0) {
             throw exception(approve ? FINANCE_RECEIPT_APPROVE_FAIL : FINANCE_RECEIPT_PROCESS_FAIL);
+        }
+
+        // 3. 审核通过后，核销应收账款
+        if (approve && receipt.getReceiptPrice() != null && receipt.getReceiptPrice().compareTo(BigDecimal.ZERO) > 0) {
+            financeReceivableService.writeOff(receipt.getCustomerId(), receipt.getReceiptPrice());
         }
     }
 

@@ -41,6 +41,8 @@ public class ProductSkuServiceImpl implements ProductSkuService {
 
     @Override
     public Long createProductSku(ProductSkuSaveReqVO createReqVO) {
+        // 校验SKU编码唯一性
+        validateSkuCodeUnique(createReqVO.getSkuCode(), null);
         // 插入
         ProductSkuDO productSku = BeanUtils.toBean(createReqVO, ProductSkuDO.class);
         productSkuMapper.insert(productSku);
@@ -53,6 +55,8 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     public void updateProductSku(ProductSkuSaveReqVO updateReqVO) {
         // 校验存在
         validateProductSkuExists(updateReqVO.getId());
+        // 校验SKU编码唯一性（排除自己）
+        validateSkuCodeUnique(updateReqVO.getSkuCode(), updateReqVO.getId());
         // 更新
         ProductSkuDO updateObj = BeanUtils.toBean(updateReqVO, ProductSkuDO.class);
         productSkuMapper.updateById(updateObj);
@@ -76,6 +80,13 @@ public class ProductSkuServiceImpl implements ProductSkuService {
     private void validateProductSkuExists(Long id) {
         if (productSkuMapper.selectById(id) == null) {
             throw exception(PRODUCT_SKU_NOT_EXISTS);
+        }
+    }
+
+    private void validateSkuCodeUnique(String skuCode, Long excludeId) {
+        ProductSkuDO existing = productSkuMapper.selectBySkuCode(skuCode);
+        if (existing != null && (excludeId == null || !existing.getId().equals(excludeId))) {
+            throw exception(PRODUCT_SKU_CODE_DUPLICATE, skuCode);
         }
     }
 

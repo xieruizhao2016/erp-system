@@ -160,8 +160,10 @@ const getList = async () => {
   loading.value = true
   try {
     const data = await ProductSkuApi.getPage(queryParams)
-    list.value = data.list
-    total.value = data.total
+    // 修复：后端返回的数据结构是 {code: 0, data: {list: [...], total: 4}}
+    // 前端拦截器返回的是整个响应对象，所以需要使用 data.data.list 和 data.data.total
+    list.value = data.data?.list || data.list || []
+    total.value = data.data?.total ?? data.total ?? 0
   } catch (error: any) {
     // 如果API调用失败，显示错误信息
     console.error('加载SKU列表失败:', error)

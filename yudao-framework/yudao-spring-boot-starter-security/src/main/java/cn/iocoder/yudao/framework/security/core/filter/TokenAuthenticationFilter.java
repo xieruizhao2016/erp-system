@@ -99,6 +99,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
      *
      * @param request 请求
      * @param token 模拟的 token，格式为 {@link SecurityProperties#getMockSecret()} + 用户编号
+     *              如果 token 仅等于 mockSecret，则默认使用用户ID为1
      * @param userType 用户类型
      * @return 模拟的 LoginUser
      */
@@ -106,20 +107,31 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         if (!securityProperties.getMockEnable()) {
             return null;
         }
+        String mockSecret = securityProperties.getMockSecret();
         // 必须以 mockSecret 开头
-        if (!token.startsWith(securityProperties.getMockSecret())) {
+        if (StrUtil.isEmpty(mockSecret) || !token.startsWith(mockSecret)) {
             return null;
         }
         // 提取用户ID部分
-        String userIdStr = token.substring(securityProperties.getMockSecret().length());
-        // 如果用户ID为空，返回null，避免NumberFormatException
+        String userIdStr = token.substring(mockSecret.length());
+        // 如果用户ID为空，默认使用用户ID为1（方便开发调试）
         if (StrUtil.isEmpty(userIdStr)) {
+            userIdStr = "1";
+        }
+        // 如果用户ID不是有效数字，返回null
+        if (!StrUtil.isNumeric(userIdStr)) {
             return null;
         }
-        // 构建模拟用户
-        Long userId = Long.valueOf(userIdStr);
-        return new LoginUser().setId(userId).setUserType(userType)
-                .setTenantId(WebFrameworkUtils.getTenantId(request));
+        try {
+            // 构建模拟用户
+            Long userId = Long.valueOf(userIdStr);
+            return new LoginUser().setId(userId).setUserType(userType)
+                    .setTenantId(WebFrameworkUtils.getTenantId(request));
+        } catch (NumberFormatException e) {
+            // 如果转换失败，返回null
+            log.warn("[mockLoginUser] token({}) 解析 userId 失败，userIdStr({}) 非数字", token, userIdStr);
+            return null;
+        }
     }
 
 }

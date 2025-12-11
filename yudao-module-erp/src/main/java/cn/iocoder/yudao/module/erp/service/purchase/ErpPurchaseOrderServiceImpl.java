@@ -15,6 +15,7 @@ import cn.iocoder.yudao.module.erp.dal.mysql.purchase.ErpPurchaseOrderMapper;
 import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 import cn.iocoder.yudao.module.erp.enums.ErpAuditStatus;
 import cn.iocoder.yudao.module.erp.service.finance.ErpAccountService;
+import cn.iocoder.yudao.module.erp.service.finance.payable.ErpFinancePayableService;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +57,8 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
     private ErpSupplierService supplierService;
     @Resource
     private ErpAccountService accountService;
+    @Resource
+    private ErpFinancePayableService financePayableService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -149,6 +152,14 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
                 new ErpPurchaseOrderDO().setStatus(status));
         if (updateCount == 0) {
             throw exception(approve ? PURCHASE_ORDER_APPROVE_FAIL : PURCHASE_ORDER_PROCESS_FAIL);
+        }
+
+        // 3. 审核通过时，自动创建应付账款
+        if (approve) {
+            financePayableService.createPayableFromPurchaseOrder(purchaseOrder);
+        } else {
+            // 反审核时，删除应付账款（如果存在且未审核）
+            financePayableService.deletePayableByOrderId(id);
         }
     }
 
