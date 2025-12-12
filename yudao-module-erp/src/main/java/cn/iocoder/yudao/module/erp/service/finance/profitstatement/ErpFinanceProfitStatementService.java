@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.service.profitstatement;
+package cn.iocoder.yudao.module.erp.service.finance.profitstatement;
 
 import java.util.*;
 import javax.validation.*;
@@ -54,9 +54,16 @@ public interface ErpFinanceProfitStatementService {
     /**
      * 获得利润表分页
      *
-     * @param pageReqVO 分页查询
+     * @param pageReqReqVO 分页查询
      * @return 利润表分页
      */
     PageResult<ErpFinanceProfitStatementDO> getFinanceProfitStatementPage(ErpFinanceProfitStatementPageReqVO pageReqVO);
+
+    /**
+     * 计算利润表
+     *
+     * @param periodDate 期间日期
+     */
+    void calculateProfitStatement(java.time.LocalDate periodDate);
 
 }

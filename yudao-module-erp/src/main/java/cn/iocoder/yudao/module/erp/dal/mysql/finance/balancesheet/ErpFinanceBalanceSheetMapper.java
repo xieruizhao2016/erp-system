@@ -1,13 +1,13 @@
-package cn.iocoder.yudao.module.erp.dal.mysql.finance-balance-sheet;
+package cn.iocoder.yudao.module.erp.dal.mysql.finance.balancesheet;
 
 import java.util.*;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-balance-sheet.ErpFinanceBalanceSheetDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.balancesheet.ErpFinanceBalanceSheetDO;
 import org.apache.ibatis.annotations.Mapper;
-import cn.iocoder.yudao.module.erp.controller.admin.finance-balance-sheet.vo.*;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.balancesheet.vo.*;
 
 /**
  * 资产负债表 Mapper

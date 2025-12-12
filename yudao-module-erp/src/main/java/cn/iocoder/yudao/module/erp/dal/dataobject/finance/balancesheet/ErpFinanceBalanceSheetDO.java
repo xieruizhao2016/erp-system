@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.dal.dataobject.finance-balance-sheet;
+package cn.iocoder.yudao.module.erp.dal.dataobject.finance.balancesheet;
 
 import lombok.*;
 import java.util.*;

@@ -1,13 +1,13 @@
-package cn.iocoder.yudao.module.erp.dal.mysql.finance-prepayment;
+package cn.iocoder.yudao.module.erp.dal.mysql.finance.prepayment;
 
 import java.util.*;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-prepayment.ErpFinancePrepaymentDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.prepayment.ErpFinancePrepaymentDO;
 import org.apache.ibatis.annotations.Mapper;
-import cn.iocoder.yudao.module.erp.controller.admin.finance-prepayment.vo.*;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.prepayment.vo.*;
 
 /**
  * 预付款 Mapper

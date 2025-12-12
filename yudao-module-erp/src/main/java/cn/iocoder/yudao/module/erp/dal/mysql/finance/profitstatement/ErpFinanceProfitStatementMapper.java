@@ -1,13 +1,13 @@
-package cn.iocoder.yudao.module.erp.dal.mysql.finance-profit-statement;
+package cn.iocoder.yudao.module.erp.dal.mysql.finance.profitstatement;
 
 import java.util.*;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-profit-statement.ErpFinanceProfitStatementDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.profitstatement.ErpFinanceProfitStatementDO;
 import org.apache.ibatis.annotations.Mapper;
-import cn.iocoder.yudao.module.erp.controller.admin.finance-profit-statement.vo.*;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.profitstatement.vo.*;
 
 /**
  * 利润表 Mapper

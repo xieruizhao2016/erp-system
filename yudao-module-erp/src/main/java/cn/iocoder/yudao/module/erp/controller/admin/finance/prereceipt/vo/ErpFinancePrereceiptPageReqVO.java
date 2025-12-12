@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-prereceipt.vo;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo;
 
 import lombok.*;
 import java.util.*;

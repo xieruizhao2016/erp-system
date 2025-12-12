@@ -20,7 +20,7 @@ export const FinancePaymentApi = {
 
   // 查询付款单详情
   getFinancePayment: async (id: number) => {
-    return await request.get({ url: `/erp/finance-payment/get?id=` + id })
+    return await request.get({ url: `/erp/finance-payment/get`, params: { id } })
   },
 
   // 新增付款单
@@ -48,9 +48,7 @@ export const FinancePaymentApi = {
   deleteFinancePayment: async (ids: number[]) => {
     return await request.delete({
       url: `/erp/finance-payment/delete`,
-      params: {
-        ids: ids.join(',')
-      }
+      params: { ids }
     })
   },
 

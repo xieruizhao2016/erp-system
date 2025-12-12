@@ -128,4 +128,22 @@ public class ErpSaleOrderDO extends BaseDO {
      */
     private BigDecimal returnCount;
 
+    // ========== 毛利率统计 ==========
+    /**
+     * 毛利率，百分比
+     */
+    private BigDecimal grossProfitRate;
+    /**
+     * 原材料成本，单位：元
+     */
+    private BigDecimal materialCost;
+    /**
+     * 员工成本，单位：元
+     */
+    private BigDecimal laborCost;
+    /**
+     * 总成本，单位：元（total_cost = material_cost + labor_cost）
+     */
+    private BigDecimal totalCost;
+
 }

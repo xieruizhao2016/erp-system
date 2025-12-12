@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-prepayment;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.prepayment;
 
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -25,8 +25,8 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
-import cn.iocoder.yudao.module.erp.controller.admin.finance-prepayment.vo.*;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-prepayment.ErpFinancePrepaymentDO;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.prepayment.vo.*;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.prepayment.ErpFinancePrepaymentDO;
 import cn.iocoder.yudao.module.erp.service.prepayment.ErpFinancePrepaymentService;
 
 @Tag(name = "管理后台 - 预付款")
@@ -41,7 +41,7 @@ public class ErpFinancePrepaymentController {
     @PostMapping("/create")
     @Operation(summary = "创建预付款")
     @PreAuthorize("@ss.hasPermission('erp:finance-prepayment:create')")
-    public CommonResult<${primaryColumn.javaType}> createFinancePrepayment(@Valid @RequestBody ErpFinancePrepaymentSaveReqVO createReqVO) {
+    public CommonResult<Long> createFinancePrepayment(@Valid @RequestBody ErpFinancePrepaymentSaveReqVO createReqVO) {
         return success(financePrepaymentService.createFinancePrepayment(createReqVO));
     }
 
@@ -57,7 +57,7 @@ public class ErpFinancePrepaymentController {
     @Operation(summary = "删除预付款")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:finance-prepayment:delete')")
-    public CommonResult<Boolean> deleteFinancePrepayment(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<Boolean> deleteFinancePrepayment(@RequestParam("id") Long id) {
         financePrepaymentService.deleteFinancePrepayment(id);
         return success(true);
     }
@@ -66,7 +66,7 @@ public class ErpFinancePrepaymentController {
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除预付款")
                 @PreAuthorize("@ss.hasPermission('erp:finance-prepayment:delete')")
-    public CommonResult<Boolean> deleteFinancePrepaymentList(@RequestParam("ids") List<${primaryColumn.javaType}> ids) {
+    public CommonResult<Boolean> deleteFinancePrepaymentList(@RequestParam("ids") List<Long> ids) {
         financePrepaymentService.deleteFinancePrepaymentListByIds(ids);
         return success(true);
     }
@@ -75,7 +75,7 @@ public class ErpFinancePrepaymentController {
     @Operation(summary = "获得预付款")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:finance-prepayment:query')")
-    public CommonResult<ErpFinancePrepaymentRespVO> getFinancePrepayment(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<ErpFinancePrepaymentRespVO> getFinancePrepayment(@RequestParam("id") Long id) {
         ErpFinancePrepaymentDO financePrepayment = financePrepaymentService.getFinancePrepayment(id);
         return success(BeanUtils.toBean(financePrepayment, ErpFinancePrepaymentRespVO.class));
     }

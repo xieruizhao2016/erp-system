@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.dal.dataobject.finance-prepayment;
+package cn.iocoder.yudao.module.erp.dal.dataobject.finance.prepayment;
 
 import lombok.*;
 import java.util.*;

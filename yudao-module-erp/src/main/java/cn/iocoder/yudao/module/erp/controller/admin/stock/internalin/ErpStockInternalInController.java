@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.stock-internal-in;
+package cn.iocoder.yudao.module.erp.controller.admin.stock.internalin;
 
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -25,8 +25,8 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
-import cn.iocoder.yudao.module.erp.controller.admin.stock-internal-in.vo.*;
-import cn.iocoder.yudao.module.erp.dal.dataobject.stock-internal-in.ErpStockInternalInDO;
+import cn.iocoder.yudao.module.erp.controller.admin.stock.internalin.vo.*;
+import cn.iocoder.yudao.module.erp.dal.dataobject.stock.internalin.ErpStockInternalInDO;
 import cn.iocoder.yudao.module.erp.service.internalin.ErpStockInternalInService;
 
 @Tag(name = "管理后台 - 内部入库单")
@@ -41,7 +41,7 @@ public class ErpStockInternalInController {
     @PostMapping("/create")
     @Operation(summary = "创建内部入库单")
     @PreAuthorize("@ss.hasPermission('erp:stock-internal-in:create')")
-    public CommonResult<${primaryColumn.javaType}> createStockInternalIn(@Valid @RequestBody ErpStockInternalInSaveReqVO createReqVO) {
+    public CommonResult<Long> createStockInternalIn(@Valid @RequestBody ErpStockInternalInSaveReqVO createReqVO) {
         return success(stockInternalInService.createStockInternalIn(createReqVO));
     }
 
@@ -57,7 +57,7 @@ public class ErpStockInternalInController {
     @Operation(summary = "删除内部入库单")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:stock-internal-in:delete')")
-    public CommonResult<Boolean> deleteStockInternalIn(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<Boolean> deleteStockInternalIn(@RequestParam("id") Long id) {
         stockInternalInService.deleteStockInternalIn(id);
         return success(true);
     }
@@ -66,7 +66,7 @@ public class ErpStockInternalInController {
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除内部入库单")
                 @PreAuthorize("@ss.hasPermission('erp:stock-internal-in:delete')")
-    public CommonResult<Boolean> deleteStockInternalInList(@RequestParam("ids") List<${primaryColumn.javaType}> ids) {
+    public CommonResult<Boolean> deleteStockInternalInList(@RequestParam("ids") List<Long> ids) {
         stockInternalInService.deleteStockInternalInListByIds(ids);
         return success(true);
     }
@@ -75,7 +75,7 @@ public class ErpStockInternalInController {
     @Operation(summary = "获得内部入库单")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:stock-internal-in:query')")
-    public CommonResult<ErpStockInternalInRespVO> getStockInternalIn(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<ErpStockInternalInRespVO> getStockInternalIn(@RequestParam("id") Long id) {
         ErpStockInternalInDO stockInternalIn = stockInternalInService.getStockInternalIn(id);
         return success(BeanUtils.toBean(stockInternalIn, ErpStockInternalInRespVO.class));
     }

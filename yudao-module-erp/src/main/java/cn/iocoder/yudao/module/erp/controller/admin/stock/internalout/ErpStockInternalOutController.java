@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.stock-internal-out;
+package cn.iocoder.yudao.module.erp.controller.admin.stock.internalout;
 
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -25,8 +25,8 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
-import cn.iocoder.yudao.module.erp.controller.admin.stock-internal-out.vo.*;
-import cn.iocoder.yudao.module.erp.dal.dataobject.stock-internal-out.ErpStockInternalOutDO;
+import cn.iocoder.yudao.module.erp.controller.admin.stock.internalout.vo.*;
+import cn.iocoder.yudao.module.erp.dal.dataobject.stock.internalout.ErpStockInternalOutDO;
 import cn.iocoder.yudao.module.erp.service.internalout.ErpStockInternalOutService;
 
 @Tag(name = "管理后台 - 内部出库单")
@@ -41,7 +41,7 @@ public class ErpStockInternalOutController {
     @PostMapping("/create")
     @Operation(summary = "创建内部出库单")
     @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:create')")
-    public CommonResult<${primaryColumn.javaType}> createStockInternalOut(@Valid @RequestBody ErpStockInternalOutSaveReqVO createReqVO) {
+    public CommonResult<Long> createStockInternalOut(@Valid @RequestBody ErpStockInternalOutSaveReqVO createReqVO) {
         return success(stockInternalOutService.createStockInternalOut(createReqVO));
     }
 
@@ -57,7 +57,7 @@ public class ErpStockInternalOutController {
     @Operation(summary = "删除内部出库单")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:delete')")
-    public CommonResult<Boolean> deleteStockInternalOut(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<Boolean> deleteStockInternalOut(@RequestParam("id") Long id) {
         stockInternalOutService.deleteStockInternalOut(id);
         return success(true);
     }
@@ -66,7 +66,7 @@ public class ErpStockInternalOutController {
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除内部出库单")
                 @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:delete')")
-    public CommonResult<Boolean> deleteStockInternalOutList(@RequestParam("ids") List<${primaryColumn.javaType}> ids) {
+    public CommonResult<Boolean> deleteStockInternalOutList(@RequestParam("ids") List<Long> ids) {
         stockInternalOutService.deleteStockInternalOutListByIds(ids);
         return success(true);
     }
@@ -75,7 +75,7 @@ public class ErpStockInternalOutController {
     @Operation(summary = "获得内部出库单")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:query')")
-    public CommonResult<ErpStockInternalOutRespVO> getStockInternalOut(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<ErpStockInternalOutRespVO> getStockInternalOut(@RequestParam("id") Long id) {
         ErpStockInternalOutDO stockInternalOut = stockInternalOutService.getStockInternalOut(id);
         return success(BeanUtils.toBean(stockInternalOut, ErpStockInternalOutRespVO.class));
     }

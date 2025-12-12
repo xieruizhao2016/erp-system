@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-balance-sheet.vo;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.balancesheet.vo;
 
 import lombok.*;
 import java.util.*;

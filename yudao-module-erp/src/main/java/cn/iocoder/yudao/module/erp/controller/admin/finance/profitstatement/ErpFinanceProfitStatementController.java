@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-profit-statement;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.profitstatement;
 
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -25,9 +25,9 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
-import cn.iocoder.yudao.module.erp.controller.admin.finance-profit-statement.vo.*;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-profit-statement.ErpFinanceProfitStatementDO;
-import cn.iocoder.yudao.module.erp.service.profitstatement.ErpFinanceProfitStatementService;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.profitstatement.vo.*;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.profitstatement.ErpFinanceProfitStatementDO;
+import cn.iocoder.yudao.module.erp.service.finance.profitstatement.ErpFinanceProfitStatementService;
 
 @Tag(name = "管理后台 - 利润表")
 @RestController
@@ -41,7 +41,7 @@ public class ErpFinanceProfitStatementController {
     @PostMapping("/create")
     @Operation(summary = "创建利润表")
     @PreAuthorize("@ss.hasPermission('erp:finance-profit-statement:create')")
-    public CommonResult<${primaryColumn.javaType}> createFinanceProfitStatement(@Valid @RequestBody ErpFinanceProfitStatementSaveReqVO createReqVO) {
+    public CommonResult<Long> createFinanceProfitStatement(@Valid @RequestBody ErpFinanceProfitStatementSaveReqVO createReqVO) {
         return success(financeProfitStatementService.createFinanceProfitStatement(createReqVO));
     }
 
@@ -57,7 +57,7 @@ public class ErpFinanceProfitStatementController {
     @Operation(summary = "删除利润表")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:finance-profit-statement:delete')")
-    public CommonResult<Boolean> deleteFinanceProfitStatement(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<Boolean> deleteFinanceProfitStatement(@RequestParam("id") Long id) {
         financeProfitStatementService.deleteFinanceProfitStatement(id);
         return success(true);
     }
@@ -65,8 +65,8 @@ public class ErpFinanceProfitStatementController {
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除利润表")
-                @PreAuthorize("@ss.hasPermission('erp:finance-profit-statement:delete')")
-    public CommonResult<Boolean> deleteFinanceProfitStatementList(@RequestParam("ids") List<${primaryColumn.javaType}> ids) {
+    @PreAuthorize("@ss.hasPermission('erp:finance-profit-statement:delete')")
+    public CommonResult<Boolean> deleteFinanceProfitStatementList(@RequestParam("ids") List<Long> ids) {
         financeProfitStatementService.deleteFinanceProfitStatementListByIds(ids);
         return success(true);
     }
@@ -75,7 +75,7 @@ public class ErpFinanceProfitStatementController {
     @Operation(summary = "获得利润表")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:finance-profit-statement:query')")
-    public CommonResult<ErpFinanceProfitStatementRespVO> getFinanceProfitStatement(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<ErpFinanceProfitStatementRespVO> getFinanceProfitStatement(@RequestParam("id") Long id) {
         ErpFinanceProfitStatementDO financeProfitStatement = financeProfitStatementService.getFinanceProfitStatement(id);
         return success(BeanUtils.toBean(financeProfitStatement, ErpFinanceProfitStatementRespVO.class));
     }
@@ -99,6 +99,15 @@ public class ErpFinanceProfitStatementController {
         // 导出 Excel
         ExcelUtils.write(response, "利润表.xls", "数据", ErpFinanceProfitStatementRespVO.class,
                         BeanUtils.toBean(list, ErpFinanceProfitStatementRespVO.class));
+    }
+
+    @PostMapping("/calculate")
+    @Operation(summary = "计算利润表")
+    @PreAuthorize("@ss.hasPermission('erp:finance-profit-statement:update')")
+    @ApiAccessLog(operateType = UPDATE)
+    public CommonResult<Boolean> calculateProfitStatement(@RequestParam("periodDate") java.time.LocalDate periodDate) {
+        financeProfitStatementService.calculateProfitStatement(periodDate);
+        return success(true);
     }
 
 }

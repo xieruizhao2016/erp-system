@@ -8,9 +8,10 @@ import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.math.BigDecimal;
 
 import static cn.iocoder.yudao.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-import java.time.LocalDate;
 
 @Schema(description = "管理后台 - ERP 销售订单分页 Request VO")
 @Data
@@ -77,5 +78,11 @@ public class ErpSaleOrderPageReqVO extends PageParam {
 
     @Schema(description = "是否可退货", example = "true")
     private Boolean returnEnable;
+
+    @Schema(description = "最小毛利率", example = "10.00")
+    private BigDecimal grossProfitRateMin;
+
+    @Schema(description = "最大毛利率", example = "50.00")
+    private BigDecimal grossProfitRateMax;
 
 }

@@ -109,6 +109,21 @@ public class ErpSaleOrderRespVO {
     @Schema(description = "销售退货数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
     private BigDecimal returnCount;
 
+    // ========== 毛利率统计 ==========
+
+    @Schema(description = "毛利率，百分比", example = "25.50")
+    @ExcelProperty("毛利率")
+    private BigDecimal grossProfitRate;
+
+    @Schema(description = "原材料成本，单位：元", example = "1000.00")
+    private BigDecimal materialCost;
+
+    @Schema(description = "员工成本，单位：元", example = "500.00")
+    private BigDecimal laborCost;
+
+    @Schema(description = "总成本，单位：元", example = "1500.00")
+    private BigDecimal totalCost;
+
     @Data
     public static class Item {
 
@@ -149,6 +164,17 @@ public class ErpSaleOrderRespVO {
 
         @Schema(description = "销售退货数量", requiredMode = Schema.RequiredMode.REQUIRED, example = "100.00")
         private BigDecimal returnCount;
+
+        // ========== 毛利率统计 ==========
+
+        @Schema(description = "行毛利率，百分比", example = "25.50")
+        private BigDecimal grossProfitRate;
+
+        @Schema(description = "行原材料成本，单位：元", example = "100.00")
+        private BigDecimal materialCost;
+
+        @Schema(description = "行员工成本，单位：元", example = "50.00")
+        private BigDecimal laborCost;
 
         // ========== 关联字段 ==========
 

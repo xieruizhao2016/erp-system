@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-payable;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.payable;
 
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -25,8 +25,8 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
-import cn.iocoder.yudao.module.erp.controller.admin.finance-payable.vo.*;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-payable.ErpFinancePayableDO;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.payable.vo.*;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.payable.ErpFinancePayableDO;
 import cn.iocoder.yudao.module.erp.service.payable.ErpFinancePayableService;
 
 @Tag(name = "管理后台 - 应付账款")
@@ -41,7 +41,7 @@ public class ErpFinancePayableController {
     @PostMapping("/create")
     @Operation(summary = "创建应付账款")
     @PreAuthorize("@ss.hasPermission('erp:finance-payable:create')")
-    public CommonResult<${primaryColumn.javaType}> createFinancePayable(@Valid @RequestBody ErpFinancePayableSaveReqVO createReqVO) {
+    public CommonResult<Long> createFinancePayable(@Valid @RequestBody ErpFinancePayableSaveReqVO createReqVO) {
         return success(financePayableService.createFinancePayable(createReqVO));
     }
 
@@ -57,7 +57,7 @@ public class ErpFinancePayableController {
     @Operation(summary = "删除应付账款")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:finance-payable:delete')")
-    public CommonResult<Boolean> deleteFinancePayable(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<Boolean> deleteFinancePayable(@RequestParam("id") Long id) {
         financePayableService.deleteFinancePayable(id);
         return success(true);
     }
@@ -66,7 +66,7 @@ public class ErpFinancePayableController {
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除应付账款")
                 @PreAuthorize("@ss.hasPermission('erp:finance-payable:delete')")
-    public CommonResult<Boolean> deleteFinancePayableList(@RequestParam("ids") List<${primaryColumn.javaType}> ids) {
+    public CommonResult<Boolean> deleteFinancePayableList(@RequestParam("ids") List<Long> ids) {
         financePayableService.deleteFinancePayableListByIds(ids);
         return success(true);
     }
@@ -75,7 +75,7 @@ public class ErpFinancePayableController {
     @Operation(summary = "获得应付账款")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:finance-payable:query')")
-    public CommonResult<ErpFinancePayableRespVO> getFinancePayable(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<ErpFinancePayableRespVO> getFinancePayable(@RequestParam("id") Long id) {
         ErpFinancePayableDO financePayable = financePayableService.getFinancePayable(id);
         return success(BeanUtils.toBean(financePayable, ErpFinancePayableRespVO.class));
     }

@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.service.balancesheet;
+package cn.iocoder.yudao.module.erp.service.finance.balancesheet;
 
 import java.util.*;
 import javax.validation.*;
@@ -58,5 +58,12 @@ public interface ErpFinanceBalanceSheetService {
      * @return 资产负债表分页
      */
     PageResult<ErpFinanceBalanceSheetDO> getFinanceBalanceSheetPage(ErpFinanceBalanceSheetPageReqVO pageReqVO);
+
+    /**
+     * 计算资产负债表
+     *
+     * @param periodDate 期间日期
+     */
+    void calculateBalanceSheet(java.time.LocalDate periodDate);
 
 }

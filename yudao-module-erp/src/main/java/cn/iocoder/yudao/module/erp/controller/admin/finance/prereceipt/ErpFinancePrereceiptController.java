@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-prereceipt;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt;
 
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -25,8 +25,8 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
-import cn.iocoder.yudao.module.erp.controller.admin.finance-prereceipt.vo.*;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-prereceipt.ErpFinancePrereceiptDO;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.*;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO;
 import cn.iocoder.yudao.module.erp.service.prereceipt.ErpFinancePrereceiptService;
 
 @Tag(name = "管理后台 - 预收款")
@@ -41,7 +41,7 @@ public class ErpFinancePrereceiptController {
     @PostMapping("/create")
     @Operation(summary = "创建预收款")
     @PreAuthorize("@ss.hasPermission('erp:finance-prereceipt:create')")
-    public CommonResult<${primaryColumn.javaType}> createFinancePrereceipt(@Valid @RequestBody ErpFinancePrereceiptSaveReqVO createReqVO) {
+    public CommonResult<Long> createFinancePrereceipt(@Valid @RequestBody ErpFinancePrereceiptSaveReqVO createReqVO) {
         return success(financePrereceiptService.createFinancePrereceipt(createReqVO));
     }
 
@@ -57,7 +57,7 @@ public class ErpFinancePrereceiptController {
     @Operation(summary = "删除预收款")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:finance-prereceipt:delete')")
-    public CommonResult<Boolean> deleteFinancePrereceipt(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<Boolean> deleteFinancePrereceipt(@RequestParam("id") Long id) {
         financePrereceiptService.deleteFinancePrereceipt(id);
         return success(true);
     }
@@ -66,7 +66,7 @@ public class ErpFinancePrereceiptController {
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除预收款")
                 @PreAuthorize("@ss.hasPermission('erp:finance-prereceipt:delete')")
-    public CommonResult<Boolean> deleteFinancePrereceiptList(@RequestParam("ids") List<${primaryColumn.javaType}> ids) {
+    public CommonResult<Boolean> deleteFinancePrereceiptList(@RequestParam("ids") List<Long> ids) {
         financePrereceiptService.deleteFinancePrereceiptListByIds(ids);
         return success(true);
     }
@@ -75,7 +75,7 @@ public class ErpFinancePrereceiptController {
     @Operation(summary = "获得预收款")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:finance-prereceipt:query')")
-    public CommonResult<ErpFinancePrereceiptRespVO> getFinancePrereceipt(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<ErpFinancePrereceiptRespVO> getFinancePrereceipt(@RequestParam("id") Long id) {
         ErpFinancePrereceiptDO financePrereceipt = financePrereceiptService.getFinancePrereceipt(id);
         return success(BeanUtils.toBean(financePrereceipt, ErpFinancePrereceiptRespVO.class));
     }

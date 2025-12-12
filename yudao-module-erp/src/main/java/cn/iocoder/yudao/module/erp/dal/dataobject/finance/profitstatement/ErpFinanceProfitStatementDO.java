@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.dal.dataobject.finance-profit-statement;
+package cn.iocoder.yudao.module.erp.dal.dataobject.finance.profitstatement;
 
 import lombok.*;
 import java.util.*;

@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-payable.vo;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.payable.vo;
 
 import lombok.*;
 import java.util.*;

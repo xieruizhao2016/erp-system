@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.dal.dataobject.finance-prereceipt;
+package cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt;
 
 import lombok.*;
 import java.util.*;

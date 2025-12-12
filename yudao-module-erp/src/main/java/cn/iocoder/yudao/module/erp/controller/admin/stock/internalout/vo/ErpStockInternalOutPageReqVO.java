@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.stock-internal-out.vo;
+package cn.iocoder.yudao.module.erp.controller.admin.stock.internalout.vo;
 
 import lombok.*;
 import java.util.*;

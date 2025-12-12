@@ -50,7 +50,7 @@
           v-model="queryParams.customerId"
           clearable
           filterable
-          placeholder="请选择供客户"
+          placeholder="请选择客户"
           class="!w-240px"
         >
           <el-option
@@ -110,6 +110,25 @@
           <el-option label="部分退货" value="1" />
           <el-option label="全部退货" value="2" />
         </el-select>
+      </el-form-item>
+      <el-form-item label="毛利率" prop="grossProfitRate">
+        <el-input-number
+          v-model="queryParams.grossProfitRateMin"
+          :precision="2"
+          placeholder="最小毛利率"
+          :min="0"
+          :max="100"
+          style="width: 120px"
+        />
+        <span style="margin: 0 8px">-</span>
+        <el-input-number
+          v-model="queryParams.grossProfitRateMax"
+          :precision="2"
+          placeholder="最大毛利率"
+          :min="0"
+          :max="100"
+          style="width: 120px"
+        />
       </el-form-item>
       <el-form-item>
         <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
@@ -201,6 +220,20 @@
         prop="depositPrice"
         :formatter="erpPriceTableColumnFormatter"
       />
+      <el-table-column
+        label="毛利率"
+        align="center"
+        prop="grossProfitRate"
+        width="100"
+        sortable="custom"
+      >
+        <template #default="{ row }">
+          <span v-if="row.grossProfitRate != null">
+            {{ formatNumber(row.grossProfitRate, 2) }}%
+          </span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" align="center" fixed="right" width="90" prop="status">
         <template #default="scope">
           <dict-tag :type="DICT_TYPE.ERP_AUDIT_STATUS" :value="scope.row.status" />
@@ -298,7 +331,9 @@ const queryParams = reactive({
   remark: undefined,
   creator: undefined,
   outStatus: undefined,
-  returnStatus: undefined
+  returnStatus: undefined,
+  grossProfitRateMin: undefined,
+  grossProfitRateMax: undefined
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中

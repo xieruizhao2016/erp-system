@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-balance-sheet;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.balancesheet;
 
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -25,9 +25,9 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
-import cn.iocoder.yudao.module.erp.controller.admin.finance-balance-sheet.vo.*;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-balance-sheet.ErpFinanceBalanceSheetDO;
-import cn.iocoder.yudao.module.erp.service.balancesheet.ErpFinanceBalanceSheetService;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.balancesheet.vo.*;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.balancesheet.ErpFinanceBalanceSheetDO;
+import cn.iocoder.yudao.module.erp.service.finance.balancesheet.ErpFinanceBalanceSheetService;
 
 @Tag(name = "管理后台 - 资产负债表")
 @RestController
@@ -41,7 +41,7 @@ public class ErpFinanceBalanceSheetController {
     @PostMapping("/create")
     @Operation(summary = "创建资产负债表")
     @PreAuthorize("@ss.hasPermission('erp:finance-balance-sheet:create')")
-    public CommonResult<${primaryColumn.javaType}> createFinanceBalanceSheet(@Valid @RequestBody ErpFinanceBalanceSheetSaveReqVO createReqVO) {
+    public CommonResult<Long> createFinanceBalanceSheet(@Valid @RequestBody ErpFinanceBalanceSheetSaveReqVO createReqVO) {
         return success(financeBalanceSheetService.createFinanceBalanceSheet(createReqVO));
     }
 
@@ -57,7 +57,7 @@ public class ErpFinanceBalanceSheetController {
     @Operation(summary = "删除资产负债表")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:finance-balance-sheet:delete')")
-    public CommonResult<Boolean> deleteFinanceBalanceSheet(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<Boolean> deleteFinanceBalanceSheet(@RequestParam("id") Long id) {
         financeBalanceSheetService.deleteFinanceBalanceSheet(id);
         return success(true);
     }
@@ -65,8 +65,8 @@ public class ErpFinanceBalanceSheetController {
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除资产负债表")
-                @PreAuthorize("@ss.hasPermission('erp:finance-balance-sheet:delete')")
-    public CommonResult<Boolean> deleteFinanceBalanceSheetList(@RequestParam("ids") List<${primaryColumn.javaType}> ids) {
+    @PreAuthorize("@ss.hasPermission('erp:finance-balance-sheet:delete')")
+    public CommonResult<Boolean> deleteFinanceBalanceSheetList(@RequestParam("ids") List<Long> ids) {
         financeBalanceSheetService.deleteFinanceBalanceSheetListByIds(ids);
         return success(true);
     }
@@ -75,7 +75,7 @@ public class ErpFinanceBalanceSheetController {
     @Operation(summary = "获得资产负债表")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:finance-balance-sheet:query')")
-    public CommonResult<ErpFinanceBalanceSheetRespVO> getFinanceBalanceSheet(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<ErpFinanceBalanceSheetRespVO> getFinanceBalanceSheet(@RequestParam("id") Long id) {
         ErpFinanceBalanceSheetDO financeBalanceSheet = financeBalanceSheetService.getFinanceBalanceSheet(id);
         return success(BeanUtils.toBean(financeBalanceSheet, ErpFinanceBalanceSheetRespVO.class));
     }
@@ -99,6 +99,15 @@ public class ErpFinanceBalanceSheetController {
         // 导出 Excel
         ExcelUtils.write(response, "资产负债表.xls", "数据", ErpFinanceBalanceSheetRespVO.class,
                         BeanUtils.toBean(list, ErpFinanceBalanceSheetRespVO.class));
+    }
+
+    @PostMapping("/calculate")
+    @Operation(summary = "计算资产负债表")
+    @PreAuthorize("@ss.hasPermission('erp:finance-balance-sheet:update')")
+    @ApiAccessLog(operateType = UPDATE)
+    public CommonResult<Boolean> calculateBalanceSheet(@RequestParam("periodDate") java.time.LocalDate periodDate) {
+        financeBalanceSheetService.calculateBalanceSheet(periodDate);
+        return success(true);
     }
 
 }

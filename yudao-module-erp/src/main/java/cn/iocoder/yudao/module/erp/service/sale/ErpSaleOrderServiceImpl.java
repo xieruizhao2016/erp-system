@@ -64,6 +64,20 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
     private ErpFinanceReceivableService financeReceivableService;
     @Resource
     private ProductSkuService productSkuService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.productbom.ProductBomService productBomService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.productbomitem.ProductBomItemService productBomItemService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.processroute.ProcessRouteService processRouteService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.processrouteitem.ProcessRouteItemService processRouteItemService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.service.purchase.ErpPurchaseOrderService purchaseOrderService;
+    @Resource
+    private cn.iocoder.yudao.module.erp.dal.mysql.purchase.ErpPurchaseOrderItemMapper purchaseOrderItemMapper;
+    @Resource
+    private cn.iocoder.yudao.module.erp.dal.mysql.purchase.ErpPurchaseOrderMapper purchaseOrderMapper;
 
     @Resource
     private AdminUserApi adminUserApi;
@@ -93,6 +107,8 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
         ErpSaleOrderDO saleOrder = BeanUtils.toBean(createReqVO, ErpSaleOrderDO.class, in -> in
                 .setNo(no).setStatus(ErpAuditStatus.PROCESS.getStatus()));
         calculateTotalPrice(saleOrder, saleOrderItems);
+        // 计算成本
+        calculateCost(saleOrder, saleOrderItems);
         saleOrderMapper.insert(saleOrder);
         // 2.2 插入订单项
         saleOrderItems.forEach(o -> o.setOrderId(saleOrder.getId()));
@@ -124,6 +140,8 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
         // 2.1 更新订单
         ErpSaleOrderDO updateObj = BeanUtils.toBean(updateReqVO, ErpSaleOrderDO.class);
         calculateTotalPrice(updateObj, saleOrderItems);
+        // 计算成本
+        calculateCost(updateObj, saleOrderItems);
         saleOrderMapper.updateById(updateObj);
         // 2.2 更新订单项
         updateSaleOrderItemList(updateReqVO.getId(), saleOrderItems);
@@ -140,6 +158,284 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
         }
         saleOrder.setDiscountPrice(MoneyUtils.priceMultiplyPercent(saleOrder.getTotalPrice(), saleOrder.getDiscountPercent()));
         saleOrder.setTotalPrice(saleOrder.getTotalPrice().subtract(saleOrder.getDiscountPrice()));
+    }
+
+    /**
+     * 计算销售订单成本
+     */
+    private void calculateCost(ErpSaleOrderDO saleOrder, List<ErpSaleOrderItemDO> items) {
+        BigDecimal totalMaterialCost = BigDecimal.ZERO;
+        BigDecimal totalLaborCost = BigDecimal.ZERO;
+
+        for (ErpSaleOrderItemDO item : items) {
+            // 计算原材料成本（从BOM获取）
+            BigDecimal materialCost = calculateMaterialCost(item.getProductId(), item.getCount());
+            item.setMaterialCost(materialCost);
+
+            // 计算员工成本（从工艺路线获取）
+            BigDecimal laborCost = calculateLaborCost(item.getProductId(), item.getCount());
+            item.setLaborCost(laborCost);
+
+            // 计算行毛利率
+            BigDecimal itemTotalCost = materialCost.add(laborCost);
+            BigDecimal itemGrossProfitRate = calculateGrossProfitRate(
+                item.getTotalPrice(), itemTotalCost);
+            item.setGrossProfitRate(itemGrossProfitRate);
+
+            totalMaterialCost = totalMaterialCost.add(materialCost);
+            totalLaborCost = totalLaborCost.add(laborCost);
+        }
+
+        // 计算订单总成本
+        saleOrder.setMaterialCost(totalMaterialCost);
+        saleOrder.setLaborCost(totalLaborCost);
+        saleOrder.setTotalCost(totalMaterialCost.add(totalLaborCost));
+
+        // 计算订单毛利率
+        saleOrder.setGrossProfitRate(calculateGrossProfitRate(
+            saleOrder.getTotalPrice(), saleOrder.getTotalCost()));
+    }
+
+    /**
+     * 计算原材料成本
+     */
+    private BigDecimal calculateMaterialCost(Long productId, BigDecimal quantity) {
+        if (productId == null || quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        try {
+            // 1. 获取产品BOM（通过productId查询，取第一个激活的BOM）
+            cn.iocoder.yudao.module.erp.controller.admin.productbom.vo.ProductBomPageReqVO pageReqVO = 
+                new cn.iocoder.yudao.module.erp.controller.admin.productbom.vo.ProductBomPageReqVO();
+            pageReqVO.setProductId(productId);
+            pageReqVO.setStatus(1); // 1表示激活状态
+            pageReqVO.setPageSize(100); // 设置合理的页面大小
+            cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.erp.dal.dataobject.productbom.ProductBomDO> bomPage = 
+                productBomService.getProductBomPage(pageReqVO);
+            
+            if (bomPage == null || bomPage.getList().isEmpty()) {
+                return BigDecimal.ZERO;
+            }
+
+            // 取第一个激活的BOM（按创建时间倒序，取最新的）
+            cn.iocoder.yudao.module.erp.dal.dataobject.productbom.ProductBomDO bom = bomPage.getList().stream()
+                .filter(b -> b.getStatus() != null && b.getStatus() == 1) // 1为激活状态
+                .findFirst()
+                .orElse(null);
+
+            if (bom == null) {
+                return BigDecimal.ZERO;
+            }
+
+            // 2. 遍历BOM明细，计算原材料成本
+            BigDecimal totalCost = BigDecimal.ZERO;
+            cn.iocoder.yudao.module.erp.controller.admin.productbomitem.vo.ProductBomItemPageReqVO itemPageReqVO = 
+                new cn.iocoder.yudao.module.erp.controller.admin.productbomitem.vo.ProductBomItemPageReqVO();
+            itemPageReqVO.setBomId(bom.getId());
+            itemPageReqVO.setPageSize(1000); // BOM明细可能较多
+            cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.erp.dal.dataobject.productbomitem.ProductBomItemDO> bomItemPage = 
+                productBomItemService.getProductBomItemPage(itemPageReqVO);
+
+            if (bomItemPage != null && !bomItemPage.getList().isEmpty()) {
+                for (cn.iocoder.yudao.module.erp.dal.dataobject.productbomitem.ProductBomItemDO bomItem : bomItemPage.getList()) {
+                    if (bomItem.getChildProductId() == null || bomItem.getQuantity() == null) {
+                        continue;
+                    }
+
+                    // 获取原材料的最新采购价格
+                    BigDecimal purchasePrice = getLatestPurchasePrice(bomItem.getChildProductId());
+                    if (purchasePrice == null || purchasePrice.compareTo(BigDecimal.ZERO) <= 0) {
+                        // 如果获取不到价格，尝试使用产品的基础价格
+                        ErpProductDO product = productService.getProduct(bomItem.getChildProductId());
+                        if (product != null && product.getPurchasePrice() != null) {
+                            purchasePrice = product.getPurchasePrice();
+                        } else {
+                            purchasePrice = BigDecimal.ZERO;
+                        }
+                    }
+
+                    // 计算该原材料的成本 = 采购价格 * BOM数量 * 订单数量
+                    BigDecimal itemCost = purchasePrice
+                        .multiply(bomItem.getQuantity())
+                        .multiply(quantity);
+                    totalCost = totalCost.add(itemCost);
+                }
+            }
+
+            return totalCost;
+        } catch (Exception e) {
+            // 如果计算失败，返回0，不影响主流程
+            return BigDecimal.ZERO;
+        }
+    }
+
+    /**
+     * 计算员工成本
+     */
+    private BigDecimal calculateLaborCost(Long productId, BigDecimal quantity) {
+        if (productId == null || quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        try {
+            // 1. 获取产品的工艺路线（通过productId查询，取第一个激活的工艺路线）
+            cn.iocoder.yudao.module.erp.controller.admin.processroute.vo.ProcessRoutePageReqVO pageReqVO = 
+                new cn.iocoder.yudao.module.erp.controller.admin.processroute.vo.ProcessRoutePageReqVO();
+            pageReqVO.setProductId(productId);
+            pageReqVO.setStatus(1); // 1表示激活状态
+            pageReqVO.setPageSize(100);
+            cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.erp.dal.dataobject.processroute.ProcessRouteDO> routePage = 
+                processRouteService.getProcessRoutePage(pageReqVO);
+
+            if (routePage == null || routePage.getList().isEmpty()) {
+                return BigDecimal.ZERO;
+            }
+
+            // 取第一个激活的工艺路线（按创建时间倒序，取最新的）
+            cn.iocoder.yudao.module.erp.dal.dataobject.processroute.ProcessRouteDO route = routePage.getList().stream()
+                .filter(r -> r.getStatus() != null && r.getStatus() == 1) // 1为激活状态
+                .findFirst()
+                .orElse(null);
+
+            if (route == null) {
+                return BigDecimal.ZERO;
+            }
+
+            // 如果工艺路线有标准人工成本，直接使用
+            if (route.getStandardLaborCost() != null && route.getStandardLaborCost().compareTo(BigDecimal.ZERO) > 0) {
+                return route.getStandardLaborCost().multiply(quantity);
+            }
+
+            // 2. 遍历工艺路线明细，计算员工成本
+            BigDecimal totalCost = BigDecimal.ZERO;
+            cn.iocoder.yudao.module.erp.controller.admin.processrouteitem.vo.ProcessRouteItemPageReqVO itemPageReqVO = 
+                new cn.iocoder.yudao.module.erp.controller.admin.processrouteitem.vo.ProcessRouteItemPageReqVO();
+            itemPageReqVO.setRouteId(route.getId());
+            itemPageReqVO.setPageSize(1000); // 工艺路线明细可能较多
+            cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.erp.dal.dataobject.processrouteitem.ProcessRouteItemDO> routeItemPage = 
+                processRouteItemService.getProcessRouteItemPage(itemPageReqVO);
+
+            if (routeItemPage != null && !routeItemPage.getList().isEmpty()) {
+                for (cn.iocoder.yudao.module.erp.dal.dataobject.processrouteitem.ProcessRouteItemDO routeItem : routeItemPage.getList()) {
+                    // 获取工序的标准工时
+                    BigDecimal standardTime = routeItem.getStandardTime() != null ? routeItem.getStandardTime() : BigDecimal.ZERO;
+                    if (standardTime.compareTo(BigDecimal.ZERO) <= 0) {
+                        continue;
+                    }
+
+                    // 获取员工时薪
+                    BigDecimal hourlyRate = getEmployeeHourlyRate(routeItem.getProcessId());
+                    if (hourlyRate == null || hourlyRate.compareTo(BigDecimal.ZERO) <= 0) {
+                        // 如果获取不到时薪，使用工艺路线的标准人工成本或默认值
+                        if (route.getStandardLaborCost() != null && route.getStandardLaborCost().compareTo(BigDecimal.ZERO) > 0) {
+                            // 使用工艺路线的标准人工成本除以标准周期时间
+                            BigDecimal standardCycleTime = route.getStandardCycleTime() != null && route.getStandardCycleTime().compareTo(BigDecimal.ZERO) > 0
+                                ? route.getStandardCycleTime() : BigDecimal.ONE;
+                            hourlyRate = route.getStandardLaborCost().divide(standardCycleTime, 2, java.math.RoundingMode.HALF_UP);
+                        } else {
+                            hourlyRate = new BigDecimal("50"); // 默认时薪50元/小时
+                        }
+                    }
+
+                    // 计算该工序的成本 = 时薪 * 标准工时 * 订单数量
+                    BigDecimal itemCost = hourlyRate
+                        .multiply(standardTime)
+                        .multiply(quantity);
+                    totalCost = totalCost.add(itemCost);
+                }
+            }
+
+            return totalCost;
+        } catch (Exception e) {
+            // 如果计算失败，返回0，不影响主流程
+            return BigDecimal.ZERO;
+        }
+    }
+
+    /**
+     * 获取最新采购价格
+     */
+    private BigDecimal getLatestPurchasePrice(Long productId) {
+        if (productId == null) {
+            return null;
+        }
+
+        try {
+            // 查询该产品的采购订单项
+            List<cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpPurchaseOrderItemDO> items = 
+                purchaseOrderItemMapper.selectList(
+                    cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpPurchaseOrderItemDO::getProductId, 
+                    productId);
+
+            if (CollUtil.isEmpty(items)) {
+                return null;
+            }
+
+            // 过滤出已审核的采购订单项，并按创建时间倒序，取最新的价格
+            return items.stream()
+                .filter(item -> {
+                    cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpPurchaseOrderDO order = 
+                        purchaseOrderMapper.selectById(item.getOrderId());
+                    return order != null && 
+                           ErpAuditStatus.APPROVE.getStatus().equals(order.getStatus()) &&
+                           item.getProductPrice() != null &&
+                           item.getProductPrice().compareTo(BigDecimal.ZERO) > 0;
+                })
+                .max((a, b) -> {
+                    // 按创建时间倒序
+                    if (a.getCreateTime() != null && b.getCreateTime() != null) {
+                        return a.getCreateTime().compareTo(b.getCreateTime());
+                    }
+                    return 0;
+                })
+                .map(cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpPurchaseOrderItemDO::getProductPrice)
+                .orElse(null);
+        } catch (Exception e) {
+            // 如果查询失败，返回null
+            return null;
+        }
+    }
+
+    /**
+     * 获取员工时薪
+     */
+    private BigDecimal getEmployeeHourlyRate(Long processId) {
+        if (processId == null) {
+            return null;
+        }
+
+        try {
+            // TODO: 实现从系统配置或员工表获取时薪的逻辑
+            // 方案1: 从系统配置表获取（如果有配置的话）
+            // 方案2: 从工序表获取标准时薪（如果有字段的话）
+            // 方案3: 从员工表获取时薪（如果有字段的话）
+            
+            // 这里先返回null，使用默认值或工艺路线的标准人工成本
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 计算毛利率
+     */
+    private BigDecimal calculateGrossProfitRate(BigDecimal salePrice, BigDecimal totalCost) {
+        if (salePrice == null || salePrice.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        if (totalCost == null) {
+            totalCost = BigDecimal.ZERO;
+        }
+
+        // 毛利率 = (销售价格 - 总成本) / 销售价格 × 100%
+        BigDecimal profit = salePrice.subtract(totalCost);
+        if (profit.compareTo(BigDecimal.ZERO) < 0) {
+            return BigDecimal.ZERO;
+        }
+        return profit.divide(salePrice, 4, java.math.RoundingMode.HALF_UP)
+            .multiply(new BigDecimal("100"));
     }
 
     @Override

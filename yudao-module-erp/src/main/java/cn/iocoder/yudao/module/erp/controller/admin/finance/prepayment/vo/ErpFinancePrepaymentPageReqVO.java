@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-prepayment.vo;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.prepayment.vo;
 
 import lombok.*;
 import java.util.*;

@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.controller.admin.finance-receivable;
+package cn.iocoder.yudao.module.erp.controller.admin.finance.receivable;
 
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
@@ -25,8 +25,8 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
-import cn.iocoder.yudao.module.erp.controller.admin.finance-receivable.vo.*;
-import cn.iocoder.yudao.module.erp.dal.dataobject.finance-receivable.ErpFinanceReceivableDO;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.receivable.vo.*;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.receivable.ErpFinanceReceivableDO;
 import cn.iocoder.yudao.module.erp.service.receivable.ErpFinanceReceivableService;
 
 @Tag(name = "管理后台 - 应收账款")
@@ -41,7 +41,7 @@ public class ErpFinanceReceivableController {
     @PostMapping("/create")
     @Operation(summary = "创建应收账款")
     @PreAuthorize("@ss.hasPermission('erp:finance-receivable:create')")
-    public CommonResult<${primaryColumn.javaType}> createFinanceReceivable(@Valid @RequestBody ErpFinanceReceivableSaveReqVO createReqVO) {
+    public CommonResult<Long> createFinanceReceivable(@Valid @RequestBody ErpFinanceReceivableSaveReqVO createReqVO) {
         return success(financeReceivableService.createFinanceReceivable(createReqVO));
     }
 
@@ -57,7 +57,7 @@ public class ErpFinanceReceivableController {
     @Operation(summary = "删除应收账款")
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('erp:finance-receivable:delete')")
-    public CommonResult<Boolean> deleteFinanceReceivable(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<Boolean> deleteFinanceReceivable(@RequestParam("id") Long id) {
         financeReceivableService.deleteFinanceReceivable(id);
         return success(true);
     }
@@ -66,7 +66,7 @@ public class ErpFinanceReceivableController {
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除应收账款")
                 @PreAuthorize("@ss.hasPermission('erp:finance-receivable:delete')")
-    public CommonResult<Boolean> deleteFinanceReceivableList(@RequestParam("ids") List<${primaryColumn.javaType}> ids) {
+    public CommonResult<Boolean> deleteFinanceReceivableList(@RequestParam("ids") List<Long> ids) {
         financeReceivableService.deleteFinanceReceivableListByIds(ids);
         return success(true);
     }
@@ -75,7 +75,7 @@ public class ErpFinanceReceivableController {
     @Operation(summary = "获得应收账款")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('erp:finance-receivable:query')")
-    public CommonResult<ErpFinanceReceivableRespVO> getFinanceReceivable(@RequestParam("id") ${primaryColumn.javaType} id) {
+    public CommonResult<ErpFinanceReceivableRespVO> getFinanceReceivable(@RequestParam("id") Long id) {
         ErpFinanceReceivableDO financeReceivable = financeReceivableService.getFinanceReceivable(id);
         return success(BeanUtils.toBean(financeReceivable, ErpFinanceReceivableRespVO.class));
     }
