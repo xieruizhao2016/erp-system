@@ -27,7 +27,7 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
 import cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO;
-import cn.iocoder.yudao.module.erp.service.prereceipt.ErpFinancePrereceiptService;
+import cn.iocoder.yudao.module.erp.service.finance.prereceipt.ErpFinancePrereceiptService;
 
 @Tag(name = "管理后台 - 预收款")
 @RestController

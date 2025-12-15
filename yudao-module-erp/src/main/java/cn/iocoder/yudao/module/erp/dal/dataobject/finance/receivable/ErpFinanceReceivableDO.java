@@ -23,6 +23,11 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 public class ErpFinanceReceivableDO extends BaseDO {
 
     /**
+     * 编号
+     */
+    @TableId
+    private Long id;
+    /**
      * 单据号
      */
     private String no;

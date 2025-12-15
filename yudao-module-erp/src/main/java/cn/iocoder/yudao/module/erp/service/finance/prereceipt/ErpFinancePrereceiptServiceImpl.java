@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.service.prereceipt;
+package cn.iocoder.yudao.module.erp.service.finance.prereceipt;
 
 import cn.hutool.core.collection.CollUtil;
 import org.springframework.stereotype.Service;

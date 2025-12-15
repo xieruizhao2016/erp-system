@@ -4,7 +4,6 @@ import lombok.*;
 import java.util.*;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
-import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.*;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 
@@ -23,6 +22,11 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 @AllArgsConstructor
 public class ErpStockInternalInDO extends BaseDO {
 
+    /**
+     * 编号
+     */
+    @TableId
+    private Long id;
     /**
      * 入库单号
      */

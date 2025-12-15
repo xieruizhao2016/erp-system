@@ -18,23 +18,30 @@ import cn.iocoder.yudao.module.erp.controller.admin.processrouteitem.vo.*;
 public interface ProcessRouteItemMapper extends BaseMapperX<ProcessRouteItemDO> {
 
     default PageResult<ProcessRouteItemDO> selectPage(ProcessRouteItemPageReqVO reqVO) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<ProcessRouteItemDO>()
-                .eqIfPresent(ProcessRouteItemDO::getRouteId, reqVO.getRouteId())
-                .eqIfPresent(ProcessRouteItemDO::getProcessId, reqVO.getProcessId())
-                .eqIfPresent(ProcessRouteItemDO::getSequence, reqVO.getSequence())
-                .likeIfPresent(ProcessRouteItemDO::getOperationName, reqVO.getOperationName())
-                .betweenIfPresent(ProcessRouteItemDO::getStandardTime, reqVO.getStandardTime())
-                .betweenIfPresent(ProcessRouteItemDO::getSetupTime, reqVO.getSetupTime())
-                .eqIfPresent(ProcessRouteItemDO::getWorkerCount, reqVO.getWorkerCount())
-                .eqIfPresent(ProcessRouteItemDO::getEquipmentId, reqVO.getEquipmentId())
-                .eqIfPresent(ProcessRouteItemDO::getWorkCenterId, reqVO.getWorkCenterId())
-                .eqIfPresent(ProcessRouteItemDO::getLaborRate, reqVO.getLaborRate())
-                .eqIfPresent(ProcessRouteItemDO::getOverheadRate, reqVO.getOverheadRate())
-                .eqIfPresent(ProcessRouteItemDO::getIsBottleneck, reqVO.getIsBottleneck())
-                .eqIfPresent(ProcessRouteItemDO::getQualityCheckRequired, reqVO.getQualityCheckRequired())
-                .eqIfPresent(ProcessRouteItemDO::getRemark, reqVO.getRemark())
-                .betweenIfPresent(ProcessRouteItemDO::getCreateTime, reqVO.getCreateTime())
-                .orderByDesc(ProcessRouteItemDO::getId));
+        LambdaQueryWrapperX<ProcessRouteItemDO> wrapper = new LambdaQueryWrapperX<>();
+        if (reqVO.getRouteId() != null) wrapper.eq(ProcessRouteItemDO::getRouteId, reqVO.getRouteId());
+        if (reqVO.getProcessId() != null) wrapper.eq(ProcessRouteItemDO::getProcessId, reqVO.getProcessId());
+        if (reqVO.getSequence() != null) wrapper.eq(ProcessRouteItemDO::getSequence, reqVO.getSequence());
+        if (reqVO.getOperationName() != null) wrapper.like(ProcessRouteItemDO::getOperationName, reqVO.getOperationName());
+        if (reqVO.getStandardTime() != null && reqVO.getStandardTime().length == 2) {
+            wrapper.between(ProcessRouteItemDO::getStandardTime, reqVO.getStandardTime()[0], reqVO.getStandardTime()[1]);
+        }
+        if (reqVO.getSetupTime() != null && reqVO.getSetupTime().length == 2) {
+            wrapper.between(ProcessRouteItemDO::getSetupTime, reqVO.getSetupTime()[0], reqVO.getSetupTime()[1]);
+        }
+        if (reqVO.getWorkerCount() != null) wrapper.eq(ProcessRouteItemDO::getWorkerCount, reqVO.getWorkerCount());
+        if (reqVO.getEquipmentId() != null) wrapper.eq(ProcessRouteItemDO::getEquipmentId, reqVO.getEquipmentId());
+        if (reqVO.getWorkCenterId() != null) wrapper.eq(ProcessRouteItemDO::getWorkCenterId, reqVO.getWorkCenterId());
+        if (reqVO.getLaborRate() != null) wrapper.eq(ProcessRouteItemDO::getLaborRate, reqVO.getLaborRate());
+        if (reqVO.getOverheadRate() != null) wrapper.eq(ProcessRouteItemDO::getOverheadRate, reqVO.getOverheadRate());
+        if (reqVO.getIsBottleneck() != null) wrapper.eq(ProcessRouteItemDO::getIsBottleneck, reqVO.getIsBottleneck());
+        if (reqVO.getQualityCheckRequired() != null) wrapper.eq(ProcessRouteItemDO::getQualityCheckRequired, reqVO.getQualityCheckRequired());
+        if (reqVO.getRemark() != null) wrapper.like(ProcessRouteItemDO::getRemark, reqVO.getRemark());
+        if (reqVO.getCreateTime() != null && reqVO.getCreateTime().length == 2) {
+            wrapper.between(ProcessRouteItemDO::getCreateTime, reqVO.getCreateTime()[0], reqVO.getCreateTime()[1]);
+        }
+        wrapper.orderByDesc(ProcessRouteItemDO::getId);
+        return selectPage(reqVO, wrapper);
     }
 
     default List<ProcessRouteItemDO> selectListByRouteId(Long routeId) {

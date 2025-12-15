@@ -27,7 +27,7 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
 import cn.iocoder.yudao.module.erp.controller.admin.stock.internalout.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.stock.internalout.ErpStockInternalOutDO;
-import cn.iocoder.yudao.module.erp.service.internalout.ErpStockInternalOutService;
+import cn.iocoder.yudao.module.erp.service.stock.internalout.ErpStockInternalOutService;
 
 @Tag(name = "管理后台 - 内部出库单")
 @RestController

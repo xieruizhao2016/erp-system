@@ -111,7 +111,7 @@ public class ErpStockInternalInServiceImpl implements ErpStockInternalInService 
     @Override
     public void deleteStockInternalIn(Long id) {
         // 校验存在
-        validateStockInternalInExists(id);
+        validateStockInternalInExists(id); // 验证存在
         // 删除
         stockInternalInMapper.deleteById(id);
     }
@@ -122,12 +122,6 @@ public class ErpStockInternalInServiceImpl implements ErpStockInternalInService 
         stockInternalInMapper.deleteByIds(ids);
         }
 
-
-    private void validateStockInternalInExists(Long id) {
-        if (stockInternalInMapper.selectById(id) == null) {
-            throw exception(STOCK_INTERNAL_IN_NOT_EXISTS);
-        }
-    }
 
     @Override
     public ErpStockInternalInDO getStockInternalIn(Long id) {

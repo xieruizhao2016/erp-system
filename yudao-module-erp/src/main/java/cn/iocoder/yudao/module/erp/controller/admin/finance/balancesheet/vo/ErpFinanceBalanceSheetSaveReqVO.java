@@ -5,10 +5,14 @@ import lombok.*;
 import java.util.*;
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Schema(description = "管理后台 - 资产负债表新增/修改 Request VO")
 @Data
 public class ErpFinanceBalanceSheetSaveReqVO {
+
+    @Schema(description = "编号")
+    private Long id;
 
     @Schema(description = "期间日期（年月）", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "期间日期（年月）不能为空")

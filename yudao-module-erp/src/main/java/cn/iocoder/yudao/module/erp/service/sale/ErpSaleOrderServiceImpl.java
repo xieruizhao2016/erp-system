@@ -319,7 +319,7 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
             if (routeItemPage != null && !routeItemPage.getList().isEmpty()) {
                 for (cn.iocoder.yudao.module.erp.dal.dataobject.processrouteitem.ProcessRouteItemDO routeItem : routeItemPage.getList()) {
                     // 获取工序的标准工时
-                    BigDecimal standardTime = routeItem.getStandardTime() != null ? routeItem.getStandardTime() : BigDecimal.ZERO;
+                    BigDecimal standardTime = routeItem.getStandardTime() != null ? new BigDecimal(routeItem.getStandardTime()) : BigDecimal.ZERO;
                     if (standardTime.compareTo(BigDecimal.ZERO) <= 0) {
                         continue;
                     }
@@ -330,8 +330,8 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
                         // 如果获取不到时薪，使用工艺路线的标准人工成本或默认值
                         if (route.getStandardLaborCost() != null && route.getStandardLaborCost().compareTo(BigDecimal.ZERO) > 0) {
                             // 使用工艺路线的标准人工成本除以标准周期时间
-                            BigDecimal standardCycleTime = route.getStandardCycleTime() != null && route.getStandardCycleTime().compareTo(BigDecimal.ZERO) > 0
-                                ? route.getStandardCycleTime() : BigDecimal.ONE;
+                            BigDecimal standardCycleTime = (route.getStandardCycleTime() != null && route.getStandardCycleTime() > 0)
+                                ? new BigDecimal(route.getStandardCycleTime()) : BigDecimal.ONE;
                             hourlyRate = route.getStandardLaborCost().divide(standardCycleTime, 2, java.math.RoundingMode.HALF_UP);
                         } else {
                             hourlyRate = new BigDecimal("50"); // 默认时薪50元/小时

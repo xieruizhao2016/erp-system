@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.erp.dal.mysql.finance.receivable;
 
 import java.util.*;
+import java.math.BigDecimal;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;

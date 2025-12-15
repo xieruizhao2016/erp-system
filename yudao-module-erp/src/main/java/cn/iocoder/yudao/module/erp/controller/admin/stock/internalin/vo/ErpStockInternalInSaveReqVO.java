@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 @Data
 public class ErpStockInternalInSaveReqVO {
 
+    @Schema(description = "编号")
+    private Long id;
+
     @Schema(description = "入库单号")
     private String no;
 

@@ -5,10 +5,14 @@ import lombok.*;
 import java.util.*;
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Schema(description = "管理后台 - 应收账款新增/修改 Request VO")
 @Data
 public class ErpFinanceReceivableSaveReqVO {
+
+    @Schema(description = "编号")
+    private Long id;
 
     @Schema(description = "单据号")
     private String no;

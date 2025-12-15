@@ -52,5 +52,9 @@ public class ErpAccountDO extends BaseDO {
      * 是否默认
      */
     private Boolean defaultStatus;
+    /**
+     * 账户余额，单位：元
+     */
+    private java.math.BigDecimal balance;
 
 }

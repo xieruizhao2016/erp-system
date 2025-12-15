@@ -27,7 +27,7 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
 import cn.iocoder.yudao.module.erp.controller.admin.finance.receivable.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.receivable.ErpFinanceReceivableDO;
-import cn.iocoder.yudao.module.erp.service.receivable.ErpFinanceReceivableService;
+import cn.iocoder.yudao.module.erp.service.finance.receivable.ErpFinanceReceivableService;
 
 @Tag(name = "管理后台 - 应收账款")
 @RestController

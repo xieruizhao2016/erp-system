@@ -3,8 +3,7 @@ package cn.iocoder.yudao.module.erp.dal.dataobject.finance.balancesheet;
 import lombok.*;
 import java.util.*;
 import java.math.BigDecimal;
-import java.math.BigDecimal;
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import com.baomidou.mybatisplus.annotation.*;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 
@@ -23,6 +22,11 @@ import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 @AllArgsConstructor
 public class ErpFinanceBalanceSheetDO extends BaseDO {
 
+    /**
+     * 编号
+     */
+    @TableId
+    private Long id;
     /**
      * 期间日期（年月）
      */

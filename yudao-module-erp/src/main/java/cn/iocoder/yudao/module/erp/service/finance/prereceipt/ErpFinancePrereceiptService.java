@@ -1,4 +1,4 @@
-package cn.iocoder.yudao.module.erp.service.prereceipt;
+package cn.iocoder.yudao.module.erp.service.finance.prereceipt;
 
 import java.util.*;
 import javax.validation.*;
