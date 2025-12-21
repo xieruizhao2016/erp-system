@@ -39,6 +39,9 @@ public class ProcessSaveReqVO {
     @Schema(description = "设备类型", example = "CNC机床")
     private String equipmentType;
 
+    @Schema(description = "设备ID", example = "1")
+    private Long equipmentId;
+
     @Schema(description = "工作中心ID", example = "1")
     private Long workCenterId;
 

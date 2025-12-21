@@ -55,8 +55,9 @@
         <el-form-item label="内部类型" prop="internalType">
           <el-select v-model="queryParams.internalType" placeholder="请选择内部类型" clearable class="!w-240px">
             <el-option label="部门调拨" :value="1" />
-            <el-option label="员工领用" :value="2" />
-            <el-option label="其他" :value="3" />
+            <el-option label="员工领料" :value="2" />
+            <el-option label="生产产品" :value="3" />
+            <el-option label="其他" :value="4" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态" prop="status">
@@ -76,7 +77,7 @@
             type="primary"
             plain
             @click="openForm('create')"
-            v-hasPermi="['erp:stock-internal-in:create']"
+            v-hasPermi="['erp:stock:internal-in:create']"
           >
             <Icon icon="ep:plus" class="mr-5px" /> 新增
           </el-button>
@@ -85,7 +86,7 @@
             plain
             @click="handleExport"
             :loading="exportLoading"
-            v-hasPermi="['erp:stock-internal-in:export']"
+            v-hasPermi="['erp:stock:internal-in:export']"
           >
             <Icon icon="ep:download" class="mr-5px" /> 导出
           </el-button>
@@ -109,8 +110,9 @@
         <el-table-column label="内部类型" align="center" prop="internalType" width="100">
           <template #default="scope">
             <span v-if="scope.row.internalType === 1">部门调拨</span>
-            <span v-else-if="scope.row.internalType === 2">员工领用</span>
-            <span v-else-if="scope.row.internalType === 3">其他</span>
+            <span v-else-if="scope.row.internalType === 2">员工领料</span>
+            <span v-else-if="scope.row.internalType === 3">生产产品</span>
+            <span v-else-if="scope.row.internalType === 4">其他</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -142,7 +144,7 @@
             <el-button
               link
               @click="openForm('detail', scope.row.id)"
-              v-hasPermi="['erp:stock-internal-in:query']"
+              v-hasPermi="['erp:stock:internal-in:query']"
             >
               详情
             </el-button>
@@ -150,7 +152,7 @@
               link
               type="primary"
               @click="openForm('update', scope.row.id)"
-              v-hasPermi="['erp:stock-internal-in:update']"
+              v-hasPermi="['erp:stock:internal-in:update']"
               :disabled="scope.row.status === 20"
             >
               编辑
@@ -159,7 +161,7 @@
               link
               type="primary"
               @click="handleUpdateStatus(scope.row.id, 20)"
-              v-hasPermi="['erp:stock-internal-in:update-status']"
+              v-hasPermi="['erp:stock:internal-in:approve']"
               v-if="scope.row.status === 10"
             >
               审批
@@ -168,7 +170,7 @@
               link
               type="danger"
               @click="handleUpdateStatus(scope.row.id, 10)"
-              v-hasPermi="['erp:stock-internal-in:update-status']"
+              v-hasPermi="['erp:stock:internal-in:approve']"
               v-else
             >
               反审批
@@ -177,7 +179,7 @@
               link
               type="danger"
               @click="handleDelete(scope.row.id)"
-              v-hasPermi="['erp:stock-internal-in:delete']"
+              v-hasPermi="['erp:stock:internal-in:delete']"
               :disabled="scope.row.status === 20"
             >
               删除
@@ -241,6 +243,9 @@ const getList = async () => {
     const data = await StockInternalInApi.getStockInternalInPage(queryParams)
     list.value = data.list
     total.value = data.total
+  } catch (error) {
+    console.error('获取内部入库单列表失败:', error)
+    // 错误已由 axios 拦截器处理，这里只记录日志
   } finally {
     loading.value = false
   }

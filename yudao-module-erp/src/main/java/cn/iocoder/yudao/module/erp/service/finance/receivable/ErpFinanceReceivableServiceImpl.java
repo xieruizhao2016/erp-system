@@ -40,8 +40,33 @@ public class ErpFinanceReceivableServiceImpl implements ErpFinanceReceivableServ
     private ErpNoRedisDAO noRedisDAO;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Long createFinanceReceivable(ErpFinanceReceivableSaveReqVO createReqVO) {
-        // 插入
+        // 1. 生成单据号（如果没有提供）
+        if (createReqVO.getNo() == null || createReqVO.getNo().isEmpty()) {
+            String no = noRedisDAO.generate(ErpNoRedisDAO.FINANCE_RECEIVABLE_NO_PREFIX);
+            createReqVO.setNo(no);
+        }
+
+        // 2. 设置默认已收金额（如果没有提供）
+        if (createReqVO.getReceivedAmount() == null) {
+            createReqVO.setReceivedAmount(BigDecimal.ZERO);
+        }
+
+        // 3. 计算余额（如果没有提供）
+        if (createReqVO.getBalance() == null) {
+            BigDecimal amount = createReqVO.getAmount() != null ? createReqVO.getAmount() : BigDecimal.ZERO;
+            BigDecimal receivedAmount = createReqVO.getReceivedAmount() != null 
+                ? createReqVO.getReceivedAmount() : BigDecimal.ZERO;
+            createReqVO.setBalance(amount.subtract(receivedAmount));
+        }
+
+        // 4. 设置默认状态（如果没有提供）
+        if (createReqVO.getStatus() == null) {
+            createReqVO.setStatus(ErpAuditStatus.PROCESS.getStatus());
+        }
+
+        // 5. 插入
         ErpFinanceReceivableDO financeReceivable = BeanUtils.toBean(createReqVO, ErpFinanceReceivableDO.class);
         financeReceivableMapper.insert(financeReceivable);
 
@@ -50,9 +75,19 @@ public class ErpFinanceReceivableServiceImpl implements ErpFinanceReceivableServ
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateFinanceReceivable(ErpFinanceReceivableSaveReqVO updateReqVO) {
         // 校验存在
         validateFinanceReceivableExists(updateReqVO.getId());
+        
+        // 如果提供了金额和已收金额，但没有提供余额，则自动计算余额
+        if (updateReqVO.getBalance() == null 
+            && updateReqVO.getAmount() != null 
+            && updateReqVO.getReceivedAmount() != null) {
+            BigDecimal balance = updateReqVO.getAmount().subtract(updateReqVO.getReceivedAmount());
+            updateReqVO.setBalance(balance);
+        }
+        
         // 更新
         ErpFinanceReceivableDO updateObj = BeanUtils.toBean(updateReqVO, ErpFinanceReceivableDO.class);
         financeReceivableMapper.updateById(updateObj);

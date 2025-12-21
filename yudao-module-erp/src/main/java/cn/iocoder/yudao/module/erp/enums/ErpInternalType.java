@@ -16,8 +16,9 @@ import java.util.Arrays;
 public enum ErpInternalType implements ArrayValuable<Integer> {
 
     DEPT_TRANSFER(1, "部门调拨"),
-    EMPLOYEE_USE(2, "员工领用"),
-    OTHER(3, "其他");
+    EMPLOYEE_USE(2, "员工领料"),
+    PRODUCTION(3, "生产产品"),
+    OTHER(4, "其他");
 
     public static final Integer[] ARRAYS = Arrays.stream(values())
         .map(ErpInternalType::getType).toArray(Integer[]::new);

@@ -60,6 +60,10 @@ public class ProcessDO extends BaseDO {
      */
     private String equipmentType;
     /**
+     * 设备ID
+     */
+    private Long equipmentId;
+    /**
      * 工作中心ID
      */
     private Long workCenterId;

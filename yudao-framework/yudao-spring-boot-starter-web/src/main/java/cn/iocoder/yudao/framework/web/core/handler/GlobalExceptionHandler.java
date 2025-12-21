@@ -380,6 +380,9 @@ public class GlobalExceptionHandler {
         if (!message.contains("doesn't exist")) {
             return null;
         }
+        // 输出完整的异常信息以便调试
+        log.error("[handleTableNotExists] 异常根因消息: {}", message);
+        log.error("[handleTableNotExists] 完整异常堆栈:", ex);
         // 1. 数据报表
         if (message.contains("report_")) {
             log.error("[报表模块 yudao-module-report - 表结构未导入][参考 https://cloud.iocoder.cn/report/ 开启]");

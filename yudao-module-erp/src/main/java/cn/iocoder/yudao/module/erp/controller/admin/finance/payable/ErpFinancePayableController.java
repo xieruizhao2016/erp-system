@@ -39,7 +39,7 @@ public class ErpFinancePayableController {
     private ErpFinancePayableService financePayableService;
 
     @PostMapping("/create")
-    @Operation(summary = "创建应付账款")
+    @Operation(summary = "创建应付账款", description = "支持手动创建初始应付账款或没有关联订单的借贷记录。如果不提供单据号，将自动生成；如果不提供余额，将自动计算（余额=应付金额-已付金额）")
     @PreAuthorize("@ss.hasPermission('erp:finance-payable:create')")
     public CommonResult<Long> createFinancePayable(@Valid @RequestBody ErpFinancePayableSaveReqVO createReqVO) {
         return success(financePayableService.createFinancePayable(createReqVO));

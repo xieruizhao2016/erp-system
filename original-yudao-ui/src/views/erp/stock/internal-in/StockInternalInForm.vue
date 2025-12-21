@@ -15,25 +15,6 @@
           </el-form-item>
         </el-col>
         <el-col :span="8">
-          <el-form-item label="员工" prop="employeeId">
-            <el-select
-              v-model="formData.employeeId"
-              clearable
-              filterable
-              placeholder="请选择员工"
-              style="width: 100%"
-              :disabled="disabled"
-            >
-              <el-option
-                v-for="item in userList"
-                :key="item.id"
-                :label="item.nickname"
-                :value="item.id"
-              />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="8">
           <el-form-item label="部门" prop="deptId">
             <el-select
               v-model="formData.deptId"
@@ -42,11 +23,32 @@
               placeholder="请选择部门"
               style="width: 100%"
               :disabled="disabled"
+              @change="handleDeptChange"
             >
               <el-option
                 v-for="item in deptList"
                 :key="item.id"
                 :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="员工" prop="employeeId">
+            <el-select
+              v-model="formData.employeeId"
+              clearable
+              filterable
+              placeholder="请选择员工"
+              style="width: 100%"
+              :disabled="disabled"
+              @change="handleEmployeeChange"
+            >
+              <el-option
+                v-for="item in filteredUserList"
+                :key="item.id"
+                :label="item.nickname"
                 :value="item.id"
               />
             </el-select>
@@ -61,27 +63,9 @@
               :disabled="disabled"
             >
               <el-option label="部门调拨" :value="1" />
-              <el-option label="员工领用" :value="2" />
-              <el-option label="其他" :value="3" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="8">
-          <el-form-item label="调入仓库" prop="warehouseId">
-            <el-select
-              v-model="formData.warehouseId"
-              clearable
-              filterable
-              placeholder="请选择调入仓库"
-              style="width: 100%"
-              :disabled="disabled"
-            >
-              <el-option
-                v-for="item in warehouseList"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id"
-              />
+              <el-option label="员工领料" :value="2" />
+              <el-option label="生产产品" :value="3" />
+              <el-option label="其他" :value="4" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -136,7 +120,6 @@
 import { StockInternalInApi, StockInternalInVO } from '@/api/erp/stock/internal-in'
 import * as UserApi from '@/api/system/user'
 import * as DeptApi from '@/api/system/dept'
-import { WarehouseApi, WarehouseVO } from '@/api/erp/stock/warehouse'
 import { handleTree } from '@/utils/tree'
 import StockInternalInItemForm from './components/StockInternalInItemForm.vue'
 
@@ -157,8 +140,7 @@ const formData = ref({
   no: '',
   employeeId: undefined,
   deptId: undefined,
-  internalType: 1,
-  warehouseId: undefined,
+  internalType: 3,
   inTime: undefined,
   remark: '',
   fileUrl: '',
@@ -168,14 +150,42 @@ const formRules = reactive({
   employeeId: [{ required: true, message: '员工不能为空', trigger: 'change' }],
   deptId: [{ required: true, message: '部门不能为空', trigger: 'change' }],
   internalType: [{ required: true, message: '内部类型不能为空', trigger: 'change' }],
-  warehouseId: [{ required: true, message: '调入仓库不能为空', trigger: 'change' }],
   inTime: [{ required: true, message: '入库时间不能为空', trigger: 'change' }]
 })
 const formRef = ref() // 表单 Ref
 const itemFormRef = ref() // 明细项表单 Ref
-const userList = ref<UserApi.UserVO[]>([]) // 用户列表
+const userList = ref<UserApi.UserVO[]>([]) // 用户列表（全部）
 const deptList = ref<DeptApi.DeptVO[]>([]) // 部门列表
-const warehouseList = ref<WarehouseVO[]>([]) // 仓库列表
+
+// 根据选择的部门过滤员工列表
+const filteredUserList = computed(() => {
+  if (!formData.value.deptId) {
+    return userList.value
+  }
+  return userList.value.filter(user => user.deptId === formData.value.deptId)
+})
+
+// 处理部门选择变化
+const handleDeptChange = (deptId: number | null) => {
+  // 如果选择了部门，且当前选择的员工不属于该部门，则清空员工选择
+  if (deptId && formData.value.employeeId) {
+    const selectedUser = userList.value.find(user => user.id === formData.value.employeeId)
+    if (selectedUser && selectedUser.deptId !== deptId) {
+      formData.value.employeeId = undefined
+    }
+  }
+}
+
+// 处理员工选择变化
+const handleEmployeeChange = (employeeId: number | null) => {
+  // 如果选择了员工且当前没有选择部门，则自动回填员工的部门
+  if (employeeId && !formData.value.deptId) {
+    const selectedUser = userList.value.find(user => user.id === employeeId)
+    if (selectedUser && selectedUser.deptId) {
+      formData.value.deptId = selectedUser.deptId
+    }
+  }
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
@@ -201,11 +211,6 @@ const open = async (type: string, id?: number) => {
   if (deptList.value.length === 0) {
     DeptApi.getSimpleDeptList().then((data) => {
       deptList.value = handleTree(data)
-    })
-  }
-  if (warehouseList.value.length === 0) {
-    WarehouseApi.getWarehouseSimpleList().then((data) => {
-      warehouseList.value = data
     })
   }
 }
@@ -243,8 +248,7 @@ const resetForm = () => {
     no: '',
     employeeId: undefined,
     deptId: undefined,
-    internalType: 1,
-    warehouseId: undefined,
+    internalType: 3,
     inTime: undefined,
     remark: '',
     fileUrl: '',

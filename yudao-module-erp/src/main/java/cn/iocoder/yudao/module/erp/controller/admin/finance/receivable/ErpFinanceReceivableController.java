@@ -39,7 +39,7 @@ public class ErpFinanceReceivableController {
     private ErpFinanceReceivableService financeReceivableService;
 
     @PostMapping("/create")
-    @Operation(summary = "创建应收账款")
+    @Operation(summary = "创建应收账款", description = "支持手动创建初始应收账款或没有关联订单的借贷记录。如果不提供单据号，将自动生成；如果不提供余额，将自动计算（余额=应收金额-已收金额）")
     @PreAuthorize("@ss.hasPermission('erp:finance-receivable:create')")
     public CommonResult<Long> createFinanceReceivable(@Valid @RequestBody ErpFinanceReceivableSaveReqVO createReqVO) {
         return success(financeReceivableService.createFinanceReceivable(createReqVO));

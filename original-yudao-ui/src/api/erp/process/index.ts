@@ -11,6 +11,7 @@ export interface Process {
   setupTime?: number // 准备时间（分钟）
   workerCount?: number // 标准人员数量
   equipmentType?: string // 设备类型
+  equipmentId?: number // 设备ID
   workCenterId?: number // 工作中心ID
   laborRate?: number // 人工费率（元/小时）
   overheadRate?: number // 制造费率（元/小时）

@@ -71,20 +71,41 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="设备类型" prop="equipmentType">
-            <el-input v-model="formData.equipmentType" placeholder="请输入设备类型" />
+          <el-form-item label="设备" prop="equipmentId">
+            <el-select
+              v-model="formData.equipmentId"
+              clearable
+              filterable
+              placeholder="请选择设备"
+              class="!w-1/1"
+            >
+              <el-option
+                v-for="item in equipmentList"
+                :key="item.id"
+                :label="item.equipmentName || item.equipmentNo || `设备${item.id}`"
+                :value="item.id"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
       </el-row>
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="工作中心ID" prop="workCenterId">
-            <el-input-number
+          <el-form-item label="工作中心" prop="workCenterId">
+            <el-select
               v-model="formData.workCenterId"
-              :min="0"
-              placeholder="请输入工作中心ID"
+              clearable
+              filterable
+              placeholder="请选择工作中心"
               class="!w-1/1"
-            />
+            >
+              <el-option
+                v-for="item in workCenterList"
+                :key="item.id"
+                :label="item.workCenterName || item.workCenterNo || `工作中心${item.id}`"
+                :value="item.id"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -158,6 +179,8 @@
 </template>
 <script setup lang="ts">
 import { ProcessApi, Process } from '@/api/erp/process'
+import { EquipmentApi } from '@/api/erp/equipment'
+import { WorkCenterApi } from '@/api/erp/workcenter'
 
 /** ERP 工序 表单 */
 defineOptions({ name: 'ProcessForm' })
@@ -179,6 +202,7 @@ const formData = ref({
   setupTime: 0,
   workerCount: 1,
   equipmentType: undefined,
+  equipmentId: undefined,
   workCenterId: undefined,
   laborRate: undefined,
   overheadRate: undefined,
@@ -193,6 +217,8 @@ const formRules = reactive({
   processName: [{ required: true, message: '工序名称不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
+const equipmentList = ref<any[]>([]) // 设备列表
+const workCenterList = ref<any[]>([]) // 工作中心列表
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
@@ -200,6 +226,19 @@ const open = async (type: string, id?: number) => {
   dialogTitle.value = t('action.' + type)
   formType.value = type
   resetForm()
+  // 加载设备列表
+  try {
+    const equipmentData = await EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 })
+    equipmentList.value = equipmentData.list || []
+  } catch (error) {
+    console.error('加载设备列表失败:', error)
+  }
+  // 加载工作中心列表
+  try {
+    workCenterList.value = await WorkCenterApi.getWorkCenterList() || []
+  } catch (error) {
+    console.error('加载工作中心列表失败:', error)
+  }
   // 新增时，生成默认工序编号
   if (type === 'create') {
     try {
@@ -258,6 +297,7 @@ const resetForm = () => {
     setupTime: 0,
     workerCount: 1,
     equipmentType: undefined,
+    equipmentId: undefined,
     workCenterId: undefined,
     laborRate: undefined,
     overheadRate: undefined,

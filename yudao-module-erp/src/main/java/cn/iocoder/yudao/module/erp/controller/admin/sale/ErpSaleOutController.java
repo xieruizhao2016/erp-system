@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.erp.controller.admin.sale;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
+import lombok.extern.slf4j.Slf4j;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -34,8 +35,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
@@ -46,6 +50,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @RestController
 @RequestMapping("/erp/sale-out")
 @Validated
+@Slf4j
 public class ErpSaleOutController {
 
     @Resource
@@ -118,8 +123,13 @@ public class ErpSaleOutController {
     @Operation(summary = "获得销售出库分页")
     @PreAuthorize("@ss.hasPermission('erp:sale-out:query')")
     public CommonResult<PageResult<ErpSaleOutRespVO>> getSaleOutPage(@Valid ErpSaleOutPageReqVO pageReqVO) {
-        PageResult<ErpSaleOutDO> pageResult = saleOutService.getSaleOutPage(pageReqVO);
-        return success(buildSaleOutVOPageResult(pageResult));
+        try {
+            PageResult<ErpSaleOutDO> pageResult = saleOutService.getSaleOutPage(pageReqVO);
+            return success(buildSaleOutVOPageResult(pageResult));
+        } catch (Exception e) {
+            log.error("获取销售出库分页失败，查询参数: {}", pageReqVO, e);
+            throw e;
+        }
     }
 
     @GetMapping("/export-excel")
@@ -135,31 +145,101 @@ public class ErpSaleOutController {
     }
 
     private PageResult<ErpSaleOutRespVO> buildSaleOutVOPageResult(PageResult<ErpSaleOutDO> pageResult) {
-        if (CollUtil.isEmpty(pageResult.getList())) {
-            return PageResult.empty(pageResult.getTotal());
+        try {
+            if (CollUtil.isEmpty(pageResult.getList())) {
+                return PageResult.empty(pageResult.getTotal());
+            }
+            // 1.1 出库项
+            Set<Long> outIds = convertSet(pageResult.getList(), ErpSaleOutDO::getId, out -> out.getId() != null);
+            List<ErpSaleOutItemDO> saleOutItemList = CollUtil.isEmpty(outIds) ? Collections.emptyList() :
+                    saleOutService.getSaleOutItemListByOutIds(outIds);
+            if (saleOutItemList == null) {
+                saleOutItemList = Collections.emptyList();
+            }
+            // 过滤掉 outId 为 null 的项，避免 convertMultiMap 出现问题
+            List<ErpSaleOutItemDO> validItemList = saleOutItemList.stream()
+                    .filter(item -> item != null && item.getOutId() != null)
+                    .collect(Collectors.toList());
+            Map<Long, List<ErpSaleOutItemDO>> saleOutItemMap = convertMultiMap(validItemList, ErpSaleOutItemDO::getOutId);
+            // 1.2 产品信息
+            Set<Long> productIds = convertSet(saleOutItemList, ErpSaleOutItemDO::getProductId, item -> item.getProductId() != null);
+            Map<Long, ErpProductRespVO> productMap = CollUtil.isEmpty(productIds) ? Collections.emptyMap() :
+                    productService.getProductVOMap(productIds);
+            // 1.3 客户信息
+            Set<Long> customerIds = convertSet(pageResult.getList(), ErpSaleOutDO::getCustomerId, saleOut -> saleOut.getCustomerId() != null);
+            Map<Long, ErpCustomerDO> customerMap = CollUtil.isEmpty(customerIds) ? Collections.emptyMap() :
+                    customerService.getCustomerMap(customerIds);
+            // 1.4 管理员信息
+            Set<Long> creatorIds = convertSet(pageResult.getList(), saleOut -> {
+                String creator = saleOut.getCreator();
+                if (creator == null || creator.trim().isEmpty()) {
+                    return null;
+                }
+                try {
+                    return Long.parseLong(creator);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }, creatorId -> creatorId != null);
+            Map<Long, AdminUserRespDTO> userMap = CollUtil.isEmpty(creatorIds) ? Collections.emptyMap() :
+                    adminUserApi.getUserMap(creatorIds);
+            // 2. 开始拼接
+            return BeanUtils.toBean(pageResult, ErpSaleOutRespVO.class, saleOut -> {
+                try {
+                    List<ErpSaleOutItemDO> items = saleOutItemMap.get(saleOut.getId());
+                    if (items != null && !items.isEmpty()) {
+                        saleOut.setItems(BeanUtils.toBean(items, ErpSaleOutRespVO.Item.class,
+                                item -> {
+                                    if (item.getProductId() != null) {
+                                        MapUtils.findAndThen(productMap, item.getProductId(), product -> {
+                                            if (product != null) {
+                                                item.setProductName(product.getName());
+                                                item.setProductBarCode(product.getBarCode());
+                                                item.setProductUnitName(product.getUnitName());
+                                            }
+                                        });
+                                    }
+                                }));
+                    } else {
+                        saleOut.setItems(Collections.emptyList());
+                    }
+                    // 生成产品信息
+                    if (saleOut.getItems() != null && !saleOut.getItems().isEmpty()) {
+                        saleOut.setProductNames(CollUtil.join(saleOut.getItems(), "，", item -> {
+                            return item.getProductName() != null ? item.getProductName() : "";
+                        }));
+                    } else {
+                        saleOut.setProductNames("");
+                    }
+                    if (saleOut.getCustomerId() != null) {
+                        MapUtils.findAndThen(customerMap, saleOut.getCustomerId(), supplier -> {
+                            if (supplier != null) {
+                                saleOut.setCustomerName(supplier.getName());
+                            }
+                        });
+                    }
+                    String creator = saleOut.getCreator();
+                    if (creator != null && !creator.trim().isEmpty()) {
+                        try {
+                            Long creatorId = Long.parseLong(creator);
+                            MapUtils.findAndThen(userMap, creatorId, user -> {
+                                if (user != null) {
+                                    saleOut.setCreatorName(user.getNickname());
+                                }
+                            });
+                        } catch (NumberFormatException e) {
+                            // 忽略格式错误，不设置创建者名称
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("处理销售出库数据时发生异常，出库单ID: {}", saleOut.getId(), e);
+                }
+            });
+        } catch (Exception e) {
+            log.error("构建销售出库VO分页结果失败", e);
+            // 如果构建失败，返回空结果而不是抛出异常
+            return PageResult.empty(pageResult != null ? pageResult.getTotal() : 0);
         }
-        // 1.1 出库项
-        List<ErpSaleOutItemDO> saleOutItemList = saleOutService.getSaleOutItemListByOutIds(
-                convertSet(pageResult.getList(), ErpSaleOutDO::getId));
-        Map<Long, List<ErpSaleOutItemDO>> saleOutItemMap = convertMultiMap(saleOutItemList, ErpSaleOutItemDO::getOutId);
-        // 1.2 产品信息
-        Map<Long, ErpProductRespVO> productMap = productService.getProductVOMap(
-                convertSet(saleOutItemList, ErpSaleOutItemDO::getProductId));
-        // 1.3 客户信息
-        Map<Long, ErpCustomerDO> customerMap = customerService.getCustomerMap(
-                convertSet(pageResult.getList(), ErpSaleOutDO::getCustomerId));
-        // 1.4 管理员信息
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(
-                convertSet(pageResult.getList(), stockOut -> Long.parseLong(stockOut.getCreator())));
-        // 2. 开始拼接
-        return BeanUtils.toBean(pageResult, ErpSaleOutRespVO.class, saleOut -> {
-            saleOut.setItems(BeanUtils.toBean(saleOutItemMap.get(saleOut.getId()), ErpSaleOutRespVO.Item.class,
-                    item -> MapUtils.findAndThen(productMap, item.getProductId(), product -> item.setProductName(product.getName())
-                            .setProductBarCode(product.getBarCode()).setProductUnitName(product.getUnitName()))));
-            saleOut.setProductNames(CollUtil.join(saleOut.getItems(), "，", ErpSaleOutRespVO.Item::getProductName));
-            MapUtils.findAndThen(customerMap, saleOut.getCustomerId(), supplier -> saleOut.setCustomerName(supplier.getName()));
-            MapUtils.findAndThen(userMap, Long.parseLong(saleOut.getCreator()), user -> saleOut.setCreatorName(user.getNickname()));
-        });
     }
 
 }

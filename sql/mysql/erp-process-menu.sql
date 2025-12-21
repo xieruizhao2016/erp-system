@@ -7,21 +7,22 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ========== 工序管理 ==========
--- 菜单（插入在工艺路线之前，因为工序是基础数据）
+-- ========== 工序 ==========
+-- 菜单（放在基础数据菜单下，作为基础数据）
 INSERT INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_id`, `path`, `icon`, `component`, `component_name`, `status`, `visible`, `keep_alive`, `always_show`, `creator`, `create_time`, `updater`, `update_time`, `deleted`) 
-VALUES (6006, '工序管理', '', 2, 3, 5042, 'process', 'ep:setting', 'erp/process/index', 'Process', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
+VALUES (5049, '工序', '', 2, 1, 6100, 'process', 'ep:setting', 'erp/process/index', 'Process', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0')
 ON DUPLICATE KEY UPDATE 
-  `name` = '工序管理',
+  `name` = '工序',
   `path` = 'process',
   `icon` = 'ep:setting',
   `component` = 'erp/process/index',
   `component_name` = 'Process',
-  `sort` = 3,
+  `parent_id` = 6100,
+  `sort` = 1,
   `update_time` = NOW();
 
 -- 按钮权限
-SET @parentId = 6006;
+SET @parentId = 5049;
 INSERT INTO `system_menu` (`name`, `permission`, `type`, `sort`, `parent_id`, `path`, `icon`, `component`, `status`, `visible`, `keep_alive`, `always_show`, `creator`, `create_time`, `updater`, `update_time`, `deleted`) 
 VALUES 
 ('工序查询', 'erp:process:query', 3, 1, @parentId, '', '', '', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
@@ -32,9 +33,8 @@ VALUES
 ON DUPLICATE KEY UPDATE 
   `update_time` = NOW();
 
--- 调整其他菜单的sort顺序（如果需要）
--- 注意：如果BOM明细的sort是3，工序也是3，可能需要调整
--- 这里假设BOM明细保持sort=3，工序也使用sort=3（在同一层级可以相同）
+-- 注意：工序放在基础数据菜单（ID: 6100）下，sort=1（最前面）
+-- 基础数据下的其他菜单：工序(sort=1), 产品BOM(sort=2), BOM明细(sort=3), 工艺路线(sort=4)...
 
 SET FOREIGN_KEY_CHECKS = 1;
 

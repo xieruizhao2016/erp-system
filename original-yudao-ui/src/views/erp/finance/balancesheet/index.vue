@@ -2,228 +2,332 @@
   <ContentWrap>
     <DocAlert title="【财务】资产负债表" url="https://doc.iocoder.cn/erp/finance-balance-sheet/" />
 
-    <ContentWrap>
-      <!-- 搜索工作栏 -->
-      <el-form
-        class="-mb-15px"
-        :model="queryParams"
-        ref="queryFormRef"
-        :inline="true"
-        label-width="120px"
-      >
-        <el-form-item label="期间日期" prop="periodDate">
-          <el-date-picker
-            v-model="queryParams.periodDate"
-            type="month"
-            value-format="YYYY-MM"
-            placeholder="请选择期间日期"
-            class="!w-240px"
-          />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="queryParams.status" placeholder="请选择状态" clearable class="!w-240px">
-            <el-option
-              v-for="dict in getIntDictOptions(DICT_TYPE.ERP_AUDIT_STATUS)"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
+    <!-- 顶部3个卡片：资产总额、负债总额、所有者权益 -->
+    <el-row :gutter="16" class="mb-4">
+      <el-col :md="8" :sm="24" :xs="24">
+        <div class="flex flex-col gap-2 bg-[var(--el-bg-color-overlay)] p-6 rounded">
+          <div class="flex items-center justify-between text-gray-500">
+            <span>资产总额</span>
+          </div>
+          <div class="flex flex-row items-baseline justify-between">
+            <CountTo
+              prefix="￥"
+              :end-val="statistics?.assetTotal || 0"
+              :decimals="2"
+              :duration="500"
+              class="text-3xl text-blue-600"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
-          <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
-          <el-button
-            type="success"
-            plain
-            @click="handleCalculate"
-            v-hasPermi="['erp:finance-balance-sheet:update']"
-          >
-            <Icon icon="ep:calculator" class="mr-5px" /> 计算
-          </el-button>
-          <el-button
-            type="success"
-            plain
-            @click="handleExport"
-            :loading="exportLoading"
-            v-hasPermi="['erp:finance-balance-sheet:export']"
-          >
-            <Icon icon="ep:download" class="mr-5px" /> 导出
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </ContentWrap>
+          </div>
+        </div>
+      </el-col>
+      <el-col :md="8" :sm="24" :xs="24">
+        <div class="flex flex-col gap-2 bg-[var(--el-bg-color-overlay)] p-6 rounded">
+          <div class="flex items-center justify-between text-gray-500">
+            <span>负债总额</span>
+          </div>
+          <div class="flex flex-row items-baseline justify-between">
+            <CountTo
+              prefix="￥"
+              :end-val="statistics?.liabilityTotal || 0"
+              :decimals="2"
+              :duration="500"
+              class="text-3xl text-orange-600"
+            />
+          </div>
+        </div>
+      </el-col>
+      <el-col :md="8" :sm="24" :xs="24">
+        <div class="flex flex-col gap-2 bg-[var(--el-bg-color-overlay)] p-6 rounded">
+          <div class="flex items-center justify-between text-gray-500">
+            <span>所有者权益</span>
+          </div>
+          <div class="flex flex-row items-baseline justify-between">
+            <CountTo
+              prefix="￥"
+              :end-val="statistics?.equityTotal || 0"
+              :decimals="2"
+              :duration="500"
+              class="text-3xl text-green-600"
+            />
+          </div>
+        </div>
+      </el-col>
+    </el-row>
 
-    <!-- 列表 -->
-    <ContentWrap>
-      <el-table v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
-        <el-table-column label="期间日期" align="center" prop="periodDate" width="120" />
-        <el-table-column label="资产总计" align="center" prop="assetTotal" :formatter="erpPriceTableColumnFormatter" />
-        <el-table-column label="负债总计" align="center" prop="liabilityTotal" :formatter="erpPriceTableColumnFormatter" />
-        <el-table-column label="所有者权益" align="center" prop="equityTotal" :formatter="erpPriceTableColumnFormatter" />
-        <el-table-column label="状态" align="center" prop="status" width="100">
-          <template #default="scope">
-            <dict-tag :type="DICT_TYPE.ERP_AUDIT_STATUS" :value="scope.row.status" />
+    <!-- 第二行：两个饼状图 -->
+    <el-row :gutter="16" class="mb-4">
+      <el-col :md="12" :sm="24" :xs="24">
+        <el-card shadow="never" v-loading="loading">
+          <template #header>
+            <CardTitle title="资产构成" />
           </template>
-        </el-table-column>
-        <el-table-column
-          label="创建时间"
-          align="center"
-          prop="createTime"
-          :formatter="dateFormatter"
-          width="180px"
-        />
-        <el-table-column label="操作" align="center" fixed="right" width="200">
-          <template #default="scope">
-            <el-button
-              link
-              type="primary"
-              @click="openForm('update', scope.row.id)"
-              v-hasPermi="['erp:finance-balance-sheet:update']"
-            >
-              编辑
-            </el-button>
-            <el-button
-              link
-              type="success"
-              @click="handleCalculateOne(scope.row.periodDate)"
-              v-hasPermi="['erp:finance-balance-sheet:update']"
-            >
-              重新计算
-            </el-button>
-            <el-button
-              link
-              type="danger"
-              @click="handleDelete(scope.row.id)"
-              v-hasPermi="['erp:finance-balance-sheet:delete']"
-            >
-              删除
-            </el-button>
+          <Echart :height="400" :options="assetPieChartOptions" />
+        </el-card>
+      </el-col>
+      <el-col :md="12" :sm="24" :xs="24">
+        <el-card shadow="never" v-loading="loading">
+          <template #header>
+            <CardTitle title="负债构成" />
           </template>
-        </el-table-column>
-      </el-table>
-      <!-- 分页 -->
-      <Pagination
-        :total="total"
-        v-model:page="queryParams.pageNo"
-        v-model:limit="queryParams.pageSize"
-        @pagination="getList"
-      />
-    </ContentWrap>
+          <Echart :height="400" :options="liabilityPieChartOptions" />
+        </el-card>
+      </el-col>
+    </el-row>
 
-    <!-- 表单弹窗：添加/修改 -->
-    <BalanceSheetForm ref="formRef" @success="getList" />
+    <!-- 第三行：曲线图 -->
+    <el-row :gutter="16" class="mb-4">
+      <el-col :span="24">
+        <el-card shadow="never" v-loading="loading">
+          <template #header>
+            <CardTitle title="资产和负债趋势（按月）" />
+          </template>
+          <Echart :height="400" :options="trendLineChartOptions" />
+        </el-card>
+      </el-col>
+    </el-row>
   </ContentWrap>
 </template>
 
 <script setup lang="ts">
-import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
-import { dateFormatter } from '@/utils/formatTime'
-import download from '@/utils/download'
-import { erpPriceTableColumnFormatter } from '@/utils'
-import { BalanceSheetApi, BalanceSheetVO } from '@/api/erp/finance/balancesheet'
-import BalanceSheetForm from './BalanceSheetForm.vue'
+import { EChartsOption } from 'echarts'
+import { CardTitle } from '@/components/Card'
+import { BalanceSheetApi, BalanceSheetStatisticsVO } from '@/api/erp/finance/balancesheet'
+import { useMessage } from '@/hooks/web/useMessage'
 
 /** ERP 资产负债表 列表 */
 defineOptions({ name: 'ErpFinanceBalanceSheet' })
 
-const message = useMessage() // 消息弹窗
-const { t } = useI18n() // 国际化
+const message = useMessage()
+const loading = ref(true) // 加载中
+const statistics = ref<BalanceSheetStatisticsVO>() // 统计数据
 
-const loading = ref(true) // 列表的加载中
-const list = ref<BalanceSheetVO[]>([]) // 列表的数据
-const total = ref(0) // 列表的总页数
-const queryParams = reactive({
-  pageNo: 1,
-  pageSize: 10,
-  periodDate: undefined,
-  status: undefined
-})
-const queryFormRef = ref() // 搜索的表单
-const exportLoading = ref(false) // 导出的加载中
+/** 资产饼状图配置 */
+const assetPieChartOptions = reactive<EChartsOption>({
+  tooltip: {
+    trigger: 'item',
+    formatter: '{a} <br/>{b}: ￥{c} ({d}%)'
+  },
+  legend: {
+    orient: 'vertical',
+    left: 'left',
+    top: 'middle'
+  },
+  series: [
+    {
+      name: '资产构成',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: true,
+        formatter: '{b}: ￥{c}\n({d}%)'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 16,
+          fontWeight: 'bold'
+        }
+      },
+      data: []
+    }
+  ]
+}) as EChartsOption
 
-/** 查询列表 */
-const getList = async () => {
+/** 负债饼状图配置 */
+const liabilityPieChartOptions = reactive<EChartsOption>({
+  tooltip: {
+    trigger: 'item',
+    formatter: '{a} <br/>{b}: ￥{c} ({d}%)'
+  },
+  legend: {
+    orient: 'vertical',
+    left: 'left',
+    top: 'middle'
+  },
+  series: [
+    {
+      name: '负债构成',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: true,
+        formatter: '{b}: ￥{c}\n({d}%)'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 16,
+          fontWeight: 'bold'
+        }
+      },
+      data: []
+    }
+  ]
+}) as EChartsOption
+
+/** 趋势曲线图配置 */
+const trendLineChartOptions = reactive<EChartsOption>({
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'cross'
+    },
+    formatter: (params: any) => {
+      let result = params[0].name + '<br/>'
+      params.forEach((item: any) => {
+        result += item.marker + item.seriesName + ': ￥' + item.value.toFixed(2) + '<br/>'
+      })
+      return result
+    }
+  },
+  legend: {
+    data: ['资产总额', '负债总额'],
+    top: 10
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    containLabel: true
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    data: []
+  },
+  yAxis: {
+    type: 'value',
+    axisLabel: {
+      formatter: (value: number) => {
+        return '￥' + (value / 10000).toFixed(0) + '万'
+      }
+    }
+  },
+  series: [
+    {
+      name: '资产总额',
+      type: 'line',
+      smooth: true,
+      data: [],
+      itemStyle: {
+        color: '#409EFF'
+      },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
+            { offset: 1, color: 'rgba(64, 158, 255, 0.1)' }
+          ]
+        }
+      }
+    },
+    {
+      name: '负债总额',
+      type: 'line',
+      smooth: true,
+      data: [],
+      itemStyle: {
+        color: '#E6A23C'
+      },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(230, 162, 60, 0.3)' },
+            { offset: 1, color: 'rgba(230, 162, 60, 0.1)' }
+          ]
+        }
+      }
+    }
+  ]
+}) as EChartsOption
+
+/** 获取统计数据 */
+const getStatistics = async () => {
   loading.value = true
   try {
-    const data = await BalanceSheetApi.getBalanceSheetPage(queryParams)
-    list.value = data.list
-    total.value = data.total
+    statistics.value = await BalanceSheetApi.getBalanceSheetStatistics()
+    
+    // 更新资产饼状图数据
+    if (statistics.value?.assetComposition && statistics.value.assetComposition.length > 0) {
+      assetPieChartOptions.series[0].data = statistics.value.assetComposition.map((item) => ({
+        value: item.amount,
+        name: item.name
+      }))
+    } else {
+      assetPieChartOptions.series[0].data = []
+    }
+    
+    // 更新负债饼状图数据
+    if (statistics.value?.liabilityComposition && statistics.value.liabilityComposition.length > 0) {
+      liabilityPieChartOptions.series[0].data = statistics.value.liabilityComposition.map((item) => ({
+        value: item.amount,
+        name: item.name
+      }))
+    } else {
+      liabilityPieChartOptions.series[0].data = []
+    }
+    
+    // 更新趋势曲线图数据
+    if (statistics.value?.monthlyTrend && statistics.value.monthlyTrend.length > 0) {
+      const months = statistics.value.monthlyTrend.map((item) => item.month)
+      const assetData = statistics.value.monthlyTrend.map((item) => item.assetTotal)
+      const liabilityData = statistics.value.monthlyTrend.map((item) => item.liabilityTotal)
+      
+      trendLineChartOptions.xAxis.data = months
+      trendLineChartOptions.series[0].data = assetData
+      trendLineChartOptions.series[1].data = liabilityData
+    } else {
+      trendLineChartOptions.xAxis.data = []
+      trendLineChartOptions.series[0].data = []
+      trendLineChartOptions.series[1].data = []
+    }
+  } catch (error: any) {
+    console.error('获取统计数据失败:', error)
+    message.error('获取统计数据失败: ' + (error?.message || '请检查后端服务是否已重启'))
+    // 设置默认值
+    statistics.value = {
+      assetTotal: 0,
+      liabilityTotal: 0,
+      equityTotal: 0,
+      assetComposition: [],
+      liabilityComposition: [],
+      monthlyTrend: []
+    }
   } finally {
     loading.value = false
   }
 }
 
-/** 搜索按钮操作 */
-const handleQuery = () => {
-  queryParams.pageNo = 1
-  getList()
-}
-
-/** 重置按钮操作 */
-const resetQuery = () => {
-  queryFormRef.value.resetFields()
-  handleQuery()
-}
-
-/** 添加/修改操作 */
-const formRef = ref()
-const openForm = (type: string, id?: number) => {
-  formRef.value.open(type, id)
-}
-
-/** 删除按钮操作 */
-const handleDelete = async (id: number) => {
-  try {
-    // 删除的二次确认
-    await message.delConfirm()
-    // 发起删除
-    await BalanceSheetApi.deleteBalanceSheet(id)
-    message.success(t('common.delSuccess'))
-    // 刷新列表
-    await getList()
-  } catch {}
-}
-
-/** 计算按钮操作 */
-const handleCalculate = async () => {
-  try {
-    const periodDate = queryParams.periodDate || new Date().toISOString().slice(0, 7)
-    await message.confirm('确认要计算资产负债表吗？')
-    await BalanceSheetApi.calculateBalanceSheet(periodDate)
-    message.success('计算成功')
-    await getList()
-  } catch {}
-}
-
-/** 重新计算单个 */
-const handleCalculateOne = async (periodDate: string) => {
-  try {
-    await message.confirm('确认要重新计算该期间的资产负债表吗？')
-    await BalanceSheetApi.calculateBalanceSheet(periodDate)
-    message.success('计算成功')
-    await getList()
-  } catch {}
-}
-
-/** 导出按钮操作 */
-const handleExport = async () => {
-  try {
-    // 导出的二次确认
-    await message.exportConfirm()
-    // 发起导出
-    exportLoading.value = true
-    const data = await BalanceSheetApi.exportBalanceSheet(queryParams)
-    download.excel(data, 'ERP 资产负债表.xls')
-  } catch {
-  } finally {
-    exportLoading.value = false
-  }
-}
-
 /** 初始化 **/
 onMounted(() => {
-  getList()
+  getStatistics()
 })
 </script>
 
+<style lang="scss" scoped>
+.rounded {
+  border-radius: 4px;
+}
+</style>

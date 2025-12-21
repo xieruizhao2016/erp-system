@@ -9,6 +9,10 @@ import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.framework.common.util.number.NumberUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
+import lombok.extern.slf4j.Slf4j;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.receipt.ErpFinanceReceiptPageReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.receipt.ErpFinanceReceiptRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.finance.vo.receipt.ErpFinanceReceiptSaveReqVO;
@@ -44,6 +48,7 @@ import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.
 @RestController
 @RequestMapping("/erp/finance-receipt")
 @Validated
+@Slf4j
 public class ErpFinanceReceiptController {
 
     @Resource
@@ -107,8 +112,13 @@ public class ErpFinanceReceiptController {
     @Operation(summary = "获得收款单分页")
     @PreAuthorize("@ss.hasPermission('erp:finance-receipt:query')")
     public CommonResult<PageResult<ErpFinanceReceiptRespVO>> getFinanceReceiptPage(@Valid ErpFinanceReceiptPageReqVO pageReqVO) {
-        PageResult<ErpFinanceReceiptDO> pageResult = financeReceiptService.getFinanceReceiptPage(pageReqVO);
-        return success(buildFinanceReceiptVOPageResult(pageResult));
+        try {
+            PageResult<ErpFinanceReceiptDO> pageResult = financeReceiptService.getFinanceReceiptPage(pageReqVO);
+            return success(buildFinanceReceiptVOPageResult(pageResult));
+        } catch (Exception e) {
+            log.error("获取收款单分页失败", e);
+            throw e;
+        }
     }
 
     @GetMapping("/export-excel")
@@ -124,30 +134,116 @@ public class ErpFinanceReceiptController {
     }
 
     private PageResult<ErpFinanceReceiptRespVO> buildFinanceReceiptVOPageResult(PageResult<ErpFinanceReceiptDO> pageResult) {
-        if (CollUtil.isEmpty(pageResult.getList())) {
-            return PageResult.empty(pageResult.getTotal());
+        try {
+            if (CollUtil.isEmpty(pageResult.getList())) {
+                return PageResult.empty(pageResult.getTotal());
+            }
+            
+            // 1.1 收款项
+            Set<Long> receiptIds = convertSet(pageResult.getList(), ErpFinanceReceiptDO::getId, id -> id != null);
+            List<ErpFinanceReceiptItemDO> receiptItemList = CollUtil.isEmpty(receiptIds) 
+                ? Collections.emptyList() 
+                : financeReceiptService.getFinanceReceiptItemListByReceiptIds(receiptIds);
+            
+            // 过滤掉 receiptId 为 null 的项
+            receiptItemList = receiptItemList != null 
+                ? receiptItemList.stream().filter(item -> item.getReceiptId() != null).collect(Collectors.toList())
+                : Collections.emptyList();
+            
+            Map<Long, List<ErpFinanceReceiptItemDO>> financeReceiptItemMap = convertMultiMap(receiptItemList, ErpFinanceReceiptItemDO::getReceiptId);
+            
+            // 1.2 客户信息
+            Set<Long> customerIds = convertSet(pageResult.getList(), ErpFinanceReceiptDO::getCustomerId, id -> id != null);
+            Map<Long, ErpCustomerDO> customerMap = CollUtil.isEmpty(customerIds) 
+                ? Collections.emptyMap() 
+                : customerService.getCustomerMap(customerIds);
+            
+            // 1.3 结算账户信息
+            Set<Long> accountIds = convertSet(pageResult.getList(), ErpFinanceReceiptDO::getAccountId, id -> id != null);
+            Map<Long, ErpAccountDO> accountMap = CollUtil.isEmpty(accountIds) 
+                ? Collections.emptyMap() 
+                : accountService.getAccountMap(accountIds);
+            
+            // 1.4 管理员信息
+            java.util.Set<Long> userIds = new java.util.HashSet<>();
+            for (ErpFinanceReceiptDO receipt : pageResult.getList()) {
+                // 处理 creator
+                if (receipt.getCreator() != null && !receipt.getCreator().isEmpty()) {
+                    try {
+                        Long creatorId = NumberUtils.parseLong(receipt.getCreator());
+                        if (creatorId != null) {
+                            userIds.add(creatorId);
+                        }
+                    } catch (Exception e) {
+                        log.warn("解析 creator 失败: {}", receipt.getCreator(), e);
+                    }
+                }
+                // 处理 financeUserId
+                if (receipt.getFinanceUserId() != null) {
+                    userIds.add(receipt.getFinanceUserId());
+                }
+            }
+            Map<Long, AdminUserRespDTO> userMap = CollUtil.isEmpty(userIds) 
+                ? Collections.emptyMap() 
+                : adminUserApi.getUserMap(userIds);
+            
+            // 2. 开始拼接
+            return BeanUtils.toBean(pageResult, ErpFinanceReceiptRespVO.class, receipt -> {
+                // 设置收款项
+                List<ErpFinanceReceiptItemDO> items = financeReceiptItemMap.get(receipt.getId());
+                if (items != null) {
+                    receipt.setItems(BeanUtils.toBean(items, ErpFinanceReceiptRespVO.Item.class));
+                } else {
+                    receipt.setItems(Collections.emptyList());
+                }
+                
+                // 设置客户名称
+                if (receipt.getCustomerId() != null) {
+                    MapUtils.findAndThen(customerMap, receipt.getCustomerId(), customer -> {
+                        if (customer != null && customer.getName() != null) {
+                            receipt.setCustomerName(customer.getName());
+                        }
+                    });
+                }
+                
+                // 设置账户名称
+                if (receipt.getAccountId() != null) {
+                    MapUtils.findAndThen(accountMap, receipt.getAccountId(), account -> {
+                        if (account != null && account.getName() != null) {
+                            receipt.setAccountName(account.getName());
+                        }
+                    });
+                }
+                
+                // 设置创建人名称
+                if (receipt.getCreator() != null && !receipt.getCreator().isEmpty()) {
+                    try {
+                        Long creatorId = NumberUtils.parseLong(receipt.getCreator());
+                        if (creatorId != null) {
+                            MapUtils.findAndThen(userMap, creatorId, user -> {
+                                if (user != null && user.getNickname() != null) {
+                                    receipt.setCreatorName(user.getNickname());
+                                }
+                            });
+                        }
+                    } catch (Exception e) {
+                        log.warn("解析 creator 失败: {}", receipt.getCreator(), e);
+                    }
+                }
+                
+                // 设置财务人员名称
+                if (receipt.getFinanceUserId() != null) {
+                    MapUtils.findAndThen(userMap, receipt.getFinanceUserId(), user -> {
+                        if (user != null && user.getNickname() != null) {
+                            receipt.setFinanceUserName(user.getNickname());
+                        }
+                    });
+                }
+            });
+        } catch (Exception e) {
+            log.error("构建收款单 VO 分页结果失败", e);
+            return PageResult.empty(pageResult != null ? pageResult.getTotal() : 0);
         }
-        // 1.1 收款项
-        List<ErpFinanceReceiptItemDO> receiptItemList = financeReceiptService.getFinanceReceiptItemListByReceiptIds(
-                convertSet(pageResult.getList(), ErpFinanceReceiptDO::getId));
-        Map<Long, List<ErpFinanceReceiptItemDO>> financeReceiptItemMap = convertMultiMap(receiptItemList, ErpFinanceReceiptItemDO::getReceiptId);
-        // 1.2 客户信息
-        Map<Long, ErpCustomerDO> customerMap = customerService.getCustomerMap(
-                convertSet(pageResult.getList(), ErpFinanceReceiptDO::getCustomerId));
-        // 1.3 结算账户信息
-        Map<Long, ErpAccountDO> accountMap = accountService.getAccountMap(
-                convertSet(pageResult.getList(), ErpFinanceReceiptDO::getAccountId));
-        // 1.4 管理员信息
-        Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(convertListByFlatMap(pageResult.getList(),
-                contact -> Stream.of(NumberUtils.parseLong(contact.getCreator()), contact.getFinanceUserId())));
-        // 2. 开始拼接
-        return BeanUtils.toBean(pageResult, ErpFinanceReceiptRespVO.class, receipt -> {
-            receipt.setItems(BeanUtils.toBean(financeReceiptItemMap.get(receipt.getId()), ErpFinanceReceiptRespVO.Item.class));
-            MapUtils.findAndThen(customerMap, receipt.getCustomerId(), customer -> receipt.setCustomerName(customer.getName()));
-            MapUtils.findAndThen(accountMap, receipt.getAccountId(), account -> receipt.setAccountName(account.getName()));
-            MapUtils.findAndThen(userMap, Long.parseLong(receipt.getCreator()), user -> receipt.setCreatorName(user.getNickname()));
-            MapUtils.findAndThen(userMap, receipt.getFinanceUserId(), user -> receipt.setFinanceUserName(user.getNickname()));
-        });
     }
 
 }

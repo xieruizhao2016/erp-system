@@ -44,6 +44,7 @@ import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
 import java.time.LocalDate;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 import java.time.LocalDate;
+import lombok.extern.slf4j.Slf4j;
 
 import cn.iocoder.yudao.module.erp.controller.admin.finance.balancesheet.vo.*;
 import java.time.LocalDate;
@@ -56,6 +57,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/erp/finance-balance-sheet")
 @Validated
+@Slf4j
 public class ErpFinanceBalanceSheetController {
 
     @Resource
@@ -131,6 +133,21 @@ public class ErpFinanceBalanceSheetController {
     public CommonResult<Boolean> calculateBalanceSheet(@RequestParam("periodDate") java.time.LocalDate periodDate) {
         financeBalanceSheetService.calculateBalanceSheet(periodDate);
         return success(true);
+    }
+
+    @GetMapping("/statistics")
+    @Operation(summary = "获取资产负债表统计数据")
+    @PreAuthorize("@ss.hasPermission('erp:finance-balance-sheet:query')")
+    public CommonResult<ErpFinanceBalanceSheetStatisticsRespVO> getBalanceSheetStatistics() {                                                                   
+        try {
+            log.info("开始获取资产负债表统计数据");
+            ErpFinanceBalanceSheetStatisticsRespVO statistics = financeBalanceSheetService.getBalanceSheetStatistics();                                             
+            log.info("成功获取资产负债表统计数据");
+            return success(statistics);
+        } catch (Exception e) {
+            log.error("获取资产负债表统计数据失败", e);
+            throw e;
+        }
     }
 
 }

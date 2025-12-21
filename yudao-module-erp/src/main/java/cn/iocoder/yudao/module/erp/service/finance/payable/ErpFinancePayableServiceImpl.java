@@ -40,8 +40,33 @@ public class ErpFinancePayableServiceImpl implements ErpFinancePayableService {
     private ErpNoRedisDAO noRedisDAO;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Long createFinancePayable(ErpFinancePayableSaveReqVO createReqVO) {
-        // 插入
+        // 1. 生成单据号（如果没有提供）
+        if (createReqVO.getNo() == null || createReqVO.getNo().isEmpty()) {
+            String no = noRedisDAO.generate(ErpNoRedisDAO.FINANCE_PAYABLE_NO_PREFIX);
+            createReqVO.setNo(no);
+        }
+
+        // 2. 设置默认已付金额（如果没有提供）
+        if (createReqVO.getPaidAmount() == null) {
+            createReqVO.setPaidAmount(BigDecimal.ZERO);
+        }
+
+        // 3. 计算余额（如果没有提供）
+        if (createReqVO.getBalance() == null) {
+            BigDecimal amount = createReqVO.getAmount() != null ? createReqVO.getAmount() : BigDecimal.ZERO;
+            BigDecimal paidAmount = createReqVO.getPaidAmount() != null 
+                ? createReqVO.getPaidAmount() : BigDecimal.ZERO;
+            createReqVO.setBalance(amount.subtract(paidAmount));
+        }
+
+        // 4. 设置默认状态（如果没有提供）
+        if (createReqVO.getStatus() == null) {
+            createReqVO.setStatus(ErpAuditStatus.PROCESS.getStatus());
+        }
+
+        // 5. 插入
         ErpFinancePayableDO financePayable = BeanUtils.toBean(createReqVO, ErpFinancePayableDO.class);
         financePayableMapper.insert(financePayable);
 
@@ -50,9 +75,19 @@ public class ErpFinancePayableServiceImpl implements ErpFinancePayableService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateFinancePayable(ErpFinancePayableSaveReqVO updateReqVO) {
         // 校验存在
         validateFinancePayableExists(updateReqVO.getId());
+        
+        // 如果提供了金额和已付金额，但没有提供余额，则自动计算余额
+        if (updateReqVO.getBalance() == null 
+            && updateReqVO.getAmount() != null 
+            && updateReqVO.getPaidAmount() != null) {
+            BigDecimal balance = updateReqVO.getAmount().subtract(updateReqVO.getPaidAmount());
+            updateReqVO.setBalance(balance);
+        }
+        
         // 更新
         ErpFinancePayableDO updateObj = BeanUtils.toBean(updateReqVO, ErpFinancePayableDO.class);
         financePayableMapper.updateById(updateObj);

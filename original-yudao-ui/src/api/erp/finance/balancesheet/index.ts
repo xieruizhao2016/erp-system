@@ -12,6 +12,16 @@ export interface BalanceSheetVO {
   createTime: string // 创建时间
 }
 
+// ERP 资产负债表统计数据 VO
+export interface BalanceSheetStatisticsVO {
+  assetTotal: number // 资产总额
+  liabilityTotal: number // 负债总额
+  equityTotal: number // 所有者权益
+  assetComposition: Array<{ name: string; amount: number }> // 资产构成
+  liabilityComposition: Array<{ name: string; amount: number }> // 负债构成
+  monthlyTrend: Array<{ month: string; assetTotal: number; liabilityTotal: number }> // 月度趋势
+}
+
 // ERP 资产负债表 API
 export const BalanceSheetApi = {
   // 查询资产负债表分页
@@ -52,6 +62,11 @@ export const BalanceSheetApi = {
   // 导出资产负债表 Excel
   exportBalanceSheet: async (params: any) => {
     return await request.download({ url: `/erp/finance-balance-sheet/export-excel`, params })
+  },
+
+  // 获取资产负债表统计数据
+  getBalanceSheetStatistics: async () => {
+    return await request.get({ url: `/erp/finance-balance-sheet/statistics` })
   }
 }
 

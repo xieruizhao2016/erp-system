@@ -72,4 +72,11 @@ public interface ErpFinanceBalanceSheetService {
      */
     void calculateBalanceSheet(java.time.LocalDate periodDate);
 
+    /**
+     * 获取资产负债表统计数据（用于仪表盘）
+     *
+     * @return 统计数据
+     */
+    ErpFinanceBalanceSheetStatisticsRespVO getBalanceSheetStatistics();
+
 }

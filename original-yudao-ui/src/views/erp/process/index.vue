@@ -132,7 +132,16 @@
       <el-table-column label="标准工时(分钟)" align="center" prop="standardTime" width="120" />
       <el-table-column label="准备时间(分钟)" align="center" prop="setupTime" width="120" />
       <el-table-column label="人员数量" align="center" prop="workerCount" width="100" />
-      <el-table-column label="设备类型" align="center" prop="equipmentType" min-width="120" />
+      <el-table-column label="设备" align="center" min-width="120">
+        <template #default="scope">
+          {{ getEquipmentName(scope.row.equipmentId) || scope.row.equipmentType || '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="工作中心" align="center" min-width="120">
+        <template #default="scope">
+          {{ getWorkCenterName(scope.row.workCenterId) || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="是否需要质检" align="center" prop="qualityCheckRequired" width="120">
         <template #default="scope">
           <el-tag v-if="scope.row.qualityCheckRequired" type="success">是</el-tag>
@@ -198,6 +207,8 @@ import { isEmpty } from '@/utils/is'
 import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
 import { ProcessApi, Process } from '@/api/erp/process'
+import { EquipmentApi } from '@/api/erp/equipment'
+import { WorkCenterApi } from '@/api/erp/workcenter'
 import ProcessForm from './ProcessForm.vue'
 
 /** ERP 工序 列表 */
@@ -221,6 +232,8 @@ const queryParams = reactive({
 })
 const queryFormRef = ref() // 搜索的表单
 const exportLoading = ref(false) // 导出的加载中
+const equipmentList = ref<any[]>([]) // 设备列表
+const workCenterList = ref<any[]>([]) // 工作中心列表
 
 /** 查询列表 */
 const getList = async () => {
@@ -297,8 +310,35 @@ const handleExport = async () => {
   }
 }
 
+/** 获取设备名称 */
+const getEquipmentName = (equipmentId: number | undefined) => {
+  if (!equipmentId) return ''
+  const equipment = equipmentList.value.find(item => item.id === equipmentId)
+  return equipment ? (equipment.equipmentName || equipment.equipmentNo || `设备${equipmentId}`) : ''
+}
+
+/** 获取工作中心名称 */
+const getWorkCenterName = (workCenterId: number | undefined) => {
+  if (!workCenterId) return ''
+  const workCenter = workCenterList.value.find(item => item.id === workCenterId)
+  return workCenter ? (workCenter.workCenterName || workCenter.workCenterNo || `工作中心${workCenterId}`) : ''
+}
+
 /** 初始化 **/
 onMounted(async () => {
+  // 加载设备列表
+  try {
+    const equipmentData = await EquipmentApi.getEquipmentPage({ pageNo: 1, pageSize: 100 })
+    equipmentList.value = equipmentData.list || []
+  } catch (error) {
+    console.error('加载设备列表失败:', error)
+  }
+  // 加载工作中心列表
+  try {
+    workCenterList.value = await WorkCenterApi.getWorkCenterList() || []
+  } catch (error) {
+    console.error('加载工作中心列表失败:', error)
+  }
   await getList()
 })
 </script>

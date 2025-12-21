@@ -6,7 +6,7 @@ export interface StockInternalInVO {
   no: string // 入库单号
   employeeId: number // 员工编号
   deptId: number // 部门编号
-  internalType: number // 内部类型（1-部门调拨，2-员工领用，3-其他）
+  internalType: number // 内部类型（1-部门调拨，2-员工领料，3-生产产品，4-其他）
   inTime: string // 入库时间
   totalCount: number // 合计数量
   totalPrice: number // 合计金额，单位：元

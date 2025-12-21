@@ -25,7 +25,7 @@ public class ErpStockInternalOutSaveReqVO {
     @Schema(description = "部门编号（关联 system_dept.id）")
     private Long deptId;
 
-    @Schema(description = "内部类型（1-部门调拨，2-员工领用，3-其他）")
+    @Schema(description = "内部类型（1-部门调拨，2-员工领料，3-生产产品，4-其他）")
     private Integer internalType;
 
     @Schema(description = "出库时间")

@@ -40,6 +40,22 @@ VALUES
 ('BOM明细导出', 'erp:product-bom-item:export', 3, 5, @parentId, '', '', '', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0');
 
 
+-- ========== 工序 ==========
+-- 菜单（放在基础数据菜单下）
+INSERT IGNORE INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_id`, `path`, `icon`, `component`, `component_name`, `status`, `visible`, `keep_alive`, `always_show`, `creator`, `create_time`, `updater`, `update_time`, `deleted`) 
+VALUES (5049, '工序', '', 2, 1, 6100, 'process', 'ep:setting', 'erp/process/index', 'Process', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0');
+
+-- 按钮权限
+SET @parentId = 5049;
+INSERT IGNORE INTO `system_menu` (`name`, `permission`, `type`, `sort`, `parent_id`, `path`, `icon`, `component`, `status`, `visible`, `keep_alive`, `always_show`, `creator`, `create_time`, `updater`, `update_time`, `deleted`) 
+VALUES 
+('工序查询', 'erp:process:query', 3, 1, @parentId, '', '', '', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+('工序创建', 'erp:process:create', 3, 2, @parentId, '', '', '', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+('工序更新', 'erp:process:update', 3, 3, @parentId, '', '', '', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+('工序删除', 'erp:process:delete', 3, 4, @parentId, '', '', '', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0'),
+('工序导出', 'erp:process:export', 3, 5, @parentId, '', '', '', 0, b'1', b'1', b'1', '1', NOW(), '1', NOW(), b'0');
+
+
 -- ========== 工艺路线 ==========
 -- 菜单
 INSERT IGNORE INTO `system_menu` (`id`, `name`, `permission`, `type`, `sort`, `parent_id`, `path`, `icon`, `component`, `component_name`, `status`, `visible`, `keep_alive`, `always_show`, `creator`, `create_time`, `updater`, `update_time`, `deleted`) 
