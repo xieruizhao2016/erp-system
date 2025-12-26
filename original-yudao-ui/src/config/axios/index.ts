@@ -38,11 +38,13 @@ export default {
   },
   download: async <T = any>(option: any) => {
     const res = await request({ method: 'GET', responseType: 'blob', ...option })
-    return res as unknown as Promise<T>
+    // 对于 blob 类型，service 拦截器已经返回了 response.data (blob 对象)
+    return res as unknown as T
   },
   upload: async <T = any>(option: any) => {
     option.headersType = 'multipart/form-data'
     const res = await request({ method: 'POST', ...option })
-    return res as unknown as Promise<T>
+    // service 拦截器已经处理了响应，返回的是 CommonResult 对象（包含 code、data、msg）
+    return res as unknown as T
   }
 }

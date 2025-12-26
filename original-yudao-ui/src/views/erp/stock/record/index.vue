@@ -105,6 +105,11 @@
           <dict-tag :type="DICT_TYPE.ERP_STOCK_RECORD_BIZ_TYPE" :value="scope.row.bizType" />
         </template>
       </el-table-column>
+      <el-table-column label="关系人" align="center" prop="relatedPersonName" min-width="120">
+        <template #default="scope">
+          {{ scope.row.relatedPersonName || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="出入库单号" align="center" prop="bizNo" width="200" />
       <el-table-column
         label="出入库日期"

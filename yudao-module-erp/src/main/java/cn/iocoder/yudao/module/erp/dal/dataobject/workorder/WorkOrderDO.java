@@ -103,6 +103,13 @@ public class WorkOrderDO extends BaseDO {
      * 备注
      */
     private String remark;
+    
+    /**
+     * 总工时（分钟）- 计算字段，不映射到数据库
+     * 通过聚合工单进度表的 work_time 字段计算得出
+     */
+    @TableField(exist = false)
+    private Integer totalWorkTime;
 
 
 }

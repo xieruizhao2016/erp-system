@@ -1,6 +1,9 @@
 package cn.iocoder.yudao.module.erp.service.purchase;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.erp.controller.admin.purchase.vo.order.ErpPurchaseOrderImportExcelVO;
+import cn.iocoder.yudao.module.erp.controller.admin.purchase.vo.order.ErpPurchaseOrderImportReqVO;
+import cn.iocoder.yudao.module.erp.controller.admin.purchase.vo.order.ErpPurchaseOrderImportRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.purchase.vo.order.ErpPurchaseOrderPageReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.purchase.vo.order.ErpPurchaseOrderSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpPurchaseOrderDO;
@@ -106,5 +109,15 @@ public interface ErpPurchaseOrderService {
      * @return 采购订单项 List
      */
     List<ErpPurchaseOrderItemDO> getPurchaseOrderItemListByOrderIds(Collection<Long> orderIds);
+
+    /**
+     * 导入采购订单列表
+     *
+     * @param importOrders 导入订单列表
+     * @param importReqVO 导入请求
+     * @return 导入结果
+     */
+    ErpPurchaseOrderImportRespVO importPurchaseOrderList(List<ErpPurchaseOrderImportExcelVO> importOrders,
+                                                         ErpPurchaseOrderImportReqVO importReqVO);
 
 }

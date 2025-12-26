@@ -50,6 +50,14 @@
           <el-button @click="handleQuery"><Icon icon="ep:search" class="mr-5px" /> 搜索</el-button>
           <el-button @click="resetQuery"><Icon icon="ep:refresh" class="mr-5px" /> 重置</el-button>
           <el-button
+            type="primary"
+            plain
+            @click="openForm('create')"
+            v-hasPermi="['erp:finance-receivable:create']"
+          >
+            <Icon icon="ep:plus" class="mr-5px" /> 新增
+          </el-button>
+          <el-button
             type="success"
             plain
             @click="handleExport"
@@ -152,8 +160,13 @@ const getList = async () => {
   loading.value = true
   try {
     const data = await ReceivableApi.getReceivablePage(queryParams)
-    list.value = data.list
-    total.value = data.total
+    // 修复：后端返回的数据结构是 {code: 0, data: {list: [...], total: 0}}
+    // 前端拦截器返回的是整个响应对象，所以需要使用 data.data.list 和 data.data.total
+    list.value = data.data?.list || data.list || []
+    total.value = data.data?.total ?? data.total ?? 0
+  } catch (error: any) {
+    console.error('查询应收账款列表失败:', error)
+    // 错误已由axios拦截器处理，这里只记录日志
   } finally {
     loading.value = false
   }
@@ -209,9 +222,14 @@ const handleExport = async () => {
 onMounted(() => {
   getList()
   // 加载客户列表
-  CustomerApi.getCustomerSimpleList().then((data) => {
-    customerList.value = data
-  })
+  CustomerApi.getCustomerSimpleList()
+    .then((data) => {
+      customerList.value = data
+    })
+    .catch((error) => {
+      console.error('加载客户列表失败:', error)
+      // 静默处理错误，不影响页面正常显示
+    })
 })
 </script>
 

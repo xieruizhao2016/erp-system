@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDate;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import org.springframework.context.annotation.Lazy;
 
 import java.util.*;
 import java.time.LocalDate;
@@ -63,6 +64,9 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
     private cn.iocoder.yudao.module.erp.service.product.ErpProductService productService;
     @Resource
     private cn.iocoder.yudao.module.erp.dal.mysql.equipment.EquipmentMapper equipmentMapper;
+    @Resource
+    @Lazy
+    private cn.iocoder.yudao.module.erp.service.sale.ErpSaleOrderService saleOrderService;
 
     @Override
     public Long createFinanceBalanceSheet(ErpFinanceBalanceSheetSaveReqVO createReqVO) {
@@ -260,6 +264,27 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
             // 忽略错误
         }
 
+        // 5. 计算预收款余额（流动资产）- 预收款收到现金，增加资产
+        // 从会计角度：收到预收款时，借：银行存款（资产增加），贷：预收账款（负债增加）
+        // 所以预收款应该同时计入资产和负债
+        try {
+            cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptPageReqVO prereceiptPageReqVO = 
+                new cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptPageReqVO();
+            prereceiptPageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
+            cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO> prereceiptPage = 
+                prereceiptService.getFinancePrereceiptPage(prereceiptPageReqVO);
+            
+            if (prereceiptPage != null && prereceiptPage.getList() != null) {
+                for (cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO prereceipt : prereceiptPage.getList()) {
+                    if (prereceipt.getBalance() != null) {
+                        assetTotal = assetTotal.add(prereceipt.getBalance());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // 忽略错误
+        }
+
         return assetTotal;
     }
 
@@ -289,6 +314,8 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
         }
 
         // 2. 计算预收款余额（流动负债）
+        // 只有未出库的销售订单对应的预收款才计入负债
+        // 已出库的预收款不再计入负债（因为已经完成交付义务）
         try {
             cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptPageReqVO prereceiptPageReqVO = 
                 new cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptPageReqVO();
@@ -298,8 +325,32 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
             
             if (prereceiptPage != null && prereceiptPage.getList() != null) {
                 for (cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO prereceipt : prereceiptPage.getList()) {
-                    if (prereceipt.getBalance() != null) {
-                        liabilityTotal = liabilityTotal.add(prereceipt.getBalance());
+                    if (prereceipt.getBalance() != null && prereceipt.getBalance().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                        // 如果有关联的销售订单，检查是否已出库
+                        if (prereceipt.getOrderId() != null) {
+                            try {
+                                cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOrderDO saleOrder = 
+                                    saleOrderService.getSaleOrder(prereceipt.getOrderId());
+                                if (saleOrder != null) {
+                                    // 如果已出库（outCount > 0 且等于 totalCount），则不计入负债
+                                    java.math.BigDecimal outCount = saleOrder.getOutCount() != null ? saleOrder.getOutCount() : java.math.BigDecimal.ZERO;
+                                    java.math.BigDecimal totalCount = saleOrder.getTotalCount() != null ? saleOrder.getTotalCount() : java.math.BigDecimal.ZERO;
+                                    // 如果未完全出库，则计入负债
+                                    if (outCount.compareTo(totalCount) < 0) {
+                                        liabilityTotal = liabilityTotal.add(prereceipt.getBalance());
+                                    }
+                                } else {
+                                    // 如果订单不存在，默认计入负债
+                                    liabilityTotal = liabilityTotal.add(prereceipt.getBalance());
+                                }
+                            } catch (Exception e) {
+                                // 如果查询订单失败，默认计入负债
+                                liabilityTotal = liabilityTotal.add(prereceipt.getBalance());
+                            }
+                        } else {
+                            // 如果没有关联订单，默认计入负债
+                            liabilityTotal = liabilityTotal.add(prereceipt.getBalance());
+                        }
                     }
                 }
             }
@@ -315,29 +366,17 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
         try {
             ErpFinanceBalanceSheetStatisticsRespVO statistics = new ErpFinanceBalanceSheetStatisticsRespVO();
             
-            // 获取最新的资产负债表数据
-            ErpFinanceBalanceSheetPageReqVO pageReqVO = new ErpFinanceBalanceSheetPageReqVO();
-            pageReqVO.setPageSize(1);
-            pageReqVO.setPageNo(1);
-            PageResult<ErpFinanceBalanceSheetDO> pageResult = financeBalanceSheetMapper.selectPage(pageReqVO);
-        
-        java.math.BigDecimal assetTotal = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal liabilityTotal = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal equityTotal = java.math.BigDecimal.ZERO;
-        
-        if (pageResult != null && !pageResult.getList().isEmpty()) {
-            ErpFinanceBalanceSheetDO latest = pageResult.getList().get(0);
-            assetTotal = latest.getAssetTotal() != null ? latest.getAssetTotal() : java.math.BigDecimal.ZERO;
-            liabilityTotal = latest.getLiabilityTotal() != null ? latest.getLiabilityTotal() : java.math.BigDecimal.ZERO;
-            equityTotal = latest.getEquityTotal() != null ? latest.getEquityTotal() : java.math.BigDecimal.ZERO;
-        }
+            // 实时计算资产和负债总额（与资产构成保持一致）
+            java.time.LocalDate currentDate = java.time.LocalDate.now();
+            java.math.BigDecimal assetTotal = calculateAssets(currentDate);
+            java.math.BigDecimal liabilityTotal = calculateLiabilities(currentDate);
+            java.math.BigDecimal equityTotal = assetTotal.subtract(liabilityTotal);
         
         statistics.setAssetTotal(assetTotal);
         statistics.setLiabilityTotal(liabilityTotal);
         statistics.setEquityTotal(equityTotal);
         
         // 计算资产构成
-        java.time.LocalDate currentDate = java.time.LocalDate.now();
         List<ErpFinanceBalanceSheetStatisticsRespVO.AssetCompositionItem> assetComposition = new ArrayList<>();
         
         // 账户余额
@@ -446,6 +485,34 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
             // 忽略错误
         }
         
+        // 预收款（收到现金，计入资产）
+        // 所有预收款余额都计入资产，因为收到现金
+        try {
+            cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptPageReqVO prereceiptPageReqVO = 
+                new cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptPageReqVO();
+            prereceiptPageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
+            cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO> prereceiptPage = 
+                prereceiptService.getFinancePrereceiptPage(prereceiptPageReqVO);
+            
+            java.math.BigDecimal prereceiptBalance = java.math.BigDecimal.ZERO;
+            if (prereceiptPage != null && prereceiptPage.getList() != null) {
+                for (cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO prereceipt : prereceiptPage.getList()) {
+                    if (prereceipt.getBalance() != null && prereceipt.getBalance().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                        prereceiptBalance = prereceiptBalance.add(prereceipt.getBalance());
+                    }
+                }
+            }
+            // 无论金额大小，只要有余额就显示（即使为0也显示，确保数据一致性）
+            if (prereceiptBalance.compareTo(java.math.BigDecimal.ZERO) >= 0) {
+                ErpFinanceBalanceSheetStatisticsRespVO.AssetCompositionItem item = new ErpFinanceBalanceSheetStatisticsRespVO.AssetCompositionItem();
+                item.setName("预收款（现金）");
+                item.setAmount(prereceiptBalance);
+                assetComposition.add(item);
+            }
+        } catch (Exception e) {
+            // 忽略错误
+        }
+        
         statistics.setAssetComposition(assetComposition);
         
         // 计算负债构成
@@ -477,7 +544,7 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
             // 忽略错误
         }
         
-        // 预收款
+        // 预收款（只有未出库的销售订单对应的预收款才计入负债）
         try {
             cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptPageReqVO prereceiptPageReqVO = 
                 new cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptPageReqVO();
@@ -485,18 +552,42 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
             cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO> prereceiptPage = 
                 prereceiptService.getFinancePrereceiptPage(prereceiptPageReqVO);
             
-            java.math.BigDecimal prereceiptBalance = java.math.BigDecimal.ZERO;
+            java.math.BigDecimal prereceiptLiabilityBalance = java.math.BigDecimal.ZERO;
             if (prereceiptPage != null && prereceiptPage.getList() != null) {
                 for (cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO prereceipt : prereceiptPage.getList()) {
-                    if (prereceipt.getBalance() != null) {
-                        prereceiptBalance = prereceiptBalance.add(prereceipt.getBalance());
+                    if (prereceipt.getBalance() != null && prereceipt.getBalance().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                        // 如果有关联的销售订单，检查是否已出库
+                        if (prereceipt.getOrderId() != null) {
+                            try {
+                                cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOrderDO saleOrder = 
+                                    saleOrderService.getSaleOrder(prereceipt.getOrderId());
+                                if (saleOrder != null) {
+                                    // 如果已出库（outCount >= totalCount），则不计入负债
+                                    java.math.BigDecimal outCount = saleOrder.getOutCount() != null ? saleOrder.getOutCount() : java.math.BigDecimal.ZERO;
+                                    java.math.BigDecimal totalCount = saleOrder.getTotalCount() != null ? saleOrder.getTotalCount() : java.math.BigDecimal.ZERO;
+                                    // 如果未完全出库，则计入负债
+                                    if (outCount.compareTo(totalCount) < 0) {
+                                        prereceiptLiabilityBalance = prereceiptLiabilityBalance.add(prereceipt.getBalance());
+                                    }
+                                } else {
+                                    // 如果订单不存在，默认计入负债
+                                    prereceiptLiabilityBalance = prereceiptLiabilityBalance.add(prereceipt.getBalance());
+                                }
+                            } catch (Exception e) {
+                                // 如果查询订单失败，默认计入负债
+                                prereceiptLiabilityBalance = prereceiptLiabilityBalance.add(prereceipt.getBalance());
+                            }
+                        } else {
+                            // 如果没有关联订单，默认计入负债
+                            prereceiptLiabilityBalance = prereceiptLiabilityBalance.add(prereceipt.getBalance());
+                        }
                     }
                 }
             }
-            if (prereceiptBalance.compareTo(java.math.BigDecimal.ZERO) > 0) {
+            if (prereceiptLiabilityBalance.compareTo(java.math.BigDecimal.ZERO) > 0) {
                 ErpFinanceBalanceSheetStatisticsRespVO.LiabilityCompositionItem item = new ErpFinanceBalanceSheetStatisticsRespVO.LiabilityCompositionItem();
                 item.setName("预收款");
-                item.setAmount(prereceiptBalance);
+                item.setAmount(prereceiptLiabilityBalance);
                 liabilityComposition.add(item);
             }
         } catch (Exception e) {

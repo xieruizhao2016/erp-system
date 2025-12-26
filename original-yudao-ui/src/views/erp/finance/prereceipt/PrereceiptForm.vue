@@ -40,19 +40,19 @@
       </el-form-item>
       <el-form-item label="已核销金额" prop="usedAmount">
         <el-input-number
-          v-model="formData.receivedAmount"
+          v-model="formData.usedAmount"
           :precision="2"
           :min="0"
-          placeholder="请输入已收金额"
+          placeholder="请输入已核销金额"
           style="width: 100%"
         />
       </el-form-item>
-      <el-form-item label="到期日" prop="dueDate">
+      <el-form-item label="预收日期" prop="prereceiptDate">
         <el-date-picker
-          v-model="formData.dueDate"
+          v-model="formData.prereceiptDate"
           type="date"
           value-format="YYYY-MM-DD"
-          placeholder="请选择到期日"
+          placeholder="请选择预收日期"
           style="width: 100%"
         />
       </el-form-item>
@@ -106,7 +106,7 @@ const formData = ref({
   amount: 0,
   usedAmount: 0,
   balance: 0,
-  dueDate: '',
+  prereceiptDate: '',
   status: 10,
   remark: ''
 })
@@ -128,7 +128,20 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true
     try {
-      formData.value = await PrereceiptApi.getPrereceipt(id)
+      const data = await PrereceiptApi.getPrereceipt(id)
+      // 将后端返回的数据映射到表单数据
+      formData.value = {
+        id: data.id,
+        no: data.no || '',
+        customerId: data.customerId,
+        orderId: data.orderId,
+        amount: data.amount || 0,
+        usedAmount: data.usedAmount || 0,
+        balance: data.balance || 0,
+        prereceiptDate: data.prereceiptDate || '',
+        status: data.status || 10,
+        remark: data.remark || ''
+      }
       // 计算余额
       formData.value.balance = formData.value.amount - (formData.value.usedAmount || 0)
     } finally {
@@ -180,7 +193,7 @@ const resetForm = () => {
     amount: 0,
     usedAmount: 0,
     balance: 0,
-    dueDate: '',
+    prereceiptDate: '',
     status: 10,
     remark: ''
   }

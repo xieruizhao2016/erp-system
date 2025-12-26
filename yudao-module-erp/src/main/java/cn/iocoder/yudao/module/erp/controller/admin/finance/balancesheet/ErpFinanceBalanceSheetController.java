@@ -141,7 +141,19 @@ public class ErpFinanceBalanceSheetController {
     public CommonResult<ErpFinanceBalanceSheetStatisticsRespVO> getBalanceSheetStatistics() {                                                                   
         try {
             log.info("开始获取资产负债表统计数据");
-            ErpFinanceBalanceSheetStatisticsRespVO statistics = financeBalanceSheetService.getBalanceSheetStatistics();                                             
+            ErpFinanceBalanceSheetStatisticsRespVO statistics = financeBalanceSheetService.getBalanceSheetStatistics();
+            log.info("资产负债表统计数据 - 资产总额: {}, 负债总额: {}, 所有者权益: {}", 
+                statistics.getAssetTotal(), statistics.getLiabilityTotal(), statistics.getEquityTotal());
+            if (statistics.getAssetComposition() != null) {
+                log.info("资产构成项数: {}", statistics.getAssetComposition().size());
+                statistics.getAssetComposition().forEach(item -> 
+                    log.info("  - {}: {}", item.getName(), item.getAmount()));
+            }
+            if (statistics.getLiabilityComposition() != null) {
+                log.info("负债构成项数: {}", statistics.getLiabilityComposition().size());
+                statistics.getLiabilityComposition().forEach(item -> 
+                    log.info("  - {}: {}", item.getName(), item.getAmount()));
+            }
             log.info("成功获取资产负债表统计数据");
             return success(statistics);
         } catch (Exception e) {

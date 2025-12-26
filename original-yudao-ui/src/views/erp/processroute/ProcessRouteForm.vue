@@ -34,18 +34,39 @@
       </el-form-item>
       <el-form-item label="标准周期时间" prop="standardCycleTime">
         <el-input-number
-          v-model="formData.standardCycleTime"
+          v-model="calculatedMetrics.standardCycleTime"
           :min="0"
           :precision="0"
-          placeholder="请输入标准周期时间（分钟）"
+          placeholder="根据工序明细自动计算（分钟）"
           style="width: 100%"
+          readonly
+          disabled
         />
+        <div class="text-xs text-gray-500 mt-1">根据工序明细的标准工时和准备时间自动计算</div>
       </el-form-item>
       <el-form-item label="标准人工成本" prop="standardLaborCost">
-        <el-input v-model="formData.standardLaborCost" placeholder="请输入标准人工成本" />
+        <el-input-number
+          v-model="calculatedMetrics.standardLaborCost"
+          :min="0"
+          :precision="2"
+          placeholder="根据工序明细自动计算（元）"
+          style="width: 100%"
+          readonly
+          disabled
+        />
+        <div class="text-xs text-gray-500 mt-1">根据工序明细的标准工时和人工费率自动计算</div>
       </el-form-item>
       <el-form-item label="标准制造费用" prop="standardOverheadCost">
-        <el-input v-model="formData.standardOverheadCost" placeholder="请输入标准制造费用" />
+        <el-input-number
+          v-model="calculatedMetrics.standardOverheadCost"
+          :min="0"
+          :precision="2"
+          placeholder="根据工序明细自动计算（元）"
+          style="width: 100%"
+          readonly
+          disabled
+        />
+        <div class="text-xs text-gray-500 mt-1">根据工序明细的标准工时和制造费率自动计算</div>
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-radio-group v-model="formData.status">
@@ -62,7 +83,7 @@
       <ContentWrap>
         <el-tabs v-model="subTabsName" class="-mt-15px -mb-10px">
           <el-tab-pane label="工序明细" name="item">
-            <ProcessRouteItemForm ref="itemFormRef" :items="formData.items" />
+            <ProcessRouteItemForm ref="itemFormRef" :items="formData.items" @change="handleItemsChange" />
           </el-tab-pane>
         </el-tabs>
       </ContentWrap>
@@ -111,6 +132,13 @@ const itemFormRef = ref() // 明细表单 Ref
 const subTabsName = ref('item') // 子表Tab名称
 const productList = ref<ProductVO[]>([]) // 产品列表
 
+// 计算后的指标（只读显示）
+const calculatedMetrics = ref({
+  standardCycleTime: 0,
+  standardLaborCost: 0,
+  standardOverheadCost: 0
+})
+
 /** 加载列表数据 */
 const loadListData = async () => {
   try {
@@ -119,6 +147,56 @@ const loadListData = async () => {
   } catch (error) {
     console.error('加载产品列表失败:', error)
   }
+}
+
+/** 计算工艺路线指标（根据工序明细） */
+const calculateMetrics = () => {
+  const items = itemFormRef.value?.formData || formData.value.items || []
+  
+  let totalCycleTime = 0
+  let totalLaborCost = 0
+  let totalOverheadCost = 0
+
+  items.forEach((item: any) => {
+    // 标准周期时间 = 标准工时 + 准备时间
+    if (item.standardTime) {
+      totalCycleTime += item.standardTime
+    }
+    if (item.setupTime) {
+      totalCycleTime += item.setupTime
+    }
+
+    // 标准人工成本 = 标准工时（分钟） × 人工费率（元/小时） / 60
+    if (item.standardTime && item.laborRate) {
+      const hours = item.standardTime / 60
+      totalLaborCost += hours * item.laborRate
+    }
+
+    // 标准制造费用 = 标准工时（分钟） × 制造费率（元/小时） / 60
+    if (item.standardTime && item.overheadRate) {
+      const hours = item.standardTime / 60
+      totalOverheadCost += hours * item.overheadRate
+    }
+  })
+
+  calculatedMetrics.value = {
+    standardCycleTime: totalCycleTime,
+    standardLaborCost: Number(totalLaborCost.toFixed(2)),
+    standardOverheadCost: Number(totalOverheadCost.toFixed(2))
+  }
+
+  // 同步到formData，用于提交
+  formData.value.standardCycleTime = calculatedMetrics.value.standardCycleTime
+  formData.value.standardLaborCost = calculatedMetrics.value.standardLaborCost
+  formData.value.standardOverheadCost = calculatedMetrics.value.standardOverheadCost
+}
+
+/** 处理工序明细变化 */
+const handleItemsChange = () => {
+  // 延迟计算，确保数据已更新
+  nextTick(() => {
+    calculateMetrics()
+  })
 }
 
 /** 打开弹窗 */
@@ -157,6 +235,10 @@ const open = async (type: string, id?: number) => {
         ...data,
         items: data.items || []
       }
+      // 计算指标
+      nextTick(() => {
+        calculateMetrics()
+      })
     } finally {
       formLoading.value = false
     }
@@ -175,12 +257,18 @@ const submitForm = async () => {
   }
   // 获取明细数据
   const items = itemFormRef.value?.formData || []
+  // 重新计算指标（确保是最新的）
+  calculateMetrics()
   // 提交请求
   formLoading.value = true
   try {
     const data = {
       ...formData.value,
-      items: items
+      items: items,
+      // 使用计算后的指标
+      standardCycleTime: calculatedMetrics.value.standardCycleTime,
+      standardLaborCost: calculatedMetrics.value.standardLaborCost,
+      standardOverheadCost: calculatedMetrics.value.standardOverheadCost
     } as unknown as ProcessRoute
     if (formType.value === 'create') {
       await ProcessRouteApi.createProcessRoute(data)

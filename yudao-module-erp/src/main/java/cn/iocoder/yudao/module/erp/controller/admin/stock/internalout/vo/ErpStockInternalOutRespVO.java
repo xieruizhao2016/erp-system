@@ -13,6 +13,10 @@ import cn.idev.excel.annotation.*;
 @ExcelIgnoreUnannotated
 public class ErpStockInternalOutRespVO {
 
+    @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11756")
+    @ExcelProperty("编号")
+    private Long id;
+
     @Schema(description = "出库单号")
     @ExcelProperty("出库单号")
     private String no;

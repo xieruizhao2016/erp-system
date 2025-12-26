@@ -85,4 +85,10 @@ public class ErpStockRecordRespVO {
     @ExcelProperty("创建人")
     private String creatorName;
 
+    // ========== 关系人信息 ==========
+
+    @Schema(description = "关系人", example = "供应商A/客户B/员工C")
+    @ExcelProperty("关系人")
+    private String relatedPersonName;
+
 }

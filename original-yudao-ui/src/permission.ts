@@ -72,9 +72,15 @@ router.beforeEach(async (to, from, next) => {
         await dictStore.setDictMap()
       }
       if (!userStore.getIsSetUser) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/9f9bb41f-0fa7-49a2-9cbc-851e0d8f0404',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'permission.ts:74',message:'User not set, calling setUserInfoAction',data:{toPath:to.path},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         isRelogin.show = true
         try {
           const result = await userStore.setUserInfoAction()
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/9f9bb41f-0fa7-49a2-9cbc-851e0d8f0404',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'permission.ts:77',message:'setUserInfoAction result',data:{resultIsNull:result===null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           // 如果获取用户信息失败（返回null），说明token无效，跳转到登录页
           if (result === null) {
             isRelogin.show = false
@@ -94,6 +100,9 @@ router.beforeEach(async (to, from, next) => {
           const nextData = to.path === redirect ? { ...to, replace: true } : { path: redirect, query }
           next(nextData)
         } catch (error) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/9f9bb41f-0fa7-49a2-9cbc-851e0d8f0404',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'permission.ts:96',message:'Error in setUserInfoAction',data:{errorMessage:(error as Error)?.message,errorName:(error as Error)?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           // 如果发生错误，清除token并跳转到登录页
           console.error('获取用户信息时发生错误:', error)
           isRelogin.show = false

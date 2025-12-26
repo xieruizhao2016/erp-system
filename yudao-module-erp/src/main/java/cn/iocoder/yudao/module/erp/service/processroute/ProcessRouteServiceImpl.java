@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.math.BigDecimal;
 import cn.iocoder.yudao.module.erp.controller.admin.processroute.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.processroute.ProcessRouteDO;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -43,6 +44,53 @@ public class ProcessRouteServiceImpl implements ProcessRouteService {
     @Resource
     private ErpNoRedisDAO noRedisDAO;
 
+    /**
+     * 根据工序明细计算工艺路线的标准周期时间、标准人工成本、标准制造费用
+     */
+    private void calculateRouteMetrics(ProcessRouteDO processRoute, List<ProcessRouteSaveReqVO.Item> items) {
+        if (CollUtil.isEmpty(items)) {
+            processRoute.setStandardCycleTime(0);
+            processRoute.setStandardLaborCost(BigDecimal.ZERO);
+            processRoute.setStandardOverheadCost(BigDecimal.ZERO);
+            return;
+        }
+
+        // 计算标准周期时间 = 所有工序的标准工时之和（包括准备时间）
+        int totalCycleTime = 0;
+        BigDecimal totalLaborCost = BigDecimal.ZERO;
+        BigDecimal totalOverheadCost = BigDecimal.ZERO;
+
+        for (ProcessRouteSaveReqVO.Item item : items) {
+            // 标准周期时间 = 标准工时 + 准备时间
+            if (item.getStandardTime() != null) {
+                totalCycleTime += item.getStandardTime();
+            }
+            if (item.getSetupTime() != null) {
+                totalCycleTime += item.getSetupTime();
+            }
+
+            // 标准人工成本 = 标准工时（分钟） × 人工费率（元/小时） / 60
+            if (item.getStandardTime() != null && item.getLaborRate() != null) {
+                BigDecimal minutes = new BigDecimal(item.getStandardTime());
+                BigDecimal hours = minutes.divide(new BigDecimal(60), 4, java.math.RoundingMode.HALF_UP);
+                BigDecimal itemLaborCost = hours.multiply(item.getLaborRate());
+                totalLaborCost = totalLaborCost.add(itemLaborCost);
+            }
+
+            // 标准制造费用 = 标准工时（分钟） × 制造费率（元/小时） / 60
+            if (item.getStandardTime() != null && item.getOverheadRate() != null) {
+                BigDecimal minutes = new BigDecimal(item.getStandardTime());
+                BigDecimal hours = minutes.divide(new BigDecimal(60), 4, java.math.RoundingMode.HALF_UP);
+                BigDecimal itemOverheadCost = hours.multiply(item.getOverheadRate());
+                totalOverheadCost = totalOverheadCost.add(itemOverheadCost);
+            }
+        }
+
+        processRoute.setStandardCycleTime(totalCycleTime);
+        processRoute.setStandardLaborCost(totalLaborCost.setScale(2, java.math.RoundingMode.HALF_UP));
+        processRoute.setStandardOverheadCost(totalOverheadCost.setScale(2, java.math.RoundingMode.HALF_UP));
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createProcessRoute(ProcessRouteSaveReqVO createReqVO) {
@@ -60,6 +108,10 @@ public class ProcessRouteServiceImpl implements ProcessRouteService {
         // 插入主表
         ProcessRouteDO processRoute = BeanUtils.toBean(createReqVO, ProcessRouteDO.class);
         processRoute.setRouteNo(routeNo);
+        
+        // 根据工序明细自动计算标准周期时间、标准人工成本、标准制造费用
+        calculateRouteMetrics(processRoute, createReqVO.getItems());
+        
         processRouteMapper.insert(processRoute);
 
         // 插入明细
@@ -90,6 +142,10 @@ public class ProcessRouteServiceImpl implements ProcessRouteService {
         }
         // 更新主表
         ProcessRouteDO updateObj = BeanUtils.toBean(updateReqVO, ProcessRouteDO.class);
+        
+        // 根据工序明细自动计算标准周期时间、标准人工成本、标准制造费用
+        calculateRouteMetrics(updateObj, updateReqVO.getItems());
+        
         processRouteMapper.updateById(updateObj);
 
         // 更新明细

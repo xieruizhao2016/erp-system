@@ -151,6 +151,22 @@
           <Icon icon="ep:download" class="mr-5px" /> 导出
         </el-button>
         <el-button
+          type="info"
+          plain
+          @click="goToImport"
+          v-hasPermi="['erp:sale-out:import']"
+        >
+          <Icon icon="ep:plus" class="mr-5px" /> 批量创建
+        </el-button>
+        <el-button
+          type="warning"
+          plain
+          @click="goToImport"
+          v-hasPermi="['erp:sale-out:import']"
+        >
+          <Icon icon="ep:upload" class="mr-5px" /> 导入
+        </el-button>
+        <el-button
           type="danger"
           plain
           @click="handleDelete(selectionList.map((item) => item.id))"
@@ -229,7 +245,7 @@
       >
         <template #default="{ row }">
           <span v-if="row.grossProfitRate != null">
-            {{ formatNumber(row.grossProfitRate, 2) }}%
+            {{ erpNumberFormatter(row.grossProfitRate, 2) }}%
           </span>
           <span v-else>-</span>
         </template>
@@ -308,7 +324,7 @@ import SaleOrderForm from './SaleOrderForm.vue'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
 import { UserVO } from '@/api/system/user'
 import * as UserApi from '@/api/system/user'
-import { erpCountTableColumnFormatter, erpPriceTableColumnFormatter } from '@/utils'
+import { erpCountTableColumnFormatter, erpPriceTableColumnFormatter, erpNumberFormatter } from '@/utils'
 import { CustomerApi, CustomerVO } from '@/api/erp/sale/customer'
 
 /** ERP 销售订单列表 */
@@ -316,6 +332,7 @@ defineOptions({ name: 'ErpSaleOrder' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
+const router = useRouter() // 路由
 
 const loading = ref(true) // 列表的加载中
 const list = ref<SaleOrderVO[]>([]) // 列表的数据
@@ -345,7 +362,13 @@ const userList = ref<UserVO[]>([]) // 用户列表
 const getList = async () => {
   loading.value = true
   try {
-    const data = await SaleOrderApi.getSaleOrderPage(queryParams)
+    // 构建查询参数，处理空数组
+    const params: any = { ...queryParams }
+    // 处理日期范围：空数组转换为undefined
+    if (Array.isArray(params.orderTime) && params.orderTime.length === 0) {
+      params.orderTime = undefined
+    }
+    const data = await SaleOrderApi.getSaleOrderPage(params)
     list.value = data.list
     total.value = data.total
   } finally {
@@ -369,6 +392,11 @@ const resetQuery = () => {
 const formRef = ref()
 const openForm = (type: string, id?: number) => {
   formRef.value.open(type, id)
+}
+
+/** 导入操作 */
+const goToImport = () => {
+  router.push({ path: '/erp/sale-order/import' })
 }
 
 /** 删除按钮操作 */

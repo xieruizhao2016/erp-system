@@ -119,6 +119,14 @@ export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecord
       const index = route?.component
         ? modulesRoutesKeys.findIndex((ev) => ev.includes(route.component))
         : modulesRoutesKeys.findIndex((ev) => ev.includes(route.path))
+      if (index === -1) {
+        console.error(`[路由生成] 未找到组件文件:`, {
+          component: route.component,
+          path: route.path,
+          name: route.name
+        })
+        continue // 跳过这个路由，继续处理下一个
+      }
       childrenData.component = modules[modulesRoutesKeys[index]]
       data.children = [childrenData]
     } else {
@@ -142,6 +150,18 @@ export const generateRoute = (routes: AppCustomRouteRecordRaw[]): AppRouteRecord
         const index = route?.component
           ? modulesRoutesKeys.findIndex((ev) => ev.includes(route.component))
           : modulesRoutesKeys.findIndex((ev) => ev.includes(route.path))
+        if (index === -1) {
+          console.error(`[路由生成] 未找到组件文件:`, {
+            component: route.component,
+            path: route.path,
+            name: route.name,
+            availableKeys: modulesRoutesKeys.filter(key => 
+              key.includes('erp/finance') || key.includes(route.path)
+            ).slice(0, 5)
+          })
+          // 如果找不到组件，跳过该路由，继续处理下一个
+          continue
+        }
         data.component = modules[modulesRoutesKeys[index]]
       }
       if (route.children) {

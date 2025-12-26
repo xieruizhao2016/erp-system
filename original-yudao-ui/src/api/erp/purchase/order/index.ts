@@ -60,5 +60,15 @@ export const PurchaseOrderApi = {
   // 导出采购订单 Excel
   exportPurchaseOrder: async (params: any) => {
     return await request.download({ url: `/erp/purchase-order/export-excel`, params })
+  },
+
+  // 下载采购订单导入模板
+  importPurchaseOrderTemplate: () => {
+    return request.download({ url: '/erp/purchase-order/get-import-template' })
+  },
+
+  // 导入采购订单
+  importPurchaseOrder: async (formData) => {
+    return await request.upload({ url: `/erp/purchase-order/import`, data: formData })
   }
 }

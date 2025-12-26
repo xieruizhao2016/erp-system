@@ -10,7 +10,22 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="工作中心编号" prop="workCenterNo">
-            <el-input v-model="formData.workCenterNo" placeholder="请输入工作中心编号" />
+            <el-input
+              v-model="formData.workCenterNo"
+              placeholder="系统自动生成，可修改"
+              clearable
+            >
+              <template #append>
+                <el-button
+                  v-if="formType === 'create'"
+                  @click="handleGenerateNo"
+                  :loading="generateNoLoading"
+                  title="重新生成编号"
+                >
+                  <Icon icon="ep:refresh" />
+                </el-button>
+              </template>
+            </el-input>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -35,7 +50,20 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="负责人" prop="responsiblePerson">
-            <el-input v-model="formData.responsiblePerson" placeholder="请输入负责人" />
+            <el-select
+              v-model="formData.responsiblePerson"
+              clearable
+              filterable
+              placeholder="请选择负责人"
+              class="!w-1/1"
+            >
+              <el-option
+                v-for="item in userList"
+                :key="item.id"
+                :label="item.nickname || item.username"
+                :value="item.nickname || item.username"
+              />
+            </el-select>
           </el-form-item>
         </el-col>
       </el-row>
@@ -61,6 +89,7 @@
 </template>
 <script setup lang="ts">
 import { WorkCenterApi, WorkCenter } from '@/api/erp/workcenter'
+import * as UserApi from '@/api/system/user'
 
 /** ERP 工作中心 表单 */
 defineOptions({ name: 'WorkCenterForm' })
@@ -72,6 +101,8 @@ const dialogVisible = ref(false) // 弹窗的是否展示
 const dialogTitle = ref('') // 弹窗的标题
 const formLoading = ref(false) // 表单的加载中：1）修改时的数据加载；2）提交的按钮禁用
 const formType = ref('') // 表单的类型：create - 新增；update - 修改
+const generateNoLoading = ref(false) // 生成编号的加载中
+const userList = ref<UserApi.UserVO[]>([]) // 用户列表
 const formData = ref({
   id: undefined,
   workCenterNo: undefined,
@@ -83,7 +114,6 @@ const formData = ref({
   remark: undefined
 })
 const formRules = reactive({
-  workCenterNo: [{ required: true, message: '工作中心编号不能为空', trigger: 'blur' }],
   workCenterName: [{ required: true, message: '工作中心名称不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
@@ -94,6 +124,22 @@ const open = async (type: string, id?: number) => {
   dialogTitle.value = t('action.' + type)
   formType.value = type
   resetForm()
+  // 加载用户列表
+  try {
+    userList.value = await UserApi.getSimpleUserList() || []
+  } catch (error) {
+    console.error('加载用户列表失败:', error)
+  }
+  // 新增时，自动生成编号并填充
+  if (type === 'create') {
+    try {
+      const workCenterNo = await WorkCenterApi.generateWorkCenterNo()
+      formData.value.workCenterNo = workCenterNo
+    } catch (error) {
+      console.error('生成工作中心编号失败:', error)
+      // 如果生成失败，不设置默认值，让用户手动输入
+    }
+  }
   // 修改时，设置数据
   if (id) {
     formLoading.value = true
@@ -105,6 +151,20 @@ const open = async (type: string, id?: number) => {
   }
 }
 defineExpose({ open }) // 提供 open 方法，用于打开弹窗
+
+/** 生成工作中心编号 */
+const handleGenerateNo = async () => {
+  generateNoLoading.value = true
+  try {
+    const data = await WorkCenterApi.generateWorkCenterNo()
+    formData.value.workCenterNo = data
+    message.success('编号已自动生成')
+  } catch (error) {
+    console.error('生成编号失败:', error)
+  } finally {
+    generateNoLoading.value = false
+  }
+}
 
 /** 提交表单 */
 const emit = defineEmits(['success']) // 定义 success 事件，用于操作成功后的回调

@@ -21,6 +21,7 @@ export interface WorkOrder {
           priority: number; // 优先级
           instruction: string; // 作业指导书
           remark: string; // 备注
+          totalWorkTime?: number; // 总工时（分钟）- 计算字段，所有工序的工时之和
   }
 
 // ERP 工单主 API

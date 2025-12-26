@@ -66,5 +66,12 @@ public interface WorkCenterService {
      */
     List<WorkCenterDO> getWorkCenterList();
 
+    /**
+     * 生成工作中心编号
+     *
+     * @return 工作中心编号
+     */
+    String generateWorkCenterNo();
+
 }
 

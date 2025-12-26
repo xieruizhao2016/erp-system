@@ -221,6 +221,12 @@
       <el-table-column label="工单数量" align="center" prop="quantity" />
       <el-table-column label="完成数量" align="center" prop="completedQuantity" />
       <el-table-column label="合格数量" align="center" prop="qualifiedQuantity" />
+      <el-table-column label="总工时" align="center" prop="totalWorkTime" width="120">
+        <template #default="scope">
+          <span v-if="scope.row.totalWorkTime">{{ formatWorkTime(scope.row.totalWorkTime) }}</span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column label="工作中心" align="center" prop="workCenterId" />
       <el-table-column label="主管" align="center" min-width="100">
         <template #default="scope">
@@ -443,6 +449,20 @@ const getUserName = (id?: number) => {
   if (!id) return '-'
   const user = userList.value.find(item => item.id === id)
   return user?.nickname || `用户${id}`
+}
+
+/** 格式化工时显示（分钟转换为小时和分钟） */
+const formatWorkTime = (minutes?: number) => {
+  if (!minutes || minutes === 0) return '-'
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hours > 0 && mins > 0) {
+    return `${hours}小时${mins}分钟`
+  } else if (hours > 0) {
+    return `${hours}小时`
+  } else {
+    return `${mins}分钟`
+  }
 }
 
 /** 初始化 **/

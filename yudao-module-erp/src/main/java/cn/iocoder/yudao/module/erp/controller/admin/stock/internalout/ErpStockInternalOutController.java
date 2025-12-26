@@ -40,14 +40,14 @@ public class ErpStockInternalOutController {
 
     @PostMapping("/create")
     @Operation(summary = "创建内部出库单")
-    @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:create')")
+    @PreAuthorize("@ss.hasPermission('erp:stock:internal-out:create')")
     public CommonResult<Long> createStockInternalOut(@Valid @RequestBody ErpStockInternalOutSaveReqVO createReqVO) {
         return success(stockInternalOutService.createStockInternalOut(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新内部出库单")
-    @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:update')")
+    @PreAuthorize("@ss.hasPermission('erp:stock:internal-out:update')")
     public CommonResult<Boolean> updateStockInternalOut(@Valid @RequestBody ErpStockInternalOutSaveReqVO updateReqVO) {
         stockInternalOutService.updateStockInternalOut(updateReqVO);
         return success(true);
@@ -56,7 +56,7 @@ public class ErpStockInternalOutController {
     @DeleteMapping("/delete")
     @Operation(summary = "删除内部出库单")
     @Parameter(name = "id", description = "编号", required = true)
-    @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:delete')")
+    @PreAuthorize("@ss.hasPermission('erp:stock:internal-out:delete')")
     public CommonResult<Boolean> deleteStockInternalOut(@RequestParam("id") Long id) {
         stockInternalOutService.deleteStockInternalOut(id);
         return success(true);
@@ -65,7 +65,7 @@ public class ErpStockInternalOutController {
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号", required = true)
     @Operation(summary = "批量删除内部出库单")
-                @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:delete')")
+                @PreAuthorize("@ss.hasPermission('erp:stock:internal-out:delete')")
     public CommonResult<Boolean> deleteStockInternalOutList(@RequestParam("ids") List<Long> ids) {
         stockInternalOutService.deleteStockInternalOutListByIds(ids);
         return success(true);
@@ -74,7 +74,7 @@ public class ErpStockInternalOutController {
     @GetMapping("/get")
     @Operation(summary = "获得内部出库单")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
-    @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:query')")
+    @PreAuthorize("@ss.hasPermission('erp:stock:internal-out:query')")
     public CommonResult<ErpStockInternalOutRespVO> getStockInternalOut(@RequestParam("id") Long id) {
         ErpStockInternalOutDO stockInternalOut = stockInternalOutService.getStockInternalOut(id);
         return success(BeanUtils.toBean(stockInternalOut, ErpStockInternalOutRespVO.class));
@@ -82,15 +82,26 @@ public class ErpStockInternalOutController {
 
     @GetMapping("/page")
     @Operation(summary = "获得内部出库单分页")
-    @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:query')")
+    @PreAuthorize("@ss.hasPermission('erp:stock:internal-out:query')")
     public CommonResult<PageResult<ErpStockInternalOutRespVO>> getStockInternalOutPage(@Valid ErpStockInternalOutPageReqVO pageReqVO) {
         PageResult<ErpStockInternalOutDO> pageResult = stockInternalOutService.getStockInternalOutPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, ErpStockInternalOutRespVO.class));
     }
 
+    @PutMapping("/update-status")
+    @Operation(summary = "更新内部出库单的状态")
+    @Parameter(name = "id", description = "编号", required = true)
+    @Parameter(name = "status", description = "状态", required = true)
+    @PreAuthorize("@ss.hasPermission('erp:stock:internal-out:approve')")
+    public CommonResult<Boolean> updateStockInternalOutStatus(@RequestParam("id") Long id,
+                                                              @RequestParam("status") Integer status) {
+        stockInternalOutService.updateStockInternalOutStatus(id, status);
+        return success(true);
+    }
+
     @GetMapping("/export-excel")
     @Operation(summary = "导出内部出库单 Excel")
-    @PreAuthorize("@ss.hasPermission('erp:stock-internal-out:export')")
+    @PreAuthorize("@ss.hasPermission('erp:stock:internal-out:export')")
     @ApiAccessLog(operateType = EXPORT)
     public void exportStockInternalOutExcel(@Valid ErpStockInternalOutPageReqVO pageReqVO,
               HttpServletResponse response) throws IOException {

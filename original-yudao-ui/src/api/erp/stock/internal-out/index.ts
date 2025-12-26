@@ -52,7 +52,15 @@ export const StockInternalOutApi = {
 
   // 审核内部出库单
   updateStockInternalOutStatus: async (id: number, status: number) => {
-    return await request.put({ url: `/erp/stock-internal-out/update-status`, params: { id, status } })
+    if (id === undefined || id === null || status === undefined || status === null) {
+      throw new Error('参数不能为空：id 和 status 都是必需的')
+    }
+    const params = new URLSearchParams()
+    params.append('id', String(id))
+    params.append('status', String(status))
+    return await request.put({
+      url: `/erp/stock-internal-out/update-status?${params.toString()}`
+    })
   },
 
   // 导出内部出库单 Excel

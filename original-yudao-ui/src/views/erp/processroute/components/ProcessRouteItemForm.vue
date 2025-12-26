@@ -179,6 +179,7 @@ const props = defineProps<{
   items?: any[]
   disabled?: boolean
 }>()
+const emit = defineEmits(['change'])
 const formLoading = ref(false) // 表单的加载中
 const formData = ref<any[]>([])
 const formRules = reactive({
@@ -190,6 +191,11 @@ const formRules = reactive({
 const formRef = ref() // 表单 Ref
 const processList = ref<any[]>([]) // 工序列表
 const equipmentList = ref<any[]>([]) // 设备列表
+
+/** 触发change事件 */
+const triggerChange = () => {
+  emit('change')
+}
 
 /** 初始化设置明细项 */
 watch(
@@ -206,8 +212,26 @@ watch(
     } else {
       formData.value = []
     }
+    // 触发change事件
+    nextTick(() => {
+      triggerChange()
+    })
   },
   { immediate: true }
+)
+
+/** 监听formData变化，当影响计算的字段变化时触发change事件 */
+watch(
+  () => formData.value.map(item => ({
+    standardTime: item.standardTime,
+    setupTime: item.setupTime,
+    laborRate: item.laborRate,
+    overheadRate: item.overheadRate
+  })),
+  () => {
+    triggerChange()
+  },
+  { deep: true }
 )
 
 /** 新增按钮操作 */
@@ -232,6 +256,10 @@ const handleAdd = () => {
     remark: undefined
   }
   formData.value.push(row)
+  // 触发change事件
+  nextTick(() => {
+    triggerChange()
+  })
 }
 
 /** 删除按钮操作 */
@@ -240,6 +268,10 @@ const handleDelete = (index: number) => {
   // 重新排序序号
   formData.value.forEach((item, idx) => {
     item.sequence = idx + 1
+  })
+  // 触发change事件
+  nextTick(() => {
+    triggerChange()
   })
 }
 
@@ -250,6 +282,10 @@ const onChangeProcess = (processId: number | undefined, row: any) => {
     row.standardTime = undefined
     row.setupTime = 0
     row.workerCount = 1
+    // 触发change事件
+    nextTick(() => {
+      triggerChange()
+    })
     return
   }
   const process = processList.value.find((item) => item.id === processId)
@@ -268,7 +304,18 @@ const onChangeProcess = (processId: number | undefined, row: any) => {
     if (row.workerCount === undefined && process.workerCount) {
       row.workerCount = process.workerCount
     }
+    // 自动填充人工费率和制造费率（如果为空）
+    if (row.laborRate === undefined && process.laborRate) {
+      row.laborRate = process.laborRate
+    }
+    if (row.overheadRate === undefined && process.overheadRate) {
+      row.overheadRate = process.overheadRate
+    }
   }
+  // 触发change事件
+  nextTick(() => {
+    triggerChange()
+  })
 }
 
 /** 表单校验 */

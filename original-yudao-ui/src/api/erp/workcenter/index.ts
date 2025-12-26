@@ -52,6 +52,11 @@ export const WorkCenterApi = {
   // 导出ERP 工作中心 Excel
   exportWorkCenter: async (params) => {
     return await request.download({ url: `/erp/work-center/export-excel`, params })
+  },
+
+  // 生成工作中心编号
+  generateWorkCenterNo: async () => {
+    return await request.get({ url: `/erp/work-center/generate-no` })
   }
 }
 

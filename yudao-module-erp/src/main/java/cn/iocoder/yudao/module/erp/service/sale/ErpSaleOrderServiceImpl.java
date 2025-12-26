@@ -2,9 +2,15 @@ package cn.iocoder.yudao.module.erp.service.sale;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.number.MoneyUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderImportExcelVO;
+import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderImportReqVO;
+import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderImportRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderPageReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderSaveReqVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductDO;
@@ -16,20 +22,31 @@ import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 import cn.iocoder.yudao.module.erp.enums.ErpAuditStatus;
 import cn.iocoder.yudao.module.erp.service.finance.ErpAccountService;
 import cn.iocoder.yudao.module.erp.service.finance.receivable.ErpFinanceReceivableService;
+import cn.iocoder.yudao.module.erp.service.finance.prereceipt.ErpFinancePrereceiptService;
+import cn.iocoder.yudao.module.erp.service.finance.balancesheet.ErpFinanceBalanceSheetService;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.ErpFinancePrereceiptSaveReqVO;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
+import cn.iocoder.yudao.module.erp.service.product.ErpProductUnitService;
 import cn.iocoder.yudao.module.erp.service.productsku.ProductSkuService;
 import cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO;
 import cn.iocoder.yudao.module.system.api.user.AdminUserApi;
+import cn.iocoder.yudao.module.system.service.user.AdminUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
@@ -57,11 +74,17 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
     @Resource
     private ErpProductService productService;
     @Resource
+    private ErpProductUnitService productUnitService;
+    @Resource
     private ErpCustomerService customerService;
     @Resource
     private ErpAccountService accountService;
     @Resource
     private ErpFinanceReceivableService financeReceivableService;
+    @Resource
+    private ErpFinancePrereceiptService financePrereceiptService;
+    @Resource
+    private ErpFinanceBalanceSheetService financeBalanceSheetService;
     @Resource
     private ProductSkuService productSkuService;
     @Resource
@@ -81,6 +104,8 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
 
     @Resource
     private AdminUserApi adminUserApi;
+    @Resource
+    private AdminUserService adminUserService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -113,6 +138,24 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
         // 2.2 插入订单项
         saleOrderItems.forEach(o -> o.setOrderId(saleOrder.getId()));
         saleOrderItemMapper.insertBatch(saleOrderItems);
+        
+        // 2.3 自动创建财务记录
+        BigDecimal depositPrice = createReqVO.getDepositPrice();
+        if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
+            // 如果填写了定金，创建预收款记录
+            createPrereceiptFromSaleOrder(saleOrder, depositPrice);
+        }
+        
+        // 2.4 自动创建应收账款记录（总金额 - 定金）
+        financeReceivableService.createReceivableFromSaleOrder(saleOrder, depositPrice);
+        
+        // 2.5 更新资产负债表
+        if (saleOrder.getOrderTime() != null) {
+            financeBalanceSheetService.calculateBalanceSheet(saleOrder.getOrderTime().toLocalDate());
+        } else {
+            financeBalanceSheetService.calculateBalanceSheet(LocalDate.now());
+        }
+        
         return saleOrder.getId();
     }
 
@@ -588,10 +631,21 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
 
         // 2. 遍历删除，并记录操作日志
         saleOrders.forEach(saleOrder -> {
-            // 2.1 删除订单
+            // 2.1 删除相关的财务记录
+            financeReceivableService.deleteReceivableByOrderId(saleOrder.getId());
+            financePrereceiptService.deletePrereceiptByOrderId(saleOrder.getId());
+            
+            // 2.2 删除订单
             saleOrderMapper.deleteById(saleOrder.getId());
-            // 2.2 删除订单项
+            // 2.3 删除订单项
             saleOrderItemMapper.deleteByOrderId(saleOrder.getId());
+            
+            // 2.4 更新资产负债表
+            if (saleOrder.getOrderTime() != null) {
+                financeBalanceSheetService.calculateBalanceSheet(saleOrder.getOrderTime().toLocalDate());
+            } else {
+                financeBalanceSheetService.calculateBalanceSheet(LocalDate.now());
+            }
         });
     }
 
@@ -635,6 +689,363 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
             return Collections.emptyList();
         }
         return saleOrderItemMapper.selectListByOrderIds(orderIds);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ErpSaleOrderImportRespVO importSaleOrderList(List<ErpSaleOrderImportExcelVO> importOrders,
+                                                        ErpSaleOrderImportReqVO importReqVO) {
+        // 校验非空
+        if (CollUtil.isEmpty(importOrders)) {
+            throw new ServiceException(1_030_500_000, "导入销售订单数据不能为空！");
+        }
+
+        // 预加载所有关联数据，建立名称到ID的映射
+        Map<String, Long> customerNameMap = buildCustomerNameMap();
+        Map<String, Long> accountNameMap = buildAccountNameMap();
+        Map<String, Long> productNameMap = buildProductNameMap();
+        Map<String, Long> unitNameMap = buildUnitNameMap();
+        Map<String, Long> skuCodeMap = buildSkuCodeMap();
+        Map<String, Long> userNameMap = buildUserNameMap();
+
+        // 按订单号分组，处理多行数据合并
+        Map<String, List<ErpSaleOrderImportExcelVO>> orderMap = new LinkedHashMap<>();
+        String currentOrderNo = null;
+        for (ErpSaleOrderImportExcelVO row : importOrders) {
+            if (StrUtil.isNotBlank(row.getOrderNo())) {
+                currentOrderNo = row.getOrderNo();
+                orderMap.put(currentOrderNo, new LinkedList<>());
+            }
+            if (currentOrderNo != null) {
+                orderMap.get(currentOrderNo).add(row);
+            }
+        }
+
+        // 逐条处理
+        ErpSaleOrderImportRespVO respVO = ErpSaleOrderImportRespVO.builder()
+                .createOrderNos(new ArrayList<>())
+                .updateOrderNos(new ArrayList<>())
+                .failureOrderNos(new LinkedHashMap<>())
+                .build();
+
+        orderMap.forEach((orderNo, rows) -> {
+            try {
+                if (CollUtil.isEmpty(rows)) {
+                    respVO.getFailureOrderNos().put(orderNo, "订单数据为空");
+                    return;
+                }
+
+                // 第一行作为订单基本信息
+                ErpSaleOrderImportExcelVO firstRow = rows.get(0);
+                // 后续行作为订单项
+                List<ErpSaleOrderImportExcelVO> itemRows = rows.size() > 1 ? rows.subList(1, rows.size()) : Collections.emptyList();
+
+                // 验证数据
+                validateSaleOrderForImport(firstRow, itemRows, customerNameMap, accountNameMap, productNameMap, unitNameMap, skuCodeMap, userNameMap);
+
+                // 检查订单是否存在
+                ErpSaleOrderDO existOrder = saleOrderMapper.selectByNo(orderNo);
+                if (existOrder == null) {
+                    // 创建新订单
+                    ErpSaleOrderSaveReqVO createReqVO = convertToSaveReqVO(firstRow, itemRows, customerNameMap, accountNameMap, productNameMap, unitNameMap, skuCodeMap, userNameMap);
+                    createReqVO.setId(null); // 确保是新建
+                    // 手动设置订单号
+                    createSaleOrderWithNo(orderNo, createReqVO);
+                    respVO.getCreateOrderNos().add(orderNo);
+                } else {
+                    // 更新现有订单
+                    if (!importReqVO.getUpdateSupport()) {
+                        respVO.getFailureOrderNos().put(orderNo, "订单已存在，且未开启更新支持");
+                        return;
+                    }
+                    if (ErpAuditStatus.APPROVE.getStatus().equals(existOrder.getStatus())) {
+                        respVO.getFailureOrderNos().put(orderNo, "订单已审核，无法更新");
+                        return;
+                    }
+                    ErpSaleOrderSaveReqVO updateReqVO = convertToSaveReqVO(firstRow, itemRows, customerNameMap, accountNameMap, productNameMap, unitNameMap, skuCodeMap, userNameMap);
+                    updateReqVO.setId(existOrder.getId());
+                    updateSaleOrder(updateReqVO);
+                    respVO.getUpdateOrderNos().add(orderNo);
+                }
+            } catch (ServiceException ex) {
+                respVO.getFailureOrderNos().put(orderNo, ex.getMessage());
+            } catch (Exception ex) {
+                respVO.getFailureOrderNos().put(orderNo, "导入失败: " + ex.getMessage());
+            }
+        });
+
+        return respVO;
+    }
+
+    /**
+     * 建立客户名称到ID的映射
+     */
+    private Map<String, Long> buildCustomerNameMap() {
+        List<cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpCustomerDO> customers =
+                customerService.getCustomerListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return convertMap(customers,
+                cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpCustomerDO::getName,
+                cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpCustomerDO::getId);
+    }
+
+    /**
+     * 建立账户名称到ID的映射
+     */
+    private Map<String, Long> buildAccountNameMap() {
+        List<cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpAccountDO> accounts =
+                accountService.getAccountListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return convertMap(accounts,
+                cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpAccountDO::getName,
+                cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpAccountDO::getId);
+    }
+
+    /**
+     * 建立产品名称到ID的映射
+     */
+    private Map<String, Long> buildProductNameMap() {
+        List<ErpProductDO> products = productService.validProductList(
+                productService.getProductVOListByStatus(CommonStatusEnum.ENABLE.getStatus())
+                        .stream().map(cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductRespVO::getId)
+                        .collect(Collectors.toList()));
+        return convertMap(products, ErpProductDO::getName, ErpProductDO::getId);
+    }
+
+    /**
+     * 建立单位名称到ID的映射
+     */
+    private Map<String, Long> buildUnitNameMap() {
+        List<cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductUnitDO> units =
+                productUnitService.getProductUnitListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return convertMap(units,
+                cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductUnitDO::getName,
+                cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductUnitDO::getId);
+    }
+
+    /**
+     * 建立SKU编码到ID的映射
+     */
+    private Map<String, Long> buildSkuCodeMap() {
+        List<ProductSkuDO> skus = productSkuService.getProductSkuSimpleList();
+        return skus.stream()
+                .filter(sku -> StrUtil.isNotBlank(sku.getSkuCode()))
+                .collect(Collectors.toMap(
+                        ProductSkuDO::getSkuCode,
+                        ProductSkuDO::getId,
+                        (v1, v2) -> v1)); // 如果有重复编码，保留第一个
+    }
+
+    /**
+     * 建立用户名称到ID的映射
+     */
+    private Map<String, Long> buildUserNameMap() {
+        List<cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO> users =
+                adminUserService.getUserListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return convertMap(users,
+                cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO::getNickname,
+                cn.iocoder.yudao.module.system.dal.dataobject.user.AdminUserDO::getId);
+    }
+
+    /**
+     * 验证导入销售订单数据
+     */
+    private void validateSaleOrderForImport(ErpSaleOrderImportExcelVO orderRow,
+                                           List<ErpSaleOrderImportExcelVO> itemRows,
+                                           Map<String, Long> customerNameMap,
+                                           Map<String, Long> accountNameMap,
+                                           Map<String, Long> productNameMap,
+                                           Map<String, Long> unitNameMap,
+                                           Map<String, Long> skuCodeMap,
+                                           Map<String, Long> userNameMap) {
+        // 验证订单基本信息
+        if (StrUtil.isBlank(orderRow.getCustomerName())) {
+            throw new ServiceException(1_030_500_020, "客户名称不能为空");
+        }
+        if (!customerNameMap.containsKey(orderRow.getCustomerName())) {
+            throw new ServiceException(1_030_500_021, "客户不存在: " + orderRow.getCustomerName());
+        }
+        if (orderRow.getOrderTime() == null) {
+            throw new ServiceException(1_030_500_022, "订单时间不能为空");
+        }
+
+        // 验证账户（可选）
+        if (StrUtil.isNotBlank(orderRow.getAccountName()) &&
+                !accountNameMap.containsKey(orderRow.getAccountName())) {
+            throw new ServiceException(1_030_500_023, "结算账户不存在: " + orderRow.getAccountName());
+        }
+
+        // 验证销售人员（可选）
+        if (StrUtil.isNotBlank(orderRow.getSaleUserName()) &&
+                !userNameMap.containsKey(orderRow.getSaleUserName())) {
+            throw new ServiceException(1_030_500_024, "销售人员不存在: " + orderRow.getSaleUserName());
+        }
+
+        // 验证订单项
+        if (CollUtil.isEmpty(itemRows)) {
+            throw new ServiceException(1_030_500_025, "订单项不能为空");
+        }
+
+        for (ErpSaleOrderImportExcelVO itemRow : itemRows) {
+            if (StrUtil.isBlank(itemRow.getProductName())) {
+                throw new ServiceException(1_030_500_026, "产品名称不能为空");
+            }
+            if (!productNameMap.containsKey(itemRow.getProductName())) {
+                throw new ServiceException(1_030_500_027, "产品不存在: " + itemRow.getProductName());
+            }
+            if (StrUtil.isBlank(itemRow.getProductUnitName())) {
+                throw new ServiceException(1_030_500_028, "产品单位不能为空");
+            }
+            if (!unitNameMap.containsKey(itemRow.getProductUnitName())) {
+                throw new ServiceException(1_030_500_029, "产品单位不存在: " + itemRow.getProductUnitName());
+            }
+            if (itemRow.getCount() == null || itemRow.getCount().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ServiceException(1_030_500_030, "产品数量必须大于0");
+            }
+
+            // 验证SKU（如果产品有多个SKU，SKU编码必填）
+            if (StrUtil.isNotBlank(itemRow.getSkuCode())) {
+                if (!skuCodeMap.containsKey(itemRow.getSkuCode())) {
+                    throw new ServiceException(1_030_500_031, "SKU编码不存在: " + itemRow.getSkuCode());
+                }
+            }
+        }
+    }
+
+    /**
+     * 转换为保存请求VO
+     */
+    private ErpSaleOrderSaveReqVO convertToSaveReqVO(ErpSaleOrderImportExcelVO orderRow,
+                                                     List<ErpSaleOrderImportExcelVO> itemRows,
+                                                     Map<String, Long> customerNameMap,
+                                                     Map<String, Long> accountNameMap,
+                                                     Map<String, Long> productNameMap,
+                                                     Map<String, Long> unitNameMap,
+                                                     Map<String, Long> skuCodeMap,
+                                                     Map<String, Long> userNameMap) {
+        ErpSaleOrderSaveReqVO saveReqVO = new ErpSaleOrderSaveReqVO();
+        saveReqVO.setCustomerId(customerNameMap.get(orderRow.getCustomerName()));
+        saveReqVO.setOrderTime(orderRow.getOrderTime());
+        saveReqVO.setDiscountPercent(orderRow.getDiscountPercent());
+        saveReqVO.setDepositPrice(orderRow.getDepositPrice());
+        saveReqVO.setRemark(orderRow.getRemark());
+        saveReqVO.setPurchaseOrderNo(orderRow.getPurchaseOrderNo());
+        saveReqVO.setContractNo(orderRow.getContractNo());
+
+        // 处理结算账户
+        if (StrUtil.isNotBlank(orderRow.getAccountName())) {
+            saveReqVO.setAccountId(accountNameMap.get(orderRow.getAccountName()));
+        }
+
+        // 处理销售人员
+        if (StrUtil.isNotBlank(orderRow.getSaleUserName())) {
+            saveReqVO.setSaleUserId(userNameMap.get(orderRow.getSaleUserName()));
+        }
+
+        // 处理订单项
+        List<ErpSaleOrderSaveReqVO.Item> items = new ArrayList<>();
+        for (ErpSaleOrderImportExcelVO itemRow : itemRows) {
+            ErpSaleOrderSaveReqVO.Item item = new ErpSaleOrderSaveReqVO.Item();
+            item.setProductId(productNameMap.get(itemRow.getProductName()));
+            // 使用导入的单位名称查找单位ID
+            item.setProductUnitId(unitNameMap.get(itemRow.getProductUnitName()));
+            item.setProductPrice(itemRow.getProductPrice());
+            item.setCount(itemRow.getCount());
+            item.setTaxPercent(itemRow.getTaxPercent());
+            item.setRemark(itemRow.getItemRemark());
+
+            // 处理SKU
+            if (StrUtil.isNotBlank(itemRow.getSkuCode())) {
+                Long skuId = skuCodeMap.get(itemRow.getSkuCode());
+                if (skuId != null) {
+                    item.setSkuId(skuId);
+                }
+            }
+
+            items.add(item);
+        }
+        saveReqVO.setItems(items);
+
+        return saveReqVO;
+    }
+
+    /**
+     * 创建销售订单（指定订单号）
+     */
+    private Long createSaleOrderWithNo(String no, ErpSaleOrderSaveReqVO createReqVO) {
+        // 1.1 校验订单项的有效性
+        List<ErpSaleOrderItemDO> saleOrderItems = validateSaleOrderItems(createReqVO.getItems());
+        // 1.2 校验客户
+        customerService.validateCustomer(createReqVO.getCustomerId());
+        // 1.3 校验结算账户
+        if (createReqVO.getAccountId() != null) {
+            accountService.validateAccount(createReqVO.getAccountId());
+        }
+        // 1.4 校验销售人员
+        if (createReqVO.getSaleUserId() != null) {
+            adminUserApi.validateUser(createReqVO.getSaleUserId());
+        }
+        // 1.5 校验订单号唯一性
+        if (saleOrderMapper.selectByNo(no) != null) {
+            throw exception(SALE_ORDER_NO_EXISTS);
+        }
+
+        // 2.1 插入订单
+        ErpSaleOrderDO saleOrder = BeanUtils.toBean(createReqVO, ErpSaleOrderDO.class, in -> in
+                .setNo(no).setStatus(ErpAuditStatus.PROCESS.getStatus()));
+        calculateTotalPrice(saleOrder, saleOrderItems);
+        calculateCost(saleOrder, saleOrderItems);
+        saleOrderMapper.insert(saleOrder);
+        // 2.2 插入订单项
+        saleOrderItems.forEach(o -> o.setOrderId(saleOrder.getId()));
+        saleOrderItemMapper.insertBatch(saleOrderItems);
+        
+        // 2.3 自动创建财务记录
+        BigDecimal depositPrice = createReqVO.getDepositPrice();
+        if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
+            // 如果填写了定金，创建预收款记录
+            createPrereceiptFromSaleOrder(saleOrder, depositPrice);
+        }
+        
+        // 2.4 自动创建应收账款记录（总金额 - 定金）
+        financeReceivableService.createReceivableFromSaleOrder(saleOrder, depositPrice);
+        
+        // 2.5 更新资产负债表
+        if (saleOrder.getOrderTime() != null) {
+            financeBalanceSheetService.calculateBalanceSheet(saleOrder.getOrderTime().toLocalDate());
+        } else {
+            financeBalanceSheetService.calculateBalanceSheet(LocalDate.now());
+        }
+        
+        return saleOrder.getId();
+    }
+
+    /**
+     * 从销售订单创建预收款记录
+     *
+     * @param saleOrder 销售订单
+     * @param depositPrice 定金金额
+     */
+    private void createPrereceiptFromSaleOrder(ErpSaleOrderDO saleOrder, BigDecimal depositPrice) {
+        // 1. 生成预收款单据号
+        String no = noRedisDAO.generate(ErpNoRedisDAO.FINANCE_PRERECEIPT_NO_PREFIX);
+        
+        // 2. 设置预收日期（使用订单日期）
+        LocalDate prereceiptDate = saleOrder.getOrderTime() != null
+            ? saleOrder.getOrderTime().toLocalDate()
+            : LocalDate.now();
+        
+        // 3. 创建预收款记录
+        ErpFinancePrereceiptSaveReqVO prereceiptReqVO = new ErpFinancePrereceiptSaveReqVO();
+        prereceiptReqVO.setNo(no);
+        prereceiptReqVO.setCustomerId(saleOrder.getCustomerId());
+        prereceiptReqVO.setOrderId(saleOrder.getId());
+        prereceiptReqVO.setAmount(depositPrice);
+        prereceiptReqVO.setUsedAmount(BigDecimal.ZERO);
+        prereceiptReqVO.setBalance(depositPrice);
+        prereceiptReqVO.setPrereceiptDate(prereceiptDate);
+        prereceiptReqVO.setStatus(ErpAuditStatus.PROCESS.getStatus());
+        prereceiptReqVO.setRemark("自动生成自销售订单：" + saleOrder.getNo() + "（定金）");
+        
+        financePrereceiptService.createFinancePrereceipt(prereceiptReqVO);
     }
 
 }

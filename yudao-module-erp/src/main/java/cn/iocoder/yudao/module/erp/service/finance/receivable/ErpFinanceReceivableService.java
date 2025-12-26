@@ -71,6 +71,14 @@ public interface ErpFinanceReceivableService {
     void createReceivableFromSaleOrder(ErpSaleOrderDO saleOrder);
 
     /**
+     * 从销售订单创建应收账款（考虑定金）
+     *
+     * @param saleOrder 销售订单
+     * @param depositPrice 定金金额（如果为null或0，则使用总金额）
+     */
+    void createReceivableFromSaleOrder(ErpSaleOrderDO saleOrder, BigDecimal depositPrice);
+
+    /**
      * 根据订单ID删除应收账款
      *
      * @param orderId 订单ID

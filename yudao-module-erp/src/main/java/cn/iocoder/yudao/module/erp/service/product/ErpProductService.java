@@ -1,6 +1,9 @@
 package cn.iocoder.yudao.module.erp.service.product;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportExcelVO;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportReqVO;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductPageReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ProductSaveReqVO;
@@ -107,5 +110,15 @@ public interface ErpProductService {
      * @return 产品数量
      */
     Long getProductCountByUnitId(Long unitId);
+
+    /**
+     * 导入产品列表
+     *
+     * @param importProducts 导入产品列表
+     * @param importReqVO 导入请求
+     * @return 导入结果
+     */
+    ErpProductImportRespVO importProductList(List<ErpProductImportExcelVO> importProducts,
+                                             ErpProductImportReqVO importReqVO);
 
 }

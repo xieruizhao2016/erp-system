@@ -59,4 +59,13 @@ public interface ErpFinancePrereceiptService {
      */
     PageResult<ErpFinancePrereceiptDO> getFinancePrereceiptPage(ErpFinancePrereceiptPageReqVO pageReqVO);
 
+    // ==================== 业务方法 ====================
+
+    /**
+     * 根据订单ID删除预收款
+     *
+     * @param orderId 订单ID
+     */
+    void deletePrereceiptByOrderId(Long orderId);
+
 }

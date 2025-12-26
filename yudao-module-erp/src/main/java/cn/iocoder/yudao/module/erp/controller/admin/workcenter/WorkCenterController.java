@@ -96,6 +96,14 @@ public class WorkCenterController {
         return success(BeanUtils.toBean(list, WorkCenterRespVO.class));
     }
 
+    @GetMapping("/generate-no")
+    @Operation(summary = "生成工作中心编号")
+    @PreAuthorize("@ss.hasPermission('erp:work-center:create')")
+    public CommonResult<String> generateWorkCenterNo() {
+        String workCenterNo = workCenterService.generateWorkCenterNo();
+        return success(workCenterNo);
+    }
+
     @GetMapping("/export-excel")
     @Operation(summary = "导出ERP 工作中心 Excel")
     @PreAuthorize("@ss.hasPermission('erp:work-center:export')")

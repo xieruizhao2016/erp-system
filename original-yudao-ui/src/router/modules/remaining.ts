@@ -746,6 +746,52 @@ const remainingRouter: AppRouteRecordRaw[] = [
         component: () => import('@/views/iot/ota/firmware/detail/index.vue')
       }
     ]
+  },
+  {
+    path: '/erp',
+    component: Layout,
+    name: 'ERP',
+    meta: {
+      hidden: true
+    },
+    children: [
+      {
+        path: 'product/import',
+        name: 'ErpProductImport',
+        component: () => import('@/views/erp/product/product/ProductImport.vue'),
+        meta: {
+          title: '产品导入',
+          noCache: true,
+          hidden: true,
+          canTo: true,
+          activeMenu: '/erp/product'
+        }
+      },
+      {
+        path: 'purchase-order/import',
+        name: 'ErpPurchaseOrderImport',
+        component: () => import('@/views/erp/purchase/order/PurchaseOrderImport.vue'),
+        meta: {
+          title: '采购订单导入',
+          noCache: true,
+          hidden: true,
+          canTo: true,
+          activeMenu: '/erp/purchase-order'
+        }
+      },
+      {
+        path: 'sale-order/import',
+        name: 'ErpSaleOrderImport',
+        component: () => import('@/views/erp/sale/order/SaleOrderImport.vue'),
+        meta: {
+          title: '销售订单导入',
+          noCache: true,
+          hidden: true,
+          canTo: true,
+          activeMenu: '/erp/sale-order'
+        }
+      }
+    ]
   }
 ]
 

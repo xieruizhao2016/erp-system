@@ -11,6 +11,7 @@ export interface StockRecordVO {
   bizId: number // 业务编号
   bizItemId: number // 业务项编号
   bizNo: string // 业务单号
+  relatedPersonName?: string // 关系人名称（供应商/客户/员工）
 }
 
 // ERP 产品库存明细 API

@@ -305,8 +305,22 @@
           {{ getEquipmentName(scope.row.equipmentId) }}
         </template>
       </el-table-column>
-      <el-table-column label="实际工时" align="center" prop="workTime" />
-      <el-table-column label="停机时间" align="center" prop="downtime" />
+      <el-table-column label="实际工时" align="center" prop="workTime" width="120">
+        <template #default="scope">
+          <span v-if="scope.row.workTime !== null && scope.row.workTime !== undefined">
+            {{ formatMinutes(scope.row.workTime) }}
+          </span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="停机时间" align="center" prop="downtime" width="120">
+        <template #default="scope">
+          <span v-if="scope.row.downtime !== null && scope.row.downtime !== undefined">
+            {{ formatMinutes(scope.row.downtime) }}
+          </span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column label="质检状态" align="center" prop="qualityStatus">
         <template #default="scope">
           <dict-tag :type="DICT_TYPE.ERP_QUALITY_STATUS" :value="scope.row.qualityStatus" />
@@ -560,6 +574,25 @@ const getUserName = (id?: number) => {
   if (!id) return '-'
   const user = userList.value.find(item => item.id === id)
   return user?.nickname || `用户${id}`
+}
+
+/** 格式化分钟显示：超过60分钟显示为小时格式 */
+const formatMinutes = (minutes?: number | null) => {
+  if (minutes === null || minutes === undefined || minutes === 0) return '0分钟'
+  
+  // 如果超过60分钟，转换为小时和分钟
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    if (mins > 0) {
+      return `${hours}小时${mins}分钟`
+    } else {
+      return `${hours}小时`
+    }
+  }
+  
+  // 小于60分钟，直接显示分钟
+  return `${minutes}分钟`
 }
 
 /** 初始化 **/

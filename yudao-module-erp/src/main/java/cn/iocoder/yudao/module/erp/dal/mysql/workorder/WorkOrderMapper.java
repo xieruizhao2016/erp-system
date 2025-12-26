@@ -44,4 +44,14 @@ public interface WorkOrderMapper extends BaseMapperX<WorkOrderDO> {
         return selectOne(WorkOrderDO::getWorkOrderNo, workOrderNo);
     }
 
+    /**
+     * 根据生产订单ID查询工单
+     *
+     * @param productionOrderId 生产订单ID
+     * @return 工单
+     */
+    default WorkOrderDO selectByProductionOrderId(Long productionOrderId) {
+        return selectOne(WorkOrderDO::getProductionOrderId, productionOrderId);
+    }
+
 }

@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.erp.dal.dataobject.finance;
 
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import com.baomidou.mybatisplus.annotation.KeySequence;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
@@ -54,7 +55,9 @@ public class ErpAccountDO extends BaseDO {
     private Boolean defaultStatus;
     /**
      * 账户余额，单位：元
+     * 注意：如果数据库表中没有此字段，请使用 @TableField(exist = false) 注解
      */
+    @TableField(exist = false)
     private java.math.BigDecimal balance;
 
 }

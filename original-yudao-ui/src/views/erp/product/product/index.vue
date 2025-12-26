@@ -50,6 +50,22 @@
         >
           <Icon icon="ep:download" class="mr-5px" /> 导出
         </el-button>
+        <el-button
+          type="info"
+          plain
+          @click="goToImport"
+          v-hasPermi="['erp:product:import']"
+        >
+          <Icon icon="ep:plus" class="mr-5px" /> 批量创建
+        </el-button>
+        <el-button
+          type="warning"
+          plain
+          @click="goToImport"
+          v-hasPermi="['erp:product:import']"
+        >
+          <Icon icon="ep:upload" class="mr-5px" /> 导入
+        </el-button>
       </el-form-item>
     </el-form>
   </ContentWrap>
@@ -160,6 +176,7 @@ defineOptions({ name: 'ErpProduct' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化
+const router = useRouter() // 路由
 
 const loading = ref(true) // 列表的加载中
 const list = ref<ProductVO[]>([]) // 列表的数据
@@ -203,6 +220,11 @@ const resetQuery = () => {
 const formRef = ref()
 const openForm = (type: string, id?: number) => {
   formRef.value.open(type, id)
+}
+
+/** 导入操作 */
+const goToImport = () => {
+  router.push({ path: '/erp/product/import' })
 }
 
 /** 删除按钮操作 */

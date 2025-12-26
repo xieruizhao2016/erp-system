@@ -12,8 +12,7 @@ public class WorkCenterSaveReqVO {
     @Schema(description = "编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     private Long id;
 
-    @Schema(description = "工作中心编号", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty(message = "工作中心编号不能为空")
+    @Schema(description = "工作中心编号（不填则自动生成）")
     private String workCenterNo;
 
     @Schema(description = "工作中心名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "加工中心")

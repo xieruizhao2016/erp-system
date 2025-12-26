@@ -91,10 +91,10 @@
           class="!w-240px"
         >
           <el-option
-            v-for="item in processRouteItemList"
+            v-for="item in processList"
             :key="item.id"
-            :label="item.operationName || `工序${item.id}`"
-            :value="item.processId"
+            :label="item.processName || item.processNo || `工序${item.id}`"
+            :value="item.id"
           />
         </el-select>
       </el-form-item>
@@ -182,9 +182,9 @@
       <el-table-column label="是否替代料" align="center" prop="isAlternative" />
       <el-table-column label="替代料组" align="center" prop="alternativeGroup" />
       <el-table-column label="位号" align="center" prop="position" />
-      <el-table-column label="工序名称" align="center" min-width="120">
+      <el-table-column label="工序名称" align="center" min-width="120" prop="processName">
         <template #default="scope">
-          {{ getProcessName(scope.row.processId) }}
+          {{ scope.row.processName || '-' }}
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
@@ -239,7 +239,7 @@ import ProductBomItemForm from './ProductBomItemForm.vue'
 import { ProductBomApi, ProductBom } from '@/api/erp/productbom'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
 import { ProductUnitApi, ProductUnit } from '@/api/erp/product/unit'
-import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import { ProcessApi, Process } from '@/api/erp/process'
 
 /** ERP BOM明细 列表 */
 defineOptions({ name: 'ProductBomItem' })
@@ -271,7 +271,7 @@ const exportLoading = ref(false) // 导出的加载中
 const productBomList = ref<ProductBom[]>([]) // BOM列表
 const productList = ref<ProductVO[]>([]) // 产品列表
 const productUnitList = ref<ProductUnit[]>([]) // 产品单位列表
-const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
+const processList = ref<Process[]>([]) // 工序列表（仅用于搜索条件）
 
 /** 查询列表 */
 const getList = async () => {
@@ -369,28 +369,23 @@ const getProductUnitName = (id?: number) => {
   return unit?.name || `单位${id}`
 }
 
-/** 获取工序名称 */
-const getProcessName = (id?: number) => {
-  if (!id) return '-'
-  const process = processRouteItemList.value.find(item => item.processId === id)
-  return process?.operationName || `工序${id}`
-}
+// 已移除 getProcessName 函数，直接使用 processName 字段（冗余字段）
 
 /** 初始化 **/
 onMounted(async () => {
   await getList()
-  // 加载BOM、产品、单位、工艺路线明细列表
+  // 加载BOM、产品、单位、工序列表（工序列表仅用于搜索条件）
   try {
-    const [bomData, products, unitData, processRouteItemData] = await Promise.all([
+    const [bomData, products, unitData, processes] = await Promise.all([
       ProductBomApi.getProductBomPage({ pageNo: 1, pageSize: 100 }),
       ProductApi.getProductSimpleList(),
       ProductUnitApi.getProductUnitPage({ pageNo: 1, pageSize: 100 }),
-      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 })
+      ProcessApi.getProcessList()
     ])
     productBomList.value = bomData.list || []
     productList.value = products || []
     productUnitList.value = unitData.list || []
-    processRouteItemList.value = processRouteItemData.list || []
+    processList.value = processes || []
   } catch (error) {
     console.error('加载列表数据失败:', error)
   }

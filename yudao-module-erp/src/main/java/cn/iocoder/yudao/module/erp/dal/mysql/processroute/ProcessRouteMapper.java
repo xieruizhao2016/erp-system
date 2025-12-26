@@ -35,4 +35,18 @@ public interface ProcessRouteMapper extends BaseMapperX<ProcessRouteDO> {
         return selectOne(ProcessRouteDO::getRouteNo, routeNo);
     }
 
+    /**
+     * 根据产品ID查询生效的工艺路线（状态为2-生效）
+     *
+     * @param productId 产品ID
+     * @return 工艺路线
+     */
+    default ProcessRouteDO selectActiveByProductId(Long productId) {
+        return selectOne(new LambdaQueryWrapperX<ProcessRouteDO>()
+                .eq(ProcessRouteDO::getProductId, productId)
+                .eq(ProcessRouteDO::getStatus, 2) // 2-生效
+                .orderByDesc(ProcessRouteDO::getId)
+                .last("LIMIT 1"));
+    }
+
 }

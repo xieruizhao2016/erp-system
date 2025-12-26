@@ -46,6 +46,7 @@
           filterable
           placeholder="请选择产品"
           class="!w-1/1"
+          @change="handleProductChange"
         >
           <el-option
             v-for="item in filteredProductList"
@@ -65,7 +66,20 @@
         <el-input v-model="formData.qualifiedQuantity" placeholder="请输入合格数量" />
       </el-form-item>
       <el-form-item label="工作中心" prop="workCenterId">
-        <el-input v-model="formData.workCenterId" placeholder="请输入工作中心" />
+        <el-select
+          v-model="formData.workCenterId"
+          clearable
+          filterable
+          placeholder="请选择工作中心"
+          class="!w-1/1"
+        >
+          <el-option
+            v-for="item in workCenterList"
+            :key="item.id"
+            :label="item.workCenterName || item.workCenterNo"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="主管" prop="supervisorId">
         <el-select
@@ -135,6 +149,8 @@ import { ProductCategoryApi, ProductCategoryVO } from '@/api/erp/product/categor
 import { defaultProps, handleTree } from '@/utils/tree'
 import * as UserApi from '@/api/system/user'
 import { UserVO } from '@/api/system/user'
+import { WorkCenterApi, WorkCenter } from '@/api/erp/workcenter'
+import { ProcessRouteApi, ProcessRoute } from '@/api/erp/processroute'
 
 /** ERP 工单主 表单 */
 defineOptions({ name: 'WorkOrderForm' })
@@ -180,6 +196,7 @@ const productList = ref<ProductVO[]>([]) // 产品列表（全部）
 const selectedCategoryId = ref<number | undefined>(undefined) // 选中的分类ID
 const productCategoryTree = ref<any[]>([]) // 产品分类树
 const userList = ref<UserVO[]>([]) // 用户列表
+const workCenterList = ref<WorkCenter[]>([]) // 工作中心列表
 
 /** 生产订单关联的产品ID列表 */
 const productionOrderProductIds = ref<number[]>([])
@@ -223,14 +240,18 @@ const handleProductionOrderChange = async (productionOrderId: number | undefined
       
       productionOrderProductIds.value = productIds
       
-      // 如果只有一个产品，自动选中
+      // 如果只有一个产品，自动选中并触发产品变更（自动填充工作中心）
       if (productIds.length === 1) {
         formData.value.productId = productIds[0]
+        // 触发产品变更，自动填充工作中心
+        await handleProductChange(productIds[0])
       }
     } else if (orderDetail.productId) {
       // 兼容旧数据：如果订单有productId字段，也加入过滤列表
       productionOrderProductIds.value = [orderDetail.productId]
       formData.value.productId = orderDetail.productId
+      // 触发产品变更，自动填充工作中心
+      await handleProductChange(orderDetail.productId)
     }
   } catch (error) {
     console.error('获取生产订单详情失败:', error)
@@ -249,6 +270,53 @@ const handleCategoryChange = (categoryId: number | undefined) => {
   }
 }
 
+/** 处理产品变更 - 自动填充工作中心 */
+const handleProductChange = async (productId: number | undefined) => {
+  // 如果是修改模式，不自动填充（避免覆盖已有数据）
+  if (formType.value === 'update') {
+    return
+  }
+  
+  // 如果清空了产品，清空工作中心
+  if (!productId) {
+    formData.value.workCenterId = undefined
+    return
+  }
+  
+  try {
+    // 根据产品ID查询生效的工艺路线（status=2）
+    const routePageResult = await ProcessRouteApi.getProcessRoutePage({
+      productId: productId,
+      status: 2, // 2-生效
+      pageNo: 1,
+      pageSize: 1
+    })
+    
+    // 如果找到工艺路线，获取第一个工序的工作中心
+    if (routePageResult.list && routePageResult.list.length > 0) {
+      const processRoute = routePageResult.list[0]
+      
+      // 获取工艺路线详情（包含明细）
+      const routeDetail = await ProcessRouteApi.getProcessRoute(processRoute.id)
+      
+      // 如果工艺路线有明细，获取第一个工序的工作中心
+      if (routeDetail.items && routeDetail.items.length > 0) {
+        // 按序号排序，获取第一个工序
+        const sortedItems = [...routeDetail.items].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
+        const firstItem = sortedItems[0]
+        
+        if (firstItem.workCenterId) {
+          formData.value.workCenterId = firstItem.workCenterId
+          message.success('已自动填充工作中心')
+        }
+      }
+    }
+  } catch (error) {
+    console.error('查询工艺路线失败:', error)
+    // 查询失败不影响其他操作，静默处理
+  }
+}
+
 /** 加载产品分类树 */
 const loadProductCategoryTree = async () => {
   try {
@@ -264,14 +332,16 @@ const loadProductCategoryTree = async () => {
 /** 加载列表数据 */
 const loadListData = async () => {
   try {
-    const [productionOrderData, products, users] = await Promise.all([
+    const [productionOrderData, products, users, workCenters] = await Promise.all([
       ProductionOrderApi.getProductionOrderPage({ pageNo: 1, pageSize: 100 }),
       ProductApi.getProductSimpleList(),
-      UserApi.getSimpleUserList()
+      UserApi.getSimpleUserList(),
+      WorkCenterApi.getWorkCenterList()
     ])
     productionOrderList.value = productionOrderData.list || []
     productList.value = products || []
     userList.value = users || []
+    workCenterList.value = workCenters || []
     // 加载产品分类树
     await loadProductCategoryTree()
   } catch (error) {

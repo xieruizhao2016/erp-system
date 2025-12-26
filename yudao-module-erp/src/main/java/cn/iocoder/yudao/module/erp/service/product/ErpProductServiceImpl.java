@@ -1,10 +1,15 @@
 package cn.iocoder.yudao.module.erp.service.product;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportExcelVO;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportReqVO;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductPageReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ProductSaveReqVO;
@@ -22,14 +27,18 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.filterList;
 import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.PRODUCT_NOT_ENABLE;
 import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.PRODUCT_NOT_EXISTS;
 
@@ -381,6 +390,232 @@ public class ErpProductServiceImpl implements ErpProductService {
                 log.info("updateProductSkuRelations: 所有SKU关联都已存在，无需插入, productId={}", productId);
             }
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ErpProductImportRespVO importProductList(List<ErpProductImportExcelVO> importProducts,
+                                                   ErpProductImportReqVO importReqVO) {
+        // 校验非空
+        importProducts = filterList(importProducts, item -> Objects.nonNull(item.getName()) && StrUtil.isNotBlank(item.getName()));
+        if (CollUtil.isEmpty(importProducts)) {
+            throw new ServiceException(1_030_500_000, "导入产品数据不能为空！");
+        }
+
+        // 预加载所有关联数据，建立名称到ID的映射
+        Map<String, Long> categoryNameMap = buildCategoryNameMap();
+        Map<String, Long> unitNameMap = buildUnitNameMap();
+        Map<String, Long> packageNameMap = buildPackageNameMap();
+        Map<String, Long> oemNameMap = buildOemNameMap();
+        Map<String, Long> skuCodeMap = buildSkuCodeMap();
+
+        // 逐条处理
+        ErpProductImportRespVO respVO = ErpProductImportRespVO.builder()
+                .createProductNames(new ArrayList<>())
+                .updateProductNames(new ArrayList<>())
+                .failureProductNames(new LinkedHashMap<>())
+                .build();
+
+        importProducts.forEach(importProduct -> {
+            try {
+                // 验证数据
+                validateProductForImport(importProduct, categoryNameMap, unitNameMap, packageNameMap, oemNameMap);
+            } catch (ServiceException ex) {
+                respVO.getFailureProductNames().put(importProduct.getName(), ex.getMessage());
+                return;
+            }
+
+            // 检查产品是否存在（通过条码或名称）
+            ErpProductDO existProduct = null;
+            if (StrUtil.isNotBlank(importProduct.getBarCode())) {
+                existProduct = productMapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ErpProductDO>()
+                                .eq(ErpProductDO::getBarCode, importProduct.getBarCode())
+                                .last("LIMIT 1"));
+            }
+            if (existProduct == null) {
+                existProduct = productMapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ErpProductDO>()
+                                .eq(ErpProductDO::getName, importProduct.getName())
+                                .last("LIMIT 1"));
+            }
+
+            if (existProduct == null) {
+                // 创建新产品
+                ProductSaveReqVO createReqVO = convertToSaveReqVO(importProduct, categoryNameMap, unitNameMap,
+                        packageNameMap, oemNameMap, skuCodeMap);
+                Long productId = createProduct(createReqVO);
+                respVO.getCreateProductNames().add(importProduct.getName());
+                log.info("导入产品成功（创建）: productId={}, name={}", productId, importProduct.getName());
+            } else {
+                // 更新现有产品
+                if (!importReqVO.getUpdateSupport()) {
+                    respVO.getFailureProductNames().put(importProduct.getName(),
+                            "产品已存在，且未开启更新支持");
+                    return;
+                }
+                ProductSaveReqVO updateReqVO = convertToSaveReqVO(importProduct, categoryNameMap, unitNameMap,
+                        packageNameMap, oemNameMap, skuCodeMap);
+                updateReqVO.setId(existProduct.getId());
+                updateProduct(updateReqVO);
+                respVO.getUpdateProductNames().add(importProduct.getName());
+                log.info("导入产品成功（更新）: productId={}, name={}", existProduct.getId(), importProduct.getName());
+            }
+        });
+
+        return respVO;
+    }
+
+    /**
+     * 建立分类名称到ID的映射
+     */
+    private Map<String, Long> buildCategoryNameMap() {
+        List<ErpProductCategoryDO> categories = productCategoryService.getProductCategoryList(
+                new cn.iocoder.yudao.module.erp.controller.admin.product.vo.category.ErpProductCategoryListReqVO());
+        return convertMap(categories, ErpProductCategoryDO::getName, ErpProductCategoryDO::getId);
+    }
+
+    /**
+     * 建立单位名称到ID的映射
+     */
+    private Map<String, Long> buildUnitNameMap() {
+        List<ErpProductUnitDO> units = productUnitService.getProductUnitListByStatus(CommonStatusEnum.ENABLE.getStatus());
+        return convertMap(units, ErpProductUnitDO::getName, ErpProductUnitDO::getId);
+    }
+
+    /**
+     * 建立包装名称到ID的映射
+     */
+    private Map<String, Long> buildPackageNameMap() {
+        List<cn.iocoder.yudao.module.erp.dal.dataobject.productpackage.ProductPackageDO> packages =
+                productPackageService.getProductPackageSimpleList();
+        return convertMap(packages,
+                cn.iocoder.yudao.module.erp.dal.dataobject.productpackage.ProductPackageDO::getPackageName,
+                cn.iocoder.yudao.module.erp.dal.dataobject.productpackage.ProductPackageDO::getId);
+    }
+
+    /**
+     * 建立OEM名称到ID的映射
+     */
+    private Map<String, Long> buildOemNameMap() {
+        List<cn.iocoder.yudao.module.erp.dal.dataobject.productoem.ProductOemDO> oems =
+                productOemService.getProductOemSimpleList();
+        return convertMap(oems,
+                cn.iocoder.yudao.module.erp.dal.dataobject.productoem.ProductOemDO::getOemName,
+                cn.iocoder.yudao.module.erp.dal.dataobject.productoem.ProductOemDO::getId);
+    }
+
+    /**
+     * 建立SKU编码到ID的映射
+     */
+    private Map<String, Long> buildSkuCodeMap() {
+        List<cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO> skus =
+                productSkuService.getProductSkuSimpleList();
+        return skus.stream()
+                .filter(sku -> StrUtil.isNotBlank(sku.getSkuCode()))
+                .collect(Collectors.toMap(
+                        cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO::getSkuCode,
+                        cn.iocoder.yudao.module.erp.dal.dataobject.productsku.ProductSkuDO::getId,
+                        (v1, v2) -> v1)); // 如果有重复编码，保留第一个
+    }
+
+    /**
+     * 验证导入产品数据
+     */
+    private void validateProductForImport(ErpProductImportExcelVO importProduct,
+                                         Map<String, Long> categoryNameMap,
+                                         Map<String, Long> unitNameMap,
+                                         Map<String, Long> packageNameMap,
+                                         Map<String, Long> oemNameMap) {
+        // 验证必填字段
+        if (StrUtil.isBlank(importProduct.getName())) {
+            throw new ServiceException(1_030_500_001, "产品名称不能为空");
+        }
+        if (StrUtil.isBlank(importProduct.getBarCode())) {
+            throw new ServiceException(1_030_500_002, "产品条码不能为空");
+        }
+        if (StrUtil.isBlank(importProduct.getCategoryName())) {
+            throw new ServiceException(1_030_500_003, "产品分类名称不能为空");
+        }
+        if (StrUtil.isBlank(importProduct.getUnitName())) {
+            throw new ServiceException(1_030_500_004, "单位名称不能为空");
+        }
+
+        // 验证分类是否存在
+        if (!categoryNameMap.containsKey(importProduct.getCategoryName())) {
+            throw new ServiceException(1_030_500_005, "产品分类不存在: " + importProduct.getCategoryName());
+        }
+
+        // 验证单位是否存在
+        if (!unitNameMap.containsKey(importProduct.getUnitName())) {
+            throw new ServiceException(1_030_500_006, "单位不存在: " + importProduct.getUnitName());
+        }
+
+        // 验证包装（可选）
+        if (StrUtil.isNotBlank(importProduct.getPackageName()) &&
+                !packageNameMap.containsKey(importProduct.getPackageName())) {
+            throw new ServiceException(1_030_500_007, "包装不存在: " + importProduct.getPackageName());
+        }
+
+        // 验证OEM（可选）
+        if (StrUtil.isNotBlank(importProduct.getOemName()) &&
+                !oemNameMap.containsKey(importProduct.getOemName())) {
+            throw new ServiceException(1_030_500_008, "OEM不存在: " + importProduct.getOemName());
+        }
+    }
+
+    /**
+     * 转换为保存请求VO
+     */
+    private ProductSaveReqVO convertToSaveReqVO(ErpProductImportExcelVO importProduct,
+                                                Map<String, Long> categoryNameMap,
+                                                Map<String, Long> unitNameMap,
+                                                Map<String, Long> packageNameMap,
+                                                Map<String, Long> oemNameMap,
+                                                Map<String, Long> skuCodeMap) {
+        ProductSaveReqVO saveReqVO = new ProductSaveReqVO();
+        saveReqVO.setName(importProduct.getName());
+        saveReqVO.setBarCode(importProduct.getBarCode());
+        saveReqVO.setCategoryId(categoryNameMap.get(importProduct.getCategoryName()));
+        saveReqVO.setUnitId(unitNameMap.get(importProduct.getUnitName()));
+        saveReqVO.setStatus(importProduct.getStatus() != null ? importProduct.getStatus() : CommonStatusEnum.ENABLE.getStatus());
+        saveReqVO.setStandard(importProduct.getStandard());
+        saveReqVO.setRemark(importProduct.getRemark());
+        saveReqVO.setExpiryDay(importProduct.getExpiryDay());
+        saveReqVO.setWeight(importProduct.getWeight());
+        saveReqVO.setPurchasePrice(importProduct.getPurchasePrice());
+        saveReqVO.setSalePrice(importProduct.getSalePrice());
+        saveReqVO.setMinPrice(importProduct.getMinPrice());
+
+        // 处理包装
+        if (StrUtil.isNotBlank(importProduct.getPackageName())) {
+            saveReqVO.setPackageId(packageNameMap.get(importProduct.getPackageName()));
+        }
+
+        // 处理OEM
+        if (StrUtil.isNotBlank(importProduct.getOemName())) {
+            saveReqVO.setOemId(oemNameMap.get(importProduct.getOemName()));
+        }
+
+        // 处理SKU编码列表
+        if (StrUtil.isNotBlank(importProduct.getSkuCodes())) {
+            List<Long> skuIds = new ArrayList<>();
+            String[] skuCodeArray = importProduct.getSkuCodes().split("[;；,，]");
+            for (String skuCode : skuCodeArray) {
+                skuCode = skuCode.trim();
+                if (StrUtil.isNotBlank(skuCode)) {
+                    Long skuId = skuCodeMap.get(skuCode);
+                    if (skuId != null) {
+                        skuIds.add(skuId);
+                    } else {
+                        log.warn("导入产品时，SKU编码不存在: skuCode={}, productName={}", skuCode, importProduct.getName());
+                    }
+                }
+            }
+            saveReqVO.setSkuIds(skuIds);
+        }
+
+        return saveReqVO;
     }
 
 }

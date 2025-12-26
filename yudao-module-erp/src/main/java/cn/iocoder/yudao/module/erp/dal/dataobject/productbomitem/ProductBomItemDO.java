@@ -88,6 +88,10 @@ public class ProductBomItemDO extends BaseDO {
      */
     private Long processId;
     /**
+     * 工序名称（冗余字段，用于列表显示，避免关联查询）
+     */
+    private String processName;
+    /**
      * 备注
      */
     private String remark;

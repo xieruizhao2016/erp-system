@@ -64,17 +64,21 @@
       <el-form-item label="实际开始时间" prop="actualStartTime">
         <el-date-picker
           v-model="formData.actualStartTime"
-          type="date"
+          type="datetime"
           value-format="x"
-          placeholder="选择实际开始时间"
+          placeholder="系统自动记录（状态变更为进行中时）"
+          :disabled="true"
+          class="!w-1/1"
         />
       </el-form-item>
       <el-form-item label="实际结束时间" prop="actualEndTime">
         <el-date-picker
           v-model="formData.actualEndTime"
-          type="date"
+          type="datetime"
           value-format="x"
-          placeholder="选择实际结束时间"
+          placeholder="系统自动记录（状态变更为已完成时）"
+          :disabled="true"
+          class="!w-1/1"
         />
       </el-form-item>
       <el-form-item label="计划数量" prop="plannedQuantity">
@@ -136,7 +140,13 @@
         </el-select>
       </el-form-item>
       <el-form-item label="实际工时" prop="workTime">
-        <el-input-number v-model="formData.workTime" placeholder="请输入实际工时（分钟）" :min="0" class="!w-1/1" />
+        <el-input-number 
+          v-model="formData.workTime" 
+          placeholder="系统自动计算（分钟）" 
+          :min="0" 
+          :disabled="true"
+          class="!w-1/1" 
+        />
       </el-form-item>
       <el-form-item label="停机时间" prop="downtime">
         <el-input-number v-model="formData.downtime" placeholder="请输入停机时间（分钟）" :min="0" class="!w-1/1" />
@@ -264,7 +274,15 @@ const submitForm = async () => {
   // 提交请求
   formLoading.value = true
   try {
-    const data = formData.value as unknown as WorkOrderProgress
+    const data = { ...formData.value } as unknown as WorkOrderProgress
+    // 实际开始时间、实际结束时间、实际工时由系统自动记录，不从前端提交
+    // 这些字段会在后端根据状态变更自动设置
+    if (formType.value === 'update') {
+      // 更新时，清除这些字段，让后端根据状态变更自动设置
+      delete (data as any).actualStartTime
+      delete (data as any).actualEndTime
+      delete (data as any).workTime
+    }
     if (formType.value === 'create') {
       await WorkOrderProgressApi.createWorkOrderProgress(data)
       message.success(t('common.createSuccess'))

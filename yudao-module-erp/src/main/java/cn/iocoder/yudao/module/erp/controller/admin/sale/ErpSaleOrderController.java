@@ -10,6 +10,9 @@ import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductRespVO;
+import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderImportExcelVO;
+import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderImportReqVO;
+import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderImportRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderPageReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.sale.vo.order.ErpSaleOrderSaveReqVO;
@@ -31,11 +34,15 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -179,6 +186,63 @@ public class ErpSaleOrderController {
         List<ErpSaleOrderRespVO> list = buildSaleOrderVOPageResult(saleOrderService.getSaleOrderPage(pageReqVO)).getList();
         // 导出 Excel
         ExcelUtils.write(response, "销售订单.xls", "数据", ErpSaleOrderRespVO.class, list);
+    }
+
+    @GetMapping("/get-import-template")
+    @Operation(summary = "获得导入销售订单模板")
+    public void importTemplate(HttpServletResponse response) throws IOException {
+        // 手动创建导出 demo
+        List<ErpSaleOrderImportExcelVO> list = Arrays.asList(
+                ErpSaleOrderImportExcelVO.builder()
+                        .orderNo("SO202501010001")
+                        .customerName("示例客户")
+                        .orderTime(LocalDateTime.now())
+                        .saleUserName("")
+                        .accountName("")
+                        .discountPercent(BigDecimal.ZERO)
+                        .depositPrice(BigDecimal.ZERO)
+                        .purchaseOrderNo("")
+                        .contractNo("")
+                        .remark("示例备注")
+                        .productName("示例产品1")
+                        .skuCode("")
+                        .productUnitName("个")
+                        .count(BigDecimal.valueOf(10))
+                        .productPrice(BigDecimal.valueOf(100.00))
+                        .taxPercent(BigDecimal.valueOf(13))
+                        .itemRemark("")
+                        .build(),
+                ErpSaleOrderImportExcelVO.builder()
+                        .orderNo("")
+                        .customerName("")
+                        .orderTime(null)
+                        .saleUserName("")
+                        .accountName("")
+                        .discountPercent(null)
+                        .depositPrice(null)
+                        .purchaseOrderNo("")
+                        .contractNo("")
+                        .remark("")
+                        .productName("示例产品2")
+                        .skuCode("SKU001")
+                        .productUnitName("个")
+                        .count(BigDecimal.valueOf(20))
+                        .productPrice(BigDecimal.valueOf(200.00))
+                        .taxPercent(BigDecimal.valueOf(13))
+                        .itemRemark("")
+                        .build()
+        );
+        // 输出
+        ExcelUtils.write(response, "销售订单导入模板.xls", "销售订单列表", ErpSaleOrderImportExcelVO.class, list);
+    }
+
+    @PostMapping("/import")
+    @Operation(summary = "导入销售订单")
+    @PreAuthorize("@ss.hasPermission('erp:sale-out:import')")
+    public CommonResult<ErpSaleOrderImportRespVO> importExcel(@Valid ErpSaleOrderImportReqVO importReqVO)
+            throws Exception {
+        List<ErpSaleOrderImportExcelVO> list = ExcelUtils.read(importReqVO.getFile(), ErpSaleOrderImportExcelVO.class);
+        return success(saleOrderService.importSaleOrderList(list, importReqVO));
     }
 
     private PageResult<ErpSaleOrderRespVO> buildSaleOrderVOPageResult(PageResult<ErpSaleOrderDO> pageResult) {

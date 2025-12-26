@@ -40,10 +40,10 @@
       </el-form-item>
       <el-form-item label="已付金额" prop="paidAmount">
         <el-input-number
-          v-model="formData.receivedAmount"
+          v-model="formData.paidAmount"
           :precision="2"
           :min="0"
-          placeholder="请输入已收金额"
+          placeholder="请输入已付金额"
           style="width: 100%"
         />
       </el-form-item>
@@ -117,6 +117,19 @@ const formRules = reactive({
 })
 const formRef = ref() // 表单 Ref
 const supplierList = ref<SupplierVO[]>([]) // 供应商列表
+const initialNo = ref('') // 初始生成的单据号，用于判断用户是否修改
+
+/** 生成单据号 */
+const generateNo = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const dateStr = `${year}${month}${day}`
+  // 生成6位随机序号（实际应该由后端生成，这里只是预览）
+  const seq = String(Math.floor(Math.random() * 1000000)).padStart(6, '0')
+  return `YFZK${dateStr}${seq}`
+}
 
 /** 打开弹窗 */
 const open = async (type: string, id?: number) => {
@@ -124,11 +137,31 @@ const open = async (type: string, id?: number) => {
   dialogTitle.value = t('action.' + type)
   formType.value = type
   resetForm()
+  // 新增时，生成默认单据号
+  if (type === 'create') {
+    initialNo.value = generateNo()
+    formData.value.no = initialNo.value
+  } else {
+    initialNo.value = ''
+  }
   // 修改时，设置数据
   if (id) {
     formLoading.value = true
     try {
-      formData.value = await PayableApi.getPayable(id)
+      const data = await PayableApi.getPayable(id)
+      // 将后端返回的数据映射到表单数据
+      formData.value = {
+        id: data.id,
+        no: data.no || '',
+        supplierId: data.supplierId,
+        orderId: data.orderId,
+        amount: data.amount || 0,
+        paidAmount: data.paidAmount || 0,
+        balance: data.balance || 0,
+        dueDate: data.dueDate || '',
+        status: data.status || 10,
+        remark: data.remark || ''
+      }
       // 计算余额
       formData.value.balance = formData.value.amount - (formData.value.paidAmount || 0)
     } finally {
@@ -155,6 +188,10 @@ const submitForm = async () => {
   formLoading.value = true
   try {
     const data = formData.value as unknown as PayableVO
+    // 新增时，如果用户没有修改单据号，传空让后端自动生成正确的序号
+    if (formType.value === 'create' && data.no === initialNo.value) {
+      data.no = ''
+    }
     if (formType.value === 'create') {
       await PayableApi.createPayable(data)
       message.success(t('common.createSuccess'))

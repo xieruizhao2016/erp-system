@@ -285,11 +285,23 @@ const handleDelete = async (id: number) => {
 /** 更新状态 */
 const handleUpdateStatus = async (id: number, status: number) => {
   try {
+    // 参数验证
+    if (!id || id === undefined || id === null) {
+      message.error('单据ID不能为空')
+      return
+    }
+    if (status === undefined || status === null) {
+      message.error('状态不能为空')
+      return
+    }
     await message.confirm(status === 20 ? '确认要审批该单据吗？' : '确认要反审批该单据吗？')
     await StockInternalOutApi.updateStockInternalOutStatus(id, status)
     message.success('操作成功')
     await getList()
-  } catch {}
+  } catch (error: any) {
+    console.error('更新状态失败:', error)
+    message.error(error?.message || '操作失败，请稍后重试')
+  }
 }
 
 /** 导出按钮操作 */

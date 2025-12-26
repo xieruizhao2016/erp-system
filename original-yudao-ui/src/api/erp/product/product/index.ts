@@ -61,5 +61,15 @@ export const ProductApi = {
   // 导出产品 Excel
   exportProduct: async (params) => {
     return await request.download({ url: `/erp/product/export-excel`, params })
+  },
+
+  // 下载产品导入模板
+  importProductTemplate: () => {
+    return request.download({ url: '/erp/product/get-import-template' })
+  },
+
+  // 导入产品
+  importProduct: async (formData) => {
+    return await request.upload({ url: `/erp/product/import`, data: formData })
   }
 }

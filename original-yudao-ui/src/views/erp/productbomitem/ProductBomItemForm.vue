@@ -46,6 +46,7 @@
           filterable
           placeholder="请选择子产品"
           class="!w-1/1"
+          @change="handleChildProductChange"
         >
           <el-option
             v-for="item in productList"
@@ -56,18 +57,19 @@
         </el-select>
       </el-form-item>
       <el-form-item label="子产品名称" prop="childProductName">
-        <el-input v-model="formData.childProductName" placeholder="请输入子产品名称" />
+        <el-input v-model="formData.childProductName" placeholder="选择子产品后自动填充" readonly />
       </el-form-item>
       <el-form-item label="子产品规格" prop="childProductSpec">
-        <el-input v-model="formData.childProductSpec" placeholder="请输入子产品规格" />
+        <el-input v-model="formData.childProductSpec" placeholder="选择子产品后自动填充" readonly />
       </el-form-item>
       <el-form-item label="单位" prop="unitId">
         <el-select
           v-model="formData.unitId"
           clearable
           filterable
-          placeholder="请选择单位"
+          placeholder="选择子产品后自动填充"
           class="!w-1/1"
+          :disabled="!!formData.childProductId"
         >
           <el-option
             v-for="item in productUnitList"
@@ -113,10 +115,10 @@
           class="!w-1/1"
         >
           <el-option
-            v-for="item in processRouteItemList"
+            v-for="item in processList"
             :key="item.id"
-            :label="item.operationName || `工序${item.id}`"
-            :value="item.processId"
+            :label="item.processName || item.processNo || `工序${item.id}`"
+            :value="item.id"
           />
         </el-select>
       </el-form-item>
@@ -136,7 +138,7 @@ import { ProductBomItemApi, ProductBomItem } from '@/api/erp/productbomitem'
 import { ProductBomApi, ProductBom } from '@/api/erp/productbom'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
 import { ProductUnitApi, ProductUnit } from '@/api/erp/product/unit'
-import { ProcessRouteItemApi, ProcessRouteItem } from '@/api/erp/processrouteitem'
+import { ProcessApi, Process } from '@/api/erp/process'
 
 /** ERP BOM明细 表单 */
 defineOptions({ name: 'ProductBomItemForm' })
@@ -170,30 +172,48 @@ const formRules = reactive({
   bomId: [{ required: true, message: 'BOM不能为空', trigger: 'change' }],
   parentProductId: [{ required: true, message: '父产品不能为空', trigger: 'change' }],
   childProductId: [{ required: true, message: '子产品不能为空', trigger: 'change' }],
-  childProductName: [{ required: true, message: '子产品名称不能为空', trigger: 'blur' }],
   quantity: [{ required: true, message: '用量不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
 const productBomList = ref<ProductBom[]>([]) // BOM列表
 const productList = ref<ProductVO[]>([]) // 产品列表
 const productUnitList = ref<ProductUnit[]>([]) // 产品单位列表
-const processRouteItemList = ref<ProcessRouteItem[]>([]) // 工艺路线明细列表
+const processList = ref<Process[]>([]) // 工序列表
 
 /** 加载列表数据 */
 const loadListData = async () => {
   try {
-    const [bomData, products, unitData, processRouteItemData] = await Promise.all([
+    const [bomData, products, unitData, processes] = await Promise.all([
       ProductBomApi.getProductBomPage({ pageNo: 1, pageSize: 100 }),
       ProductApi.getProductSimpleList(),
       ProductUnitApi.getProductUnitPage({ pageNo: 1, pageSize: 100 }),
-      ProcessRouteItemApi.getProcessRouteItemPage({ pageNo: 1, pageSize: 100 })
+      ProcessApi.getProcessList()
     ])
     productBomList.value = bomData.list || []
     productList.value = products || []
     productUnitList.value = unitData.list || []
-    processRouteItemList.value = processRouteItemData.list || []
+    processList.value = processes || []
   } catch (error) {
     console.error('加载列表数据失败:', error)
+  }
+}
+
+/** 处理子产品选择变化 */
+const handleChildProductChange = (productId: number | undefined) => {
+  if (productId) {
+    // 根据选择的子产品ID，从产品列表中查找对应的产品信息
+    const selectedProduct = productList.value.find(item => item.id === productId)
+    if (selectedProduct) {
+      // 自动填充子产品信息
+      formData.value.childProductName = selectedProduct.name || ''
+      formData.value.childProductSpec = selectedProduct.standard || ''
+      formData.value.unitId = selectedProduct.unitId
+    }
+  } else {
+    // 清空子产品选择时，清空相关信息
+    formData.value.childProductName = undefined
+    formData.value.childProductSpec = undefined
+    formData.value.unitId = undefined
   }
 }
 
@@ -211,7 +231,12 @@ const open = async (type: string, id?: number) => {
   if (id) {
     formLoading.value = true
     try {
-      formData.value = await ProductBomItemApi.getProductBomItem(id)
+      const data = await ProductBomItemApi.getProductBomItem(id)
+      formData.value = data
+      // 如果已有子产品ID，但子产品信息不完整，则自动填充（用于编辑场景）
+      if (data.childProductId && (!data.childProductName || !data.childProductSpec || !data.unitId)) {
+        handleChildProductChange(data.childProductId)
+      }
     } finally {
       formLoading.value = false
     }
@@ -228,29 +253,28 @@ const submitForm = async () => {
   formLoading.value = true
   try {
     // 构建提交数据，确保类型正确
+    // 辅助函数：安全地转换为数字
+    const toNumber = (value: any): number | undefined => {
+      if (value == null || value === '') return undefined
+      const num = Number(value)
+      return isNaN(num) ? undefined : num
+    }
+    
     const data: ProductBomItem = {
       ...formData.value,
-      // 确保 unitId 是数字类型，如果是 undefined、null 或空字符串则设为 undefined
-      unitId: formData.value.unitId && formData.value.unitId !== '' 
-        ? Number(formData.value.unitId) 
-        : undefined,
+      // 确保 unitId 是数字类型
+      unitId: toNumber(formData.value.unitId),
       // 确保其他数字字段也是正确的类型
-      quantity: formData.value.quantity && formData.value.quantity !== '' 
-        ? Number(formData.value.quantity) 
-        : undefined,
-      lossRate: formData.value.lossRate && formData.value.lossRate !== '' 
-        ? Number(formData.value.lossRate) 
-        : undefined,
-      effectiveQuantity: formData.value.effectiveQuantity && formData.value.effectiveQuantity !== '' 
-        ? Number(formData.value.effectiveQuantity) 
-        : undefined,
-      position: formData.value.position && formData.value.position !== '' 
-        ? Number(formData.value.position) 
-        : undefined,
-      processId: formData.value.processId && formData.value.processId !== '' 
-        ? Number(formData.value.processId) 
-        : undefined
+      quantity: toNumber(formData.value.quantity),
+      lossRate: toNumber(formData.value.lossRate),
+      // effectiveQuantity 是数据库生成的列，不能手动指定，移除该字段
+      effectiveQuantity: undefined,
+      position: toNumber(formData.value.position),
+      // 处理 processId：如果已选择工序，转换为数字；如果未选择，设为 undefined
+      processId: toNumber(formData.value.processId)
     }
+    // 删除 effectiveQuantity 字段，因为它是数据库生成的列
+    delete data.effectiveQuantity
     
     if (formType.value === 'create') {
       await ProductBomItemApi.createProductBomItem(data)

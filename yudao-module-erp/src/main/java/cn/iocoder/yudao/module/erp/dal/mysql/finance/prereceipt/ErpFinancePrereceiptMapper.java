@@ -31,4 +31,11 @@ public interface ErpFinancePrereceiptMapper extends BaseMapperX<ErpFinancePrerec
                 .orderByDesc(ErpFinancePrereceiptDO::getId));
     }
 
+    /**
+     * 根据订单ID查询预收款
+     */
+    default ErpFinancePrereceiptDO selectByOrderId(Long orderId) {
+        return selectOne(ErpFinancePrereceiptDO::getOrderId, orderId);
+    }
+
 }

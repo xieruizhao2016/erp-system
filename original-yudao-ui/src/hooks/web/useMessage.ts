@@ -21,19 +21,19 @@ export const useMessage = () => {
     },
     // 弹出提示
     alert(content: string) {
-      ElMessageBox.alert(content, t('common.confirmTitle'))
+      return ElMessageBox.alert(content, t('common.confirmTitle'))
     },
     // 错误提示
     alertError(content: string) {
-      ElMessageBox.alert(content, t('common.confirmTitle'), { type: 'error' })
+      return ElMessageBox.alert(content, t('common.confirmTitle'), { type: 'error' })
     },
     // 成功提示
     alertSuccess(content: string) {
-      ElMessageBox.alert(content, t('common.confirmTitle'), { type: 'success' })
+      return ElMessageBox.alert(content, t('common.confirmTitle'), { type: 'success' })
     },
     // 警告提示
     alertWarning(content: string) {
-      ElMessageBox.alert(content, t('common.confirmTitle'), { type: 'warning' })
+      return ElMessageBox.alert(content, t('common.confirmTitle'), { type: 'warning' })
     },
     // 通知提示
     notify(content: string) {

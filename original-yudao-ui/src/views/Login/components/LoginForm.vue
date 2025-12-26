@@ -295,7 +295,9 @@ const handleLogin = async (params: any) => {
     }
   } finally {
     loginLoading.value = false
+    if (loading.value) {
     loading.value.close()
+    }
   }
 }
 

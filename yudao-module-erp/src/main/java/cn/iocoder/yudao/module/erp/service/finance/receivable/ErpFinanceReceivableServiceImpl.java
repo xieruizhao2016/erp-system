@@ -127,31 +127,52 @@ public class ErpFinanceReceivableServiceImpl implements ErpFinanceReceivableServ
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createReceivableFromSaleOrder(ErpSaleOrderDO saleOrder) {
+        createReceivableFromSaleOrder(saleOrder, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createReceivableFromSaleOrder(ErpSaleOrderDO saleOrder, BigDecimal depositPrice) {
         // 1. 检查是否已存在
         ErpFinanceReceivableDO existing = financeReceivableMapper.selectByOrderId(saleOrder.getId());
         if (existing != null) {
             return; // 已存在，不重复创建
         }
 
-        // 2. 生成单据号
+        // 2. 计算应收账款金额（总金额 - 定金）
+        BigDecimal receivableAmount = saleOrder.getTotalPrice();
+        if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
+            receivableAmount = saleOrder.getTotalPrice().subtract(depositPrice);
+            // 如果应收账款金额小于等于0，则不创建应收账款
+            if (receivableAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                return;
+            }
+        }
+
+        // 3. 生成单据号
         String no = noRedisDAO.generate(ErpNoRedisDAO.FINANCE_RECEIVABLE_NO_PREFIX);
 
-        // 3. 计算到期日（默认订单日期+30天）
+        // 4. 计算到期日（默认订单日期+30天）
         LocalDate dueDate = saleOrder.getOrderTime() != null
             ? saleOrder.getOrderTime().toLocalDate().plusDays(30)
             : LocalDate.now().plusDays(30);
 
-        // 4. 创建应收账款
+        // 5. 创建应收账款
+        String remark = "自动生成自销售订单：" + saleOrder.getNo();
+        if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
+            remark += "（已扣除定金：" + depositPrice + "元）";
+        }
+        
         ErpFinanceReceivableDO receivable = ErpFinanceReceivableDO.builder()
             .no(no)
             .customerId(saleOrder.getCustomerId())
             .orderId(saleOrder.getId())
-            .amount(saleOrder.getTotalPrice())
+            .amount(receivableAmount)
             .receivedAmount(BigDecimal.ZERO)
-            .balance(saleOrder.getTotalPrice())
+            .balance(receivableAmount)
             .dueDate(dueDate)
             .status(ErpAuditStatus.PROCESS.getStatus())
-            .remark("自动生成自销售订单：" + saleOrder.getNo())
+            .remark(remark)
             .build();
 
         financeReceivableMapper.insert(receivable);

@@ -266,7 +266,7 @@ import { SupplierApi, SupplierVO } from '@/api/erp/purchase/supplier'
 import { AccountApi, AccountVO } from '@/api/erp/finance/account'
 
 /** ERP 付款单列表 */
-defineOptions({ name: 'ErpPurchaseOrder' })
+defineOptions({ name: 'ErpFinancePayment' })
 
 const message = useMessage() // 消息弹窗
 const { t } = useI18n() // 国际化

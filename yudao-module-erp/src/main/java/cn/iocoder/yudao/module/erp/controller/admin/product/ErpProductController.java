@@ -11,6 +11,9 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductPageReqVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductRespVO;
 import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ProductSaveReqVO;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportReqVO;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportRespVO;
+import cn.iocoder.yudao.module.erp.controller.admin.product.vo.product.ErpProductImportExcelVO;
 import cn.iocoder.yudao.module.erp.dal.dataobject.product.ErpProductDO;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,6 +27,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -116,6 +120,7 @@ public class ErpProductController {
                 .setName(product.getName()).setBarCode(product.getBarCode())
                 .setCategoryId(product.getCategoryId()).setCategoryName(product.getCategoryName())
                 .setUnitId(product.getUnitId()).setUnitName(product.getUnitName())
+                .setStandard(product.getStandard()) // 添加规格字段
                 .setPackageId(product.getPackageId()).setPackageCode(product.getPackageCode())
                 .setOemId(product.getOemId()).setOemCode(product.getOemCode())
                 .setPurchasePrice(product.getPurchasePrice()).setSalePrice(product.getSalePrice()).setMinPrice(product.getMinPrice())));
@@ -132,6 +137,59 @@ public class ErpProductController {
         // 导出 Excel
         ExcelUtils.write(response, "产品.xls", "数据", ErpProductRespVO.class,
                 pageResult.getList());
+    }
+
+    @GetMapping("/get-import-template")
+    @Operation(summary = "获得导入产品模板")
+    public void importTemplate(HttpServletResponse response) throws IOException {
+        // 手动创建导出 demo
+        List<ErpProductImportExcelVO> list = Arrays.asList(
+                ErpProductImportExcelVO.builder()
+                        .name("示例产品1")
+                        .barCode("P001")
+                        .categoryName("电子产品")
+                        .unitName("个")
+                        .packageName("")
+                        .oemName("")
+                        .status(0)
+                        .standard("标准规格")
+                        .remark("示例备注")
+                        .expiryDay(365)
+                        .weight(java.math.BigDecimal.valueOf(1.5))
+                        .purchasePrice(java.math.BigDecimal.valueOf(100.00))
+                        .salePrice(java.math.BigDecimal.valueOf(150.00))
+                        .minPrice(java.math.BigDecimal.valueOf(120.00))
+                        .skuCodes("SKU001;SKU002")
+                        .build(),
+                ErpProductImportExcelVO.builder()
+                        .name("示例产品2")
+                        .barCode("P002")
+                        .categoryName("电子产品")
+                        .unitName("个")
+                        .packageName("")
+                        .oemName("")
+                        .status(0)
+                        .standard("标准规格")
+                        .remark("示例备注")
+                        .expiryDay(365)
+                        .weight(java.math.BigDecimal.valueOf(2.0))
+                        .purchasePrice(java.math.BigDecimal.valueOf(200.00))
+                        .salePrice(java.math.BigDecimal.valueOf(300.00))
+                        .minPrice(java.math.BigDecimal.valueOf(250.00))
+                        .skuCodes("")
+                        .build()
+        );
+        // 输出
+        ExcelUtils.write(response, "产品导入模板.xls", "产品列表", ErpProductImportExcelVO.class, list);
+    }
+
+    @PostMapping("/import")
+    @Operation(summary = "导入产品")
+    @PreAuthorize("@ss.hasPermission('erp:product:import')")
+    public CommonResult<ErpProductImportRespVO> importExcel(@Valid ErpProductImportReqVO importReqVO)
+            throws Exception {
+        List<ErpProductImportExcelVO> list = ExcelUtils.read(importReqVO.getFile(), ErpProductImportExcelVO.class);
+        return success(productService.importProductList(list, importReqVO));
     }
 
 }

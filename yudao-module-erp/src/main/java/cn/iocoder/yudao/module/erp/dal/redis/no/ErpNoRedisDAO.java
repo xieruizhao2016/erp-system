@@ -97,6 +97,11 @@ public class ErpNoRedisDAO {
     public static final String PROCESS_ROUTE_NO_PREFIX = "GYLX";
 
     /**
+     * 工作中心 {@link cn.iocoder.yudao.module.erp.dal.dataobject.workcenter.WorkCenterDO}
+     */
+    public static final String WORK_CENTER_NO_PREFIX = "GZZX";
+
+    /**
      * 付款单 {@link cn.iocoder.yudao.module.erp.dal.dataobject.finance.ErpFinancePaymentDO}
      */
     public static final String FINANCE_PAYMENT_NO_PREFIX = "FKD";
@@ -112,6 +117,10 @@ public class ErpNoRedisDAO {
      * 应付账款 {@link cn.iocoder.yudao.module.erp.dal.dataobject.finance.payable.ErpFinancePayableDO}
      */
     public static final String FINANCE_PAYABLE_NO_PREFIX = "YFZK";
+    /**
+     * 预收款 {@link cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO}
+     */
+    public static final String FINANCE_PRERECEIPT_NO_PREFIX = "YSK";
     /**
      * 内部入库 {@link cn.iocoder.yudao.module.erp.dal.dataobject.stock.internalin.ErpStockInternalInDO}
      */

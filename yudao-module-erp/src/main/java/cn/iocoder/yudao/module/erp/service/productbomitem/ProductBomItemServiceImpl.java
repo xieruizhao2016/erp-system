@@ -14,6 +14,8 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.productbomitem.ProductBomItemMapper;
+import cn.iocoder.yudao.module.erp.service.process.ProcessService;
+import cn.iocoder.yudao.module.erp.dal.dataobject.process.ProcessDO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -32,10 +34,29 @@ public class ProductBomItemServiceImpl implements ProductBomItemService {
     @Resource
     private ProductBomItemMapper productBomItemMapper;
 
+    @Resource
+    private ProcessService processService;
+
+    /**
+     * 填充工序名称（冗余字段）
+     */
+    private void fillProcessName(ProductBomItemDO productBomItem) {
+        if (productBomItem.getProcessId() != null) {
+            ProcessDO process = processService.getProcess(productBomItem.getProcessId());
+            if (process != null) {
+                productBomItem.setProcessName(process.getProcessName());
+            }
+        } else {
+            productBomItem.setProcessName(null);
+        }
+    }
+
     @Override
     public Long createProductBomItem(ProductBomItemSaveReqVO createReqVO) {
         // 插入
         ProductBomItemDO productBomItem = BeanUtils.toBean(createReqVO, ProductBomItemDO.class);
+        // 填充工序名称
+        fillProcessName(productBomItem);
         productBomItemMapper.insert(productBomItem);
 
         // 返回
@@ -48,6 +69,8 @@ public class ProductBomItemServiceImpl implements ProductBomItemService {
         validateProductBomItemExists(updateReqVO.getId());
         // 更新
         ProductBomItemDO updateObj = BeanUtils.toBean(updateReqVO, ProductBomItemDO.class);
+        // 填充工序名称
+        fillProcessName(updateObj);
         productBomItemMapper.updateById(updateObj);
     }
 

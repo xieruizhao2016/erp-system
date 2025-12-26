@@ -74,6 +74,10 @@ public class ProductBomItemRespVO {
     @ExcelProperty("工序ID")
     private Long processId;
 
+    @Schema(description = "工序名称", example = "组装")
+    @ExcelProperty("工序名称")
+    private String processName;
+
     @Schema(description = "备注", example = "随便")
     @ExcelProperty("备注")
     private String remark;

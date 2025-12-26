@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.finance.prereceipt.ErpFinancePrereceiptMapper;
+import cn.iocoder.yudao.module.erp.enums.ErpAuditStatus;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -80,6 +81,18 @@ public class ErpFinancePrereceiptServiceImpl implements ErpFinancePrereceiptServ
     @Override
     public PageResult<ErpFinancePrereceiptDO> getFinancePrereceiptPage(ErpFinancePrereceiptPageReqVO pageReqVO) {
         return financePrereceiptMapper.selectPage(pageReqVO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deletePrereceiptByOrderId(Long orderId) {
+        ErpFinancePrereceiptDO prereceipt = financePrereceiptMapper.selectByOrderId(orderId);
+        if (prereceipt != null) {
+            // 只有未审核的预收款才能删除
+            if (!ErpAuditStatus.APPROVE.getStatus().equals(prereceipt.getStatus())) {
+                financePrereceiptMapper.deleteById(prereceipt.getId());
+            }
+        }
     }
 
 }

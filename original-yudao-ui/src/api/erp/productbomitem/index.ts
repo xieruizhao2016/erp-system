@@ -18,6 +18,7 @@ export interface ProductBomItem {
           alternativeGroup?: string; // 替代料组
           position?: number; // 位号
           processId?: number; // 工序ID
+          processName?: string; // 工序名称（冗余字段）
           remark?: string; // 备注
   }
 

@@ -14,6 +14,7 @@ import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.workcenter.WorkCenterMapper;
+import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -31,8 +32,15 @@ public class WorkCenterServiceImpl implements WorkCenterService {
     @Resource
     private WorkCenterMapper workCenterMapper;
 
+    @Resource
+    private ErpNoRedisDAO noRedisDAO;
+
     @Override
     public Long createWorkCenter(WorkCenterSaveReqVO createReqVO) {
+        // 如果工作中心编号为空，自动生成
+        if (createReqVO.getWorkCenterNo() == null || createReqVO.getWorkCenterNo().trim().isEmpty()) {
+            createReqVO.setWorkCenterNo(generateWorkCenterNo());
+        }
         // 校验工作中心编号唯一性
         validateWorkCenterNoUnique(null, createReqVO.getWorkCenterNo());
         // 插入
@@ -100,6 +108,25 @@ public class WorkCenterServiceImpl implements WorkCenterService {
     @Override
     public List<WorkCenterDO> getWorkCenterList() {
         return workCenterMapper.selectList(WorkCenterDO::getStatus, 1); // 只返回启用状态的工作中心
+    }
+
+    /**
+     * 生成工作中心编号
+     * 格式：GZZX + yyyyMMdd + 6位自增
+     *
+     * @return 工作中心编号
+     */
+    public String generateWorkCenterNo() {
+        // 生成工作中心编号，格式：GZZX + yyyyMMdd + 6位自增
+        String workCenterNo = noRedisDAO.generate(ErpNoRedisDAO.WORK_CENTER_NO_PREFIX);
+        // 确保编号唯一性，如果已存在则重新生成
+        int maxRetries = 10;
+        int retryCount = 0;
+        while (workCenterMapper.selectByWorkCenterNo(workCenterNo) != null && retryCount < maxRetries) {
+            workCenterNo = noRedisDAO.generate(ErpNoRedisDAO.WORK_CENTER_NO_PREFIX);
+            retryCount++;
+        }
+        return workCenterNo;
     }
 
 }

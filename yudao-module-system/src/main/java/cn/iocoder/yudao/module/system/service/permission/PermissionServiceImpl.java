@@ -74,7 +74,8 @@ public class PermissionServiceImpl implements PermissionService {
 
         // 情况一：遍历判断每个权限，如果有一满足，说明有权限
         for (String permission : permissions) {
-            if (hasAnyPermission(roles, permission)) {
+            boolean hasPerm = hasAnyPermission(roles, permission);
+            if (hasPerm) {
                 return true;
             }
         }
