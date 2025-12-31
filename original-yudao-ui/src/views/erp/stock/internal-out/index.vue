@@ -330,10 +330,14 @@ onMounted(() => {
   // 加载用户列表
   UserApi.getSimpleUserList().then((data) => {
     userList.value = data
+  }).catch((error) => {
+    console.error('获取用户列表失败:', error)
   })
   // 加载部门列表
   DeptApi.getSimpleDeptList().then((data) => {
     deptList.value = handleTree(data)
+  }).catch((error) => {
+    console.error('获取部门列表失败:', error)
   })
 })
 </script>

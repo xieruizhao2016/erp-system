@@ -449,11 +449,19 @@ const handleSelectionChange = (rows: SaleOrderVO[]) => {
 
 /** 初始化 **/
 onMounted(async () => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/9f9bb41f-0fa7-49a2-9cbc-851e0d8f0404',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sale/order/index.vue:451',message:'销售订单页面开始初始化',data:{},timestamp:Date.now(),sessionId:'debug-session'})}).catch(()=>{});
+  // #endregion agent log
+
   await getList()
   // 加载产品、仓库列表、客户
   productList.value = await ProductApi.getProductSimpleList()
   customerList.value = await CustomerApi.getCustomerSimpleList()
   userList.value = await UserApi.getSimpleUserList()
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/9f9bb41f-0fa7-49a2-9cbc-851e0d8f0404',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sale/order/index.vue:461',message:'销售订单页面初始化完成',data:{},timestamp:Date.now(),sessionId:'debug-session'})}).catch(()=>{});
+  // #endregion agent log
 })
 // TODO 芋艿：可优化功能：列表界面，支持导入
 // TODO 芋艿：可优化功能：详情界面，支持打印

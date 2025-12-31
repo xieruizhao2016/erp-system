@@ -16,8 +16,9 @@ ENV JAVA_OPTS="-Xms512m -Xmx512m -Djava.security.egd=file:/dev/./urandom"
 ## 应用参数
 ENV ARGS=""
 
-## 暴露后端项目的 48080 端口
-EXPOSE 48080
+## 暴露后端项目的 8080 端口（容器内端口）
+## 注意：docker-compose 中映射为 48080:8080（外部:内部）
+EXPOSE 8080
 
 ## 启动后端项目
 CMD java ${JAVA_OPTS} -jar app.jar $ARGS

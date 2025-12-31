@@ -206,11 +206,15 @@ const open = async (type: string, id?: number) => {
   if (userList.value.length === 0) {
     UserApi.getSimpleUserList().then((data) => {
       userList.value = data
+    }).catch((error) => {
+      console.error('获取用户列表失败:', error)
     })
   }
   if (deptList.value.length === 0) {
     DeptApi.getSimpleDeptList().then((data) => {
       deptList.value = handleTree(data)
+    }).catch((error) => {
+      console.error('获取部门列表失败:', error)
     })
   }
 }

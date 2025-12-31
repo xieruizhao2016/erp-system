@@ -106,7 +106,7 @@ services:
         VITE_APP_TENANT_ENABLE: ${VITE_APP_TENANT_ENABLE:-true}
         VITE_APP_CAPTCHA_ENABLE: ${VITE_APP_CAPTCHA_ENABLE:-false}
         VITE_APP_DOC_ENABLE: ${VITE_APP_DOC_ENABLE:-true}
-          VITE_BASE_URL: ${VITE_BASE_URL:-}
+        VITE_BASE_URL: ${VITE_BASE_URL:-}
         VITE_API_URL: ${VITE_API_URL:-/prod-api}
     image: yudao-admin:latest
     restart: unless-stopped

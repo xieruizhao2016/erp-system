@@ -93,3 +93,7 @@ nohup.out
 *.zip
 codegen-downloads-*/
 server-config-backup/
+
+# Ignore large release tarballs
+deploy/packages/**/*.tar
+yudao-admin-latest-*.tar
