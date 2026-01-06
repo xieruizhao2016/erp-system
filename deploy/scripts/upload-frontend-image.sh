@@ -14,14 +14,18 @@ NC='\033[0m' # No Color
 
 # 默认配置
 # 优先使用项目目录下的私钥，其次使用用户目录下的私钥
-if [ -f "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/huoshan-ssh.pem" ]; then
-    DEFAULT_SSH_KEY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/huoshan-ssh.pem"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [ -f "$PROJECT_DIR/tengxunyun.pem" ]; then
+    DEFAULT_SSH_KEY="$PROJECT_DIR/tengxunyun.pem"
+elif [ -f "$PROJECT_DIR/huoshan-ssh.pem" ]; then
+    DEFAULT_SSH_KEY="$PROJECT_DIR/huoshan-ssh.pem"
 elif [ -f "$HOME/Documents/huoshan-ssh.pem" ]; then
     DEFAULT_SSH_KEY="$HOME/Documents/huoshan-ssh.pem"
 else
     DEFAULT_SSH_KEY=""
 fi
-DEFAULT_SERVER="root@115.190.240.137"
+# 腾讯云服务器配置
+DEFAULT_SERVER="ubuntu@101.33.244.240"
 DEFAULT_REMOTE_PATH="/tmp"
 
 echo -e "${GREEN}=== 上传前端镜像到服务器 ===${NC}"
@@ -123,9 +127,14 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ 镜像导入成功！${NC}"
     echo ""
     echo -e "${BLUE}下一步操作：${NC}"
-    echo "1. SSH到服务器: ssh $SSH_KEY $SERVER"
+    if [ -n "$SSH_KEY" ]; then
+        echo "1. SSH到服务器: ssh -i $SSH_KEY $SERVER"
+    else
+        echo "1. SSH到服务器: ssh $SERVER"
+    fi
     echo "2. 进入项目目录: cd /opt/erp-system/script/docker"
     echo "3. 重启前端服务: docker-compose -f docker-compose.prod.yml --env-file .env up -d --force-recreate admin"
+    echo "4. 查看日志: docker-compose -f docker-compose.prod.yml logs -f admin"
     echo ""
 else
     echo -e "${RED}❌ 镜像导入失败${NC}"

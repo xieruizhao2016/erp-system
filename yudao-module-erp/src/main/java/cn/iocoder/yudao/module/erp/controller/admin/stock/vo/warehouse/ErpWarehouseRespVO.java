@@ -10,7 +10,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static cn.iocoder.yudao.module.system.enums.DictTypeConstants.COMMON_STATUS;
 

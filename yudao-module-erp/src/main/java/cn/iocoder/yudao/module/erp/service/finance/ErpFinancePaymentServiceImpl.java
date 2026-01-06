@@ -161,6 +161,33 @@ public class ErpFinancePaymentServiceImpl implements ErpFinancePaymentService {
         // 3. 审核通过后，核销应付账款
         if (approve && payment.getPaymentPrice() != null && payment.getPaymentPrice().compareTo(BigDecimal.ZERO) > 0) {
             financePayableService.writeOff(payment.getSupplierId(), payment.getPaymentPrice());
+            
+            // 4. 根据付款单项更新对应订单的应付账款的已付金额
+            List<ErpFinancePaymentItemDO> paymentItems = financePaymentItemMapper.selectListByPaymentId(id);
+            if (CollUtil.isNotEmpty(paymentItems)) {
+                for (ErpFinancePaymentItemDO paymentItem : paymentItems) {
+                    if (paymentItem.getPaymentPrice() == null || paymentItem.getPaymentPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                        continue;
+                    }
+                    
+                    Long orderId = null;
+                    if (ObjectUtil.equal(paymentItem.getBizType(), ErpBizTypeEnum.PURCHASE_IN.getType())) {
+                        ErpPurchaseInDO purchaseIn = purchaseInService.getPurchaseIn(paymentItem.getBizId());
+                        if (purchaseIn != null) {
+                            orderId = purchaseIn.getOrderId();
+                        }
+                    } else if (ObjectUtil.equal(paymentItem.getBizType(), ErpBizTypeEnum.PURCHASE_RETURN.getType())) {
+                        ErpPurchaseReturnDO purchaseReturn = purchaseReturnService.getPurchaseReturn(paymentItem.getBizId());
+                        if (purchaseReturn != null) {
+                            orderId = purchaseReturn.getOrderId();
+                        }
+                    }
+                    
+                    if (orderId != null) {
+                        financePayableService.updatePaidAmountByOrderId(orderId, paymentItem.getPaymentPrice());
+                    }
+                }
+            }
         }
     }
 

@@ -9,7 +9,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * ERP 付款单 DO

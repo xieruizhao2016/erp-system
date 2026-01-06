@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 import cn.idev.excel.annotation.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - ERP 工单主 Response VO")
 @Data
@@ -33,6 +33,10 @@ public class WorkOrderRespVO {
     @Schema(description = "产品名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "赵六")
     @ExcelProperty("产品名称")
     private String productName;
+
+    @Schema(description = "工艺路线ID", example = "12345")
+    @ExcelProperty("工艺路线ID")
+    private Long routeId;
 
     @Schema(description = "工单数量", requiredMode = Schema.RequiredMode.REQUIRED)
     @ExcelProperty("工单数量")

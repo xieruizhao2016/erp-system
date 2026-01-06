@@ -315,6 +315,7 @@ public class ProductionOrderServiceImpl implements ProductionOrderService {
         workOrderReqVO.setProductionOrderId(productionOrder.getId());
         workOrderReqVO.setProductId(productionOrder.getProductId());
         workOrderReqVO.setProductName(productionOrder.getProductName());
+        workOrderReqVO.setRouteId(processRoute.getId()); // 设置工艺路线ID
         workOrderReqVO.setQuantity(productionOrder.getQuantity());
         workOrderReqVO.setWorkCenterId(workCenterId);
         workOrderReqVO.setPlannedStartTime(plannedStartTime);

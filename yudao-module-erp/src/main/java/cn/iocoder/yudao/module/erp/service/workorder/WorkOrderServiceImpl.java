@@ -21,6 +21,11 @@ import cn.iocoder.yudao.module.erp.dal.mysql.productionorder.ProductionOrderMapp
 import cn.iocoder.yudao.module.erp.dal.dataobject.productionorder.ProductionOrderDO;
 import cn.iocoder.yudao.module.erp.dal.mysql.workorderprogress.WorkOrderProgressMapper;
 import cn.iocoder.yudao.module.erp.dal.dataobject.workorderprogress.WorkOrderProgressDO;
+import cn.iocoder.yudao.module.erp.service.workorderprogress.WorkOrderProgressService;
+import cn.iocoder.yudao.module.erp.controller.admin.workorderprogress.vo.WorkOrderProgressSaveReqVO;
+import cn.iocoder.yudao.module.erp.dal.mysql.processrouteitem.ProcessRouteItemMapper;
+import cn.iocoder.yudao.module.erp.dal.dataobject.processrouteitem.ProcessRouteItemDO;
+import lombok.extern.slf4j.Slf4j;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
@@ -32,6 +37,7 @@ import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
  *
  * @author 芋道源码
  */
+@Slf4j
 @Service
 @Validated
 public class WorkOrderServiceImpl implements WorkOrderService {
@@ -51,6 +57,12 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     
     @Resource
     private WorkOrderProgressMapper workOrderProgressMapper;
+    
+    @Resource
+    private WorkOrderProgressService workOrderProgressService;
+    
+    @Resource
+    private ProcessRouteItemMapper processRouteItemMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -64,7 +76,10 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         // 插入
         WorkOrderDO workOrder = BeanUtils.toBean(createReqVO, WorkOrderDO.class);
         workOrder.setWorkOrderNo(workOrderNo);
+        log.info("创建工单，工单号: {}, 工艺路线ID: {}, 生产订单ID: {}, 产品ID: {}, 请求VO中的routeId: {}", 
+                workOrderNo, workOrder.getRouteId(), workOrder.getProductionOrderId(), workOrder.getProductId(), createReqVO.getRouteId());
         workOrderMapper.insert(workOrder);
+        log.info("工单插入成功，工单ID: {}, 工艺路线ID: {}", workOrder.getId(), workOrder.getRouteId());
 
         // 如果关联了生产订单，且生产订单状态不是"进行中"，则自动更新为"进行中"
         if (workOrder.getProductionOrderId() != null) {
@@ -82,6 +97,43 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             } catch (Exception e) {
                 // 忽略错误，不影响工单创建
             }
+        }
+
+        // 如果关联了工艺路线，根据工艺路线明细自动创建工单进度记录
+        log.info("检查是否需要创建工单进度，工单ID: {}, workOrder.getRouteId(): {}, createReqVO.getRouteId(): {}", 
+                workOrder.getId(), workOrder.getRouteId(), createReqVO.getRouteId());
+        if (workOrder.getRouteId() != null) {
+            try {
+                log.info("开始根据工艺路线创建工单进度记录，工单ID: {}, 工艺路线ID: {}", workOrder.getId(), workOrder.getRouteId());
+                List<ProcessRouteItemDO> routeItems = processRouteItemMapper.selectListByRouteId(workOrder.getRouteId());
+                log.info("查询工艺路线明细结果，工艺路线ID: {}, 工序数量: {}", workOrder.getRouteId(), routeItems != null ? routeItems.size() : 0);
+                if (CollUtil.isNotEmpty(routeItems)) {
+                    log.info("找到 {} 个工序，开始创建工单进度记录", routeItems.size());
+                    for (ProcessRouteItemDO routeItem : routeItems) {
+                        WorkOrderProgressSaveReqVO progressReqVO = new WorkOrderProgressSaveReqVO();
+                        progressReqVO.setWorkOrderId(workOrder.getId());
+                        progressReqVO.setProcessId(routeItem.getProcessId());
+                        progressReqVO.setProcessName(routeItem.getOperationName()); // 使用 operationName 作为 processName
+                        progressReqVO.setSequence(routeItem.getSequence());
+                        progressReqVO.setEquipmentId(routeItem.getEquipmentId());
+                        progressReqVO.setStatus(1); // 1-待开始
+                        progressReqVO.setRemark(routeItem.getRemark());
+
+                        Long progressId = workOrderProgressService.createWorkOrderProgress(progressReqVO);
+                        log.info("创建工单进度记录成功，工单ID: {}, 进度ID: {}, 工序ID: {}, 工序名称: {}", 
+                                workOrder.getId(), progressId, routeItem.getProcessId(), routeItem.getOperationName());
+                    }
+                    log.info("工单进度记录创建完成，工单ID: {}, 共创建 {} 条记录", workOrder.getId(), routeItems.size());
+                } else {
+                    log.warn("工艺路线没有工序明细，跳过创建工单进度记录，工单ID: {}, 工艺路线ID: {}", workOrder.getId(), workOrder.getRouteId());
+                }
+            } catch (Exception e) {
+                log.error("根据工艺路线创建工单进度记录时发生异常，工单ID: {}, 工艺路线ID: {}", workOrder.getId(), workOrder.getRouteId(), e);
+                e.printStackTrace(); // 打印完整堆栈信息
+                // 忽略错误，不影响工单创建，但记录错误日志
+            }
+        } else {
+            log.warn("工单未关联工艺路线，跳过创建工单进度记录，工单ID: {}, workOrder.getRouteId()为null", workOrder.getId());
         }
 
         // 返回

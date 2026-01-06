@@ -6,7 +6,7 @@ import java.util.*;
 import javax.validation.constraints.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - ERP 设备状态记录新增/修改 Request VO")
 @Data

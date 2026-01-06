@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import cn.iocoder.yudao.module.erp.controller.admin.finance.payable.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.payable.ErpFinancePayableDO;
@@ -207,6 +208,37 @@ public class ErpFinancePayableServiceImpl implements ErpFinancePayableService {
 
             remainingAmount = remainingAmount.subtract(writeOffAmount);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updatePaidAmountByOrderId(Long orderId, BigDecimal paidAmount) {
+        if (orderId == null || paidAmount == null || paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        // 根据订单ID查找应付账款
+        ErpFinancePayableDO payable = financePayableMapper.selectByOrderId(orderId);
+        if (payable == null) {
+            return; // 如果不存在应付账款，直接返回
+        }
+
+        // 更新已付金额和余额
+        BigDecimal newPaidAmount = (payable.getPaidAmount() != null 
+            ? payable.getPaidAmount() : BigDecimal.ZERO).add(paidAmount);
+        BigDecimal newBalance = (payable.getBalance() != null 
+            ? payable.getBalance() : BigDecimal.ZERO).subtract(paidAmount);
+        
+        // 确保余额不为负数
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            newBalance = BigDecimal.ZERO;
+        }
+
+        ErpFinancePayableDO updateObj = new ErpFinancePayableDO();
+        updateObj.setId(payable.getId());
+        updateObj.setPaidAmount(newPaidAmount);
+        updateObj.setBalance(newBalance);
+        financePayableMapper.updateById(updateObj);
     }
 
 }

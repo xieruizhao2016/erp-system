@@ -569,22 +569,68 @@ const handleRowCheckboxChange = (records: MrpResult[]) => {
 
 /** 创建订单（跳转到采购订单或生产订单页面） */
 const handleCreateOrder = (row: MrpResult, orderType: 'purchase' | 'production') => {
-  // 构建跳转参数
+  console.log('handleCreateOrder called:', { row, orderType })
+  
+  // 处理dueDate：转换为YYYY-MM-DD格式的字符串
+  let dueDateStr = ''
+  if (row.dueDate) {
+    try {
+      // 如果是Dayjs对象
+      if (row.dueDate && typeof row.dueDate === 'object' && 'format' in row.dueDate) {
+        dueDateStr = (row.dueDate as any).format('YYYY-MM-DD')
+      }
+      // 如果是Date对象
+      else if (row.dueDate instanceof Date) {
+        dueDateStr = row.dueDate.toISOString().split('T')[0]
+      }
+      // 如果是字符串
+      else if (typeof row.dueDate === 'string') {
+        // 如果已经是YYYY-MM-DD格式，直接使用
+        if (/^\d{4}-\d{2}-\d{2}/.test(row.dueDate)) {
+          dueDateStr = row.dueDate.split(' ')[0] // 取日期部分，去掉时间
+        }
+        // 如果是时间戳字符串，转换为日期
+        else if (/^\d+$/.test(row.dueDate)) {
+          const timestamp = parseInt(row.dueDate)
+          // 检查是否是合理的时间戳（不是1970年附近的值）
+          if (timestamp > 946684800000) { // 2000-01-01的时间戳
+            dueDateStr = new Date(timestamp).toISOString().split('T')[0]
+          }
+        }
+        // 其他格式，尝试解析
+        else {
+          const date = new Date(row.dueDate)
+          if (!isNaN(date.getTime())) {
+            dueDateStr = date.toISOString().split('T')[0]
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('日期转换失败:', e, row.dueDate)
+    }
+  }
+  
+  // 构建跳转参数（过滤掉无效值）
   const params: any = {
     fromMrp: 'true',
     productId: row.productId?.toString(),
-    quantity: (row.plannedOrderReleases || row.netRequirement)?.toString(),
-    dueDate: row.dueDate
+    quantity: (row.plannedOrderReleases || row.netRequirement)?.toString()
   }
+  
+  // 只有当dueDate有有效值时才添加（必须是YYYY-MM-DD格式）
+  if (dueDateStr && /^\d{4}-\d{2}-\d{2}$/.test(dueDateStr)) {
+    params.dueDate = dueDateStr
+  }
+  
+  console.log('跳转参数:', params)
   
   // 根据订单类型跳转到对应页面
   if (orderType === 'purchase') {
-    // 跳转到采购订单页面 - 先尝试路由名称，失败则使用路径
+    // 跳转到采购订单页面
     router.push({
       name: 'ErpPurchaseOrder',
       query: params
     }).catch(() => {
-      // 如果路由名称失败，尝试使用路径
       router.push({
         path: '/erp/purchase/order',
         query: params
@@ -594,26 +640,36 @@ const handleCreateOrder = (row: MrpResult, orderType: 'purchase' | 'production')
       })
     })
   } else if (orderType === 'production') {
-    // 跳转到生产订单页面 - 先尝试路由名称，失败则使用路径
-    router.push({
-      name: 'ProductionOrder',
-      query: params
-    }).catch(() => {
-      // 如果路由名称失败，尝试使用路径
-      router.push({
-        path: '/erp/productionorder',
-        query: params
-      }).catch(() => {
-        // 尝试其他可能的路径
-        router.push({
-          path: '/erp/production-order',
-          query: params
-        }).catch((err) => {
-          console.error('跳转生产订单页面失败:', err)
-          message.error('跳转失败，请手动进入生产订单页面')
-        })
-      })
-    })
+    console.log('准备跳转到生产订单页面')
+    
+    // 构建查询参数字符串
+    const queryString = Object.entries(params)
+      .filter(([_, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+      .join('&')
+    
+    // 尝试通过 router.resolve 获取真实路径
+    let targetPath = '/production/production-order'  // 默认路径，根据菜单配置
+    
+    try {
+      const resolved = router.resolve({ name: 'ProductionOrder' })
+      if (resolved && resolved.path && resolved.path !== '/') {
+        targetPath = resolved.path
+        console.log('✅ 通过router.resolve获取到路径:', targetPath)
+      }
+    } catch (e) {
+      console.warn('router.resolve失败，使用默认路径:', e)
+    }
+    
+    // 构建完整URL并跳转（使用当前页面的路径作为base）
+    const currentPath = window.location.pathname
+    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'))
+    // 如果当前在 /erp/mrp-result 下，basePath 可能是 /erp，但我们生产订单路径是 /production/production-order
+    // 所以直接使用绝对路径
+    const targetUrl = `${window.location.origin}${targetPath}${queryString ? '?' + queryString : ''}`
+    
+    console.log('跳转URL:', targetUrl)
+    window.location.href = targetUrl
   }
 }
 

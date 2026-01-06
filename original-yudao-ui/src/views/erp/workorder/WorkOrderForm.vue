@@ -27,18 +27,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="产品分类" prop="categoryId">
-        <el-tree-select
-          v-model="selectedCategoryId"
-          :data="productCategoryTree"
-          :props="defaultProps"
-          check-strictly
-          clearable
-          placeholder="请选择产品分类（不选则显示全部）"
-          class="!w-1/1"
-          @change="handleCategoryChange"
-        />
-      </el-form-item>
       <el-form-item label="产品" prop="productId">
         <el-select
           v-model="formData.productId"
@@ -52,6 +40,24 @@
             v-for="item in filteredProductList"
             :key="item.id"
             :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="工艺路线" prop="routeId">
+        <el-select
+          v-model="formData.routeId"
+          clearable
+          filterable
+          placeholder="请选择工艺路线（选择产品后自动加载）"
+          class="!w-1/1"
+          @change="handleRouteChange"
+          :disabled="!formData.productId"
+        >
+          <el-option
+            v-for="item in processRouteList"
+            :key="item.id"
+            :label="item.routeName || item.routeNo || `工艺路线${item.id}`"
             :value="item.id"
           />
         </el-select>
@@ -145,8 +151,6 @@ import { getIntDictOptions, DICT_TYPE } from '@/utils/dict'
 import { WorkOrderApi, WorkOrder } from '@/api/erp/workorder'
 import { ProductionOrderApi, ProductionOrder } from '@/api/erp/productionorder'
 import { ProductApi, ProductVO } from '@/api/erp/product/product'
-import { ProductCategoryApi, ProductCategoryVO } from '@/api/erp/product/category'
-import { defaultProps, handleTree } from '@/utils/tree'
 import * as UserApi from '@/api/system/user'
 import { UserVO } from '@/api/system/user'
 import { WorkCenterApi, WorkCenter } from '@/api/erp/workcenter'
@@ -167,6 +171,7 @@ const formData = ref({
   workOrderNo: undefined,
   productionOrderId: undefined,
   productId: undefined,
+  routeId: undefined,
   quantity: undefined,
   completedQuantity: undefined,
   qualifiedQuantity: undefined,
@@ -186,43 +191,36 @@ const formRules = reactive({
   productionOrderId: [{ required: true, message: '生产订单不能为空', trigger: 'change' }],
   productId: [{ required: true, message: '产品不能为空', trigger: 'change' }],
   quantity: [{ required: true, message: '工单数量不能为空', trigger: 'blur' }],
-  workCenterId: [{ required: true, message: '工作中心不能为空', trigger: 'blur' }],
   plannedStartTime: [{ required: true, message: '计划开始时间不能为空', trigger: 'blur' }],
   plannedEndTime: [{ required: true, message: '计划结束时间不能为空', trigger: 'blur' }]
 })
 const formRef = ref() // 表单 Ref
 const productionOrderList = ref<ProductionOrder[]>([]) // 生产订单列表
 const productList = ref<ProductVO[]>([]) // 产品列表（全部）
-const selectedCategoryId = ref<number | undefined>(undefined) // 选中的分类ID
-const productCategoryTree = ref<any[]>([]) // 产品分类树
 const userList = ref<UserVO[]>([]) // 用户列表
 const workCenterList = ref<WorkCenter[]>([]) // 工作中心列表
+const processRouteList = ref<ProcessRoute[]>([]) // 工艺路线列表
 
 /** 生产订单关联的产品ID列表 */
 const productionOrderProductIds = ref<number[]>([])
 
-/** 根据分类和生产订单过滤后的产品列表 */
+/** 根据生产订单过滤后的产品列表 */
 const filteredProductList = computed(() => {
-  let filtered = productList.value
-  
   // 如果选择了生产订单，只显示该订单下的产品
   if (productionOrderProductIds.value.length > 0) {
-    filtered = filtered.filter((product) => productionOrderProductIds.value.includes(product.id))
+    return productList.value.filter((product) => productionOrderProductIds.value.includes(product.id))
   }
   
-  // 如果选择了分类，进一步过滤
-  if (selectedCategoryId.value) {
-    filtered = filtered.filter((product) => product.categoryId === selectedCategoryId.value)
-  }
-  
-  return filtered
+  return productList.value
 })
 
 /** 处理生产订单变更 */
 const handleProductionOrderChange = async (productionOrderId: number | undefined) => {
-  // 清空之前的产品过滤
+  // 清空之前的产品过滤和数据
   productionOrderProductIds.value = []
   formData.value.productId = undefined
+  formData.value.quantity = undefined
+  formData.value.routeId = undefined
   
   if (!productionOrderId) {
     return
@@ -232,6 +230,11 @@ const handleProductionOrderChange = async (productionOrderId: number | undefined
     // 获取生产订单详情，包含产品列表
     const orderDetail = await ProductionOrderApi.getProductionOrder(productionOrderId)
     
+    // 自动填充工单数量（从生产订单数量）
+    if (orderDetail.quantity) {
+      formData.value.quantity = orderDetail.quantity
+    }
+    
     // 如果订单有items，提取产品ID列表
     if (orderDetail.items && orderDetail.items.length > 0) {
       const productIds = orderDetail.items
@@ -240,17 +243,17 @@ const handleProductionOrderChange = async (productionOrderId: number | undefined
       
       productionOrderProductIds.value = productIds
       
-      // 如果只有一个产品，自动选中并触发产品变更（自动填充工作中心）
+      // 如果只有一个产品，自动选中并触发产品变更（自动填充工艺路线和工作中心）
       if (productIds.length === 1) {
         formData.value.productId = productIds[0]
-        // 触发产品变更，自动填充工作中心
+        // 触发产品变更，自动填充工艺路线和工作中心
         await handleProductChange(productIds[0])
       }
     } else if (orderDetail.productId) {
       // 兼容旧数据：如果订单有productId字段，也加入过滤列表
       productionOrderProductIds.value = [orderDetail.productId]
       formData.value.productId = orderDetail.productId
-      // 触发产品变更，自动填充工作中心
+      // 触发产品变更，自动填充工艺路线和工作中心
       await handleProductChange(orderDetail.productId)
     }
   } catch (error) {
@@ -259,23 +262,12 @@ const handleProductionOrderChange = async (productionOrderId: number | undefined
   }
 }
 
-/** 处理分类变更 */
-const handleCategoryChange = (categoryId: number | undefined) => {
-  // 当分类改变时，如果已选择的产品不在新分类下，清空产品选择
-  if (categoryId !== undefined && formData.value.productId) {
-    const product = filteredProductList.value.find((item) => item.id === formData.value.productId)
-    if (!product) {
-      formData.value.productId = undefined
-    }
-  }
-}
 
-/** 处理产品变更 - 自动填充工作中心 */
+/** 处理产品变更 - 加载工艺路线列表 */
 const handleProductChange = async (productId: number | undefined) => {
-  // 如果是修改模式，不自动填充（避免覆盖已有数据）
-  if (formType.value === 'update') {
-    return
-  }
+  // 清空工艺路线相关数据
+  formData.value.routeId = undefined
+  processRouteList.value = []
   
   // 如果清空了产品，清空工作中心
   if (!productId) {
@@ -289,45 +281,73 @@ const handleProductChange = async (productId: number | undefined) => {
       productId: productId,
       status: 2, // 2-生效
       pageNo: 1,
-      pageSize: 1
+      pageSize: 100 // 加载所有生效的工艺路线
     })
     
-    // 如果找到工艺路线，获取第一个工序的工作中心
+    // 加载工艺路线列表
     if (routePageResult.list && routePageResult.list.length > 0) {
-      const processRoute = routePageResult.list[0]
+      processRouteList.value = routePageResult.list
       
-      // 获取工艺路线详情（包含明细）
-      const routeDetail = await ProcessRouteApi.getProcessRoute(processRoute.id)
-      
-      // 如果工艺路线有明细，获取第一个工序的工作中心
-      if (routeDetail.items && routeDetail.items.length > 0) {
-        // 按序号排序，获取第一个工序
-        const sortedItems = [...routeDetail.items].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
-        const firstItem = sortedItems[0]
-        
-        if (firstItem.workCenterId) {
-          formData.value.workCenterId = firstItem.workCenterId
-          message.success('已自动填充工作中心')
+      // 如果是新增模式，自动选择第一个工艺路线
+      if (formType.value === 'create' && routePageResult.list.length > 0 && !formData.value.routeId) {
+        formData.value.routeId = routePageResult.list[0].id
+        // 自动填充工作中心
+        await handleRouteChange(routePageResult.list[0].id)
+      }
+      // 修改模式下，如果已有routeId且在当前列表中，保持不变；如果不在列表中，清空
+      else if (formType.value === 'update' && formData.value.routeId) {
+        const routeExists = routePageResult.list.some(route => route.id === formData.value.routeId)
+        if (!routeExists) {
+          formData.value.routeId = undefined
+          message.warning('当前工单关联的工艺路线已不在生效列表中')
         }
+      }
+    } else {
+      processRouteList.value = []
+      if (formType.value === 'create') {
+        message.warning('该产品没有生效的工艺路线')
       }
     }
   } catch (error) {
     console.error('查询工艺路线失败:', error)
+    message.error('加载工艺路线列表失败')
+  }
+}
+
+/** 处理工艺路线变更 - 自动填充工作中心 */
+const handleRouteChange = async (routeId: number | undefined) => {
+  // 如果是修改模式，不自动填充（避免覆盖已有数据）
+  if (formType.value === 'update') {
+    return
+  }
+  
+  // 如果清空了工艺路线，清空工作中心
+  if (!routeId) {
+    formData.value.workCenterId = undefined
+    return
+  }
+  
+  try {
+    // 获取工艺路线详情（包含明细）
+    const routeDetail = await ProcessRouteApi.getProcessRoute(routeId)
+    
+    // 如果工艺路线有明细，获取第一个工序的工作中心
+    if (routeDetail.items && routeDetail.items.length > 0) {
+      // 按序号排序，获取第一个工序
+      const sortedItems = [...routeDetail.items].sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
+      const firstItem = sortedItems[0]
+      
+      if (firstItem.workCenterId) {
+        formData.value.workCenterId = firstItem.workCenterId
+        message.success('已自动填充工作中心')
+      }
+    }
+  } catch (error) {
+    console.error('查询工艺路线详情失败:', error)
     // 查询失败不影响其他操作，静默处理
   }
 }
 
-/** 加载产品分类树 */
-const loadProductCategoryTree = async () => {
-  try {
-    const data = await ProductCategoryApi.getProductCategoryList()
-    const root: any = { id: 0, name: '顶级产品分类', children: [] }
-    root.children = handleTree(data, 'id', 'parentId')
-    productCategoryTree.value = [root]
-  } catch (error) {
-    console.error('加载产品分类失败:', error)
-  }
-}
 
 /** 加载列表数据 */
 const loadListData = async () => {
@@ -342,8 +362,6 @@ const loadListData = async () => {
     productList.value = products || []
     userList.value = users || []
     workCenterList.value = workCenters || []
-    // 加载产品分类树
-    await loadProductCategoryTree()
   } catch (error) {
     console.error('加载列表数据失败:', error)
   }
@@ -364,6 +382,22 @@ const open = async (type: string, id?: number) => {
     formLoading.value = true
     try {
       formData.value = await WorkOrderApi.getWorkOrder(id)
+      // 如果已有产品ID，加载工艺路线列表（不触发自动选择）
+      if (formData.value.productId) {
+        try {
+          const routePageResult = await ProcessRouteApi.getProcessRoutePage({
+            productId: formData.value.productId,
+            status: 2, // 2-生效
+            pageNo: 1,
+            pageSize: 100
+          })
+          if (routePageResult.list && routePageResult.list.length > 0) {
+            processRouteList.value = routePageResult.list
+          }
+        } catch (error) {
+          console.error('加载工艺路线列表失败:', error)
+        }
+      }
     } finally {
       formLoading.value = false
     }
@@ -381,7 +415,21 @@ const submitForm = async () => {
   try {
     // 复制表单数据，排除实际开始时间和实际结束时间（由系统根据状态自动设置）
     const { actualStartTime, actualEndTime, ...submitData } = formData.value
+    
+    // 补充产品名称（后端需要）
+    if (submitData.productId) {
+      const product = productList.value.find(p => p.id === submitData.productId)
+      if (product) {
+        submitData.productName = product.name
+      } else {
+        message.error('产品信息不存在，请重新选择产品')
+        return
+      }
+    }
+    
     const data = submitData as unknown as WorkOrder
+    console.log('提交工单数据:', data)
+    console.log('工艺路线ID (routeId):', data.routeId)
     if (formType.value === 'create') {
       await WorkOrderApi.createWorkOrder(data)
       message.success(t('common.createSuccess'))
@@ -404,6 +452,7 @@ const resetForm = () => {
     workOrderNo: undefined,
     productionOrderId: undefined,
     productId: undefined,
+    routeId: undefined,
     quantity: undefined,
     completedQuantity: undefined,
     qualifiedQuantity: undefined,
@@ -419,8 +468,8 @@ const resetForm = () => {
     instruction: undefined,
     remark: undefined
   }
-  selectedCategoryId.value = undefined // 重置分类选择
   productionOrderProductIds.value = [] // 重置生产订单产品过滤
+  processRouteList.value = [] // 重置工艺路线列表
   formRef.value?.resetFields()
 }
 </script>

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.*;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * ERP 设备台账 DO
@@ -58,7 +58,7 @@ public class EquipmentDO extends BaseDO {
     /**
      * 购置日期
      */
-    private LocalDate purchaseDate;
+    private LocalDateTime purchaseDate;
     /**
      * 购置价格
      */

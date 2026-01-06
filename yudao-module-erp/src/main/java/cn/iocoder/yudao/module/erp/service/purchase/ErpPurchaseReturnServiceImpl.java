@@ -186,13 +186,16 @@ public class ErpPurchaseReturnServiceImpl implements ErpPurchaseReturnService {
     @Override
     public void updatePurchaseReturnRefundPrice(Long id, BigDecimal refundPrice) {
         ErpPurchaseReturnDO purchaseReturn = purchaseReturnMapper.selectById(id);
-        if (purchaseReturn.getRefundPrice().equals(refundPrice)) {
+        // 处理 NULL 值，使用 ObjectUtil.equal 安全比较
+        if (ObjectUtil.equal(purchaseReturn.getRefundPrice(), refundPrice)) {
             return;
         }
-        if (refundPrice.compareTo(purchaseReturn.getTotalPrice()) > 0) {
-            throw exception(PURCHASE_RETURN_FAIL_REFUND_PRICE_EXCEED, refundPrice, purchaseReturn.getTotalPrice());
+        // 处理 NULL 值，如果 refundPrice 为 NULL，则视为 0
+        BigDecimal actualRefundPrice = refundPrice != null ? refundPrice : BigDecimal.ZERO;
+        if (actualRefundPrice.compareTo(purchaseReturn.getTotalPrice()) > 0) {
+            throw exception(PURCHASE_RETURN_FAIL_REFUND_PRICE_EXCEED, actualRefundPrice, purchaseReturn.getTotalPrice());
         }
-        purchaseReturnMapper.updateById(new ErpPurchaseReturnDO().setId(id).setRefundPrice(refundPrice));
+        purchaseReturnMapper.updateById(new ErpPurchaseReturnDO().setId(id).setRefundPrice(actualRefundPrice));
     }
 
     private List<ErpPurchaseReturnItemDO> validatePurchaseReturnItems(List<ErpPurchaseReturnSaveReqVO.Item> list) {

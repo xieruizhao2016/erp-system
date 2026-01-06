@@ -190,13 +190,16 @@ public class ErpPurchaseInServiceImpl implements ErpPurchaseInService {
     @Override
     public void updatePurchaseInPaymentPrice(Long id, BigDecimal paymentPrice) {
         ErpPurchaseInDO purchaseIn = purchaseInMapper.selectById(id);
-        if (purchaseIn.getPaymentPrice().equals(paymentPrice)) {
+        // 处理 NULL 值，使用 ObjectUtil.equal 安全比较
+        if (ObjectUtil.equal(purchaseIn.getPaymentPrice(), paymentPrice)) {
             return;
         }
-        if (paymentPrice.compareTo(purchaseIn.getTotalPrice()) > 0) {
-            throw exception(PURCHASE_IN_FAIL_PAYMENT_PRICE_EXCEED, paymentPrice, purchaseIn.getTotalPrice());
+        // 处理 NULL 值，如果 paymentPrice 为 NULL，则视为 0
+        BigDecimal actualPaymentPrice = paymentPrice != null ? paymentPrice : BigDecimal.ZERO;
+        if (actualPaymentPrice.compareTo(purchaseIn.getTotalPrice()) > 0) {
+            throw exception(PURCHASE_IN_FAIL_PAYMENT_PRICE_EXCEED, actualPaymentPrice, purchaseIn.getTotalPrice());
         }
-        purchaseInMapper.updateById(new ErpPurchaseInDO().setId(id).setPaymentPrice(paymentPrice));
+        purchaseInMapper.updateById(new ErpPurchaseInDO().setId(id).setPaymentPrice(actualPaymentPrice));
     }
 
     private List<ErpPurchaseInItemDO> validatePurchaseInItems(List<ErpPurchaseInSaveReqVO.Item> list) {

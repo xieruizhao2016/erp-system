@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import cn.iocoder.yudao.module.erp.controller.admin.finance.receivable.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.receivable.ErpFinanceReceivableDO;
@@ -228,6 +229,37 @@ public class ErpFinanceReceivableServiceImpl implements ErpFinanceReceivableServ
 
             remainingAmount = remainingAmount.subtract(writeOffAmount);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateReceivedAmountByOrderId(Long orderId, BigDecimal receivedAmount) {
+        if (orderId == null || receivedAmount == null || receivedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        // 根据订单ID查找应收账款
+        ErpFinanceReceivableDO receivable = financeReceivableMapper.selectByOrderId(orderId);
+        if (receivable == null) {
+            return; // 如果不存在应收账款，直接返回
+        }
+
+        // 更新已收金额和余额
+        BigDecimal newReceivedAmount = (receivable.getReceivedAmount() != null 
+            ? receivable.getReceivedAmount() : BigDecimal.ZERO).add(receivedAmount);
+        BigDecimal newBalance = (receivable.getBalance() != null 
+            ? receivable.getBalance() : BigDecimal.ZERO).subtract(receivedAmount);
+        
+        // 确保余额不为负数
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            newBalance = BigDecimal.ZERO;
+        }
+
+        ErpFinanceReceivableDO updateObj = new ErpFinanceReceivableDO();
+        updateObj.setId(receivable.getId());
+        updateObj.setReceivedAmount(newReceivedAmount);
+        updateObj.setBalance(newBalance);
+        financeReceivableMapper.updateById(updateObj);
     }
 
 }

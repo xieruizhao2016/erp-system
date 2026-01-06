@@ -5,12 +5,17 @@ import lombok.*;
 import java.util.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import cn.idev.excel.annotation.*;
 
 @Schema(description = "管理后台 - 应付账款 Response VO")
 @Data
 @ExcelIgnoreUnannotated
 public class ErpFinancePayableRespVO {
+
+    @Schema(description = "编号")
+    @ExcelProperty("编号")
+    private Long id;
 
     @Schema(description = "单据号")
     @ExcelProperty("单据号")
@@ -20,9 +25,17 @@ public class ErpFinancePayableRespVO {
     @ExcelProperty("供应商编号（关联 erp_supplier.id）")
     private Long supplierId;
 
+    @Schema(description = "供应商名称")
+    @ExcelProperty("供应商名称")
+    private String supplierName;
+
     @Schema(description = "采购订单编号（关联 erp_purchase_order.id）")
     @ExcelProperty("采购订单编号（关联 erp_purchase_order.id）")
     private Long orderId;
+
+    @Schema(description = "关联订单单号")
+    @ExcelProperty("关联订单单号")
+    private String orderNo;
 
     @Schema(description = "应付金额，单位：元")
     @ExcelProperty("应付金额，单位：元")
@@ -47,5 +60,9 @@ public class ErpFinancePayableRespVO {
     @Schema(description = "备注")
     @ExcelProperty("备注")
     private String remark;
+
+    @Schema(description = "创建时间")
+    @ExcelProperty("创建时间")
+    private LocalDateTime createTime;
 
 }

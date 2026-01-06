@@ -130,13 +130,14 @@ const handleOpenSaleOut = () => {
 }
 const handleAddSaleOut = (rows: SaleOutVO[]) => {
   rows.forEach((row) => {
+    const receiptPrice = row.receiptPrice || 0
     formData.value.push({
       bizId: row.id,
       bizType: ErpBizType.SALE_OUT,
       bizNo: row.no,
       totalPrice: row.totalPrice,
-      receiptedPrice: row.receiptPrice,
-      receiptPrice: row.totalPrice - row.receiptPrice
+      receiptedPrice: receiptPrice,
+      receiptPrice: row.totalPrice - receiptPrice
     })
   })
 }
@@ -152,13 +153,14 @@ const handleOpenSaleReturn = () => {
 }
 const handleAddSaleReturn = (rows: SaleReturnVO[]) => {
   rows.forEach((row) => {
+    const refundPrice = row.refundPrice || 0
     formData.value.push({
       bizId: row.id,
       bizType: ErpBizType.SALE_RETURN,
       bizNo: row.no,
       totalPrice: -row.totalPrice,
-      receiptedPrice: -row.refundPrice,
-      receiptPrice: -row.totalPrice + row.refundPrice
+      receiptedPrice: -refundPrice,
+      receiptPrice: -row.totalPrice + refundPrice
     })
   })
 }

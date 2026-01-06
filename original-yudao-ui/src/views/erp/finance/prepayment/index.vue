@@ -93,14 +93,6 @@
             >
               编辑
             </el-button>
-            <el-button
-              link
-              type="danger"
-              @click="handleDelete(scope.row.id)"
-              v-hasPermi="['erp:finance-prepayment:delete']"
-            >
-              删除
-            </el-button>
           </template>
         </el-table-column>
       </el-table>

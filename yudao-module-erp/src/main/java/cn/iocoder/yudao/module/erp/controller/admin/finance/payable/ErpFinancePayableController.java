@@ -27,7 +27,15 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
 import cn.iocoder.yudao.module.erp.controller.admin.finance.payable.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.payable.ErpFinancePayableDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpSupplierDO;
 import cn.iocoder.yudao.module.erp.service.finance.payable.ErpFinancePayableService;
+import cn.iocoder.yudao.module.erp.service.purchase.ErpSupplierService;
+import cn.iocoder.yudao.module.erp.service.purchase.ErpPurchaseOrderService;
+import cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpPurchaseOrderDO;
+import cn.iocoder.yudao.module.erp.dal.mysql.purchase.ErpPurchaseOrderMapper;
+import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - 应付账款")
 @RestController
@@ -37,6 +45,15 @@ public class ErpFinancePayableController {
 
     @Resource
     private ErpFinancePayableService financePayableService;
+
+    @Resource
+    private ErpSupplierService supplierService;
+
+    @Resource
+    private ErpPurchaseOrderService purchaseOrderService;
+
+    @Resource
+    private ErpPurchaseOrderMapper purchaseOrderMapper;
 
     @PostMapping("/create")
     @Operation(summary = "创建应付账款", description = "支持手动创建初始应付账款或没有关联订单的借贷记录。如果不提供单据号，将自动生成；如果不提供余额，将自动计算（余额=应付金额-已付金额）")
@@ -77,7 +94,53 @@ public class ErpFinancePayableController {
     @PreAuthorize("@ss.hasPermission('erp:finance-payable:query')")
     public CommonResult<ErpFinancePayableRespVO> getFinancePayable(@RequestParam("id") Long id) {
         ErpFinancePayableDO financePayable = financePayableService.getFinancePayable(id);
-        return success(BeanUtils.toBean(financePayable, ErpFinancePayableRespVO.class));
+        ErpFinancePayableRespVO respVO = BeanUtils.toBean(financePayable, ErpFinancePayableRespVO.class);
+        // 填充供应商名称
+        if (respVO != null && respVO.getSupplierId() != null) {
+            ErpSupplierDO supplier = supplierService.getSupplier(respVO.getSupplierId());
+            if (supplier != null) {
+                respVO.setSupplierName(supplier.getName());
+            }
+        }
+        // 填充订单单号
+        if (respVO != null && respVO.getOrderId() != null) {
+            ErpPurchaseOrderDO order = purchaseOrderService.getPurchaseOrder(respVO.getOrderId());
+            if (order != null) {
+                respVO.setOrderNo(order.getNo());
+            }
+        }
+        // 如果订单号为空，尝试从remark字段提取
+        if (respVO != null && (respVO.getOrderNo() == null || respVO.getOrderNo().isEmpty())) {
+            String orderNo = extractOrderNoFromRemark(respVO.getRemark());
+            if (orderNo != null && !orderNo.isEmpty()) {
+                respVO.setOrderNo(orderNo);
+            }
+        }
+        return success(respVO);
+    }
+
+    /**
+     * 从remark字段中提取订单号
+     * remark格式示例："自动生成自采购订单：CG20260101001" 或 "自动生成自采购订单: CGDD20260104000001"
+     */
+    private String extractOrderNoFromRemark(String remark) {
+        if (remark == null || remark.isEmpty()) {
+            return null;
+        }
+        // 匹配 "自动生成自采购订单：" 或 "自动生成自销售订单：" 后面的订单号
+        // 支持中文冒号和英文冒号，以及可能的空格
+        String pattern = "自动生成自(?:采购|销售)订单[：:](?:\\s*)([^（\\s]+)";
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+        java.util.regex.Matcher m = p.matcher(remark);
+        if (m.find()) {
+            String orderNo = m.group(1);
+            // 去除可能的尾随空格
+            if (orderNo != null) {
+                orderNo = orderNo.trim();
+            }
+            return orderNo;
+        }
+        return null;
     }
 
     @GetMapping("/page")
@@ -85,7 +148,43 @@ public class ErpFinancePayableController {
     @PreAuthorize("@ss.hasPermission('erp:finance-payable:query')")
     public CommonResult<PageResult<ErpFinancePayableRespVO>> getFinancePayablePage(@Valid ErpFinancePayablePageReqVO pageReqVO) {
         PageResult<ErpFinancePayableDO> pageResult = financePayableService.getFinancePayablePage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, ErpFinancePayableRespVO.class));
+        // 获取供应商信息
+        Set<Long> supplierIds = convertSet(pageResult.getList(), ErpFinancePayableDO::getSupplierId, 
+                payable -> payable.getSupplierId() != null);
+        Map<Long, ErpSupplierDO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() :
+                supplierService.getSupplierMap(supplierIds);
+        // 获取订单信息
+        Set<Long> orderIds = convertSet(pageResult.getList(), ErpFinancePayableDO::getOrderId, 
+                payable -> payable.getOrderId() != null);
+        Map<Long, ErpPurchaseOrderDO> orderMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(orderIds)) {
+            // 批量查询订单
+            List<ErpPurchaseOrderDO> orders = purchaseOrderMapper.selectBatchIds(orderIds);
+            if (CollUtil.isNotEmpty(orders)) {
+                for (ErpPurchaseOrderDO order : orders) {
+                    if (order != null && order.getId() != null && order.getNo() != null) {
+                        orderMap.put(order.getId(), order);
+                    }
+                }
+            }
+        }
+        // 转换为 VO 并填充供应商名称和订单单号
+        return success(BeanUtils.toBean(pageResult, ErpFinancePayableRespVO.class, payable -> {
+            MapUtils.findAndThen(supplierMap, payable.getSupplierId(), supplier -> {
+                payable.setSupplierName(supplier.getName());
+            });
+            // 优先从订单表获取订单号
+            MapUtils.findAndThen(orderMap, payable.getOrderId(), order -> {
+                payable.setOrderNo(order.getNo());
+            });
+            // 如果订单号为空，尝试从remark字段提取
+            if (payable.getOrderNo() == null || payable.getOrderNo().isEmpty()) {
+                String orderNo = extractOrderNoFromRemark(payable.getRemark());
+                if (orderNo != null && !orderNo.isEmpty()) {
+                    payable.setOrderNo(orderNo);
+                }
+            }
+        }));
     }
 
     @GetMapping("/export-excel")
@@ -96,9 +195,45 @@ public class ErpFinancePayableController {
               HttpServletResponse response) throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<ErpFinancePayableDO> list = financePayableService.getFinancePayablePage(pageReqVO).getList();
+        // 获取供应商信息
+        Set<Long> supplierIds = convertSet(list, ErpFinancePayableDO::getSupplierId, 
+                payable -> payable.getSupplierId() != null);
+        Map<Long, ErpSupplierDO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() :
+                supplierService.getSupplierMap(supplierIds);
+        // 获取订单信息
+        Set<Long> orderIds = convertSet(list, ErpFinancePayableDO::getOrderId, 
+                payable -> payable.getOrderId() != null);
+        Map<Long, ErpPurchaseOrderDO> orderMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(orderIds)) {
+            // 批量查询订单
+            List<ErpPurchaseOrderDO> orders = purchaseOrderMapper.selectBatchIds(orderIds);
+            if (CollUtil.isNotEmpty(orders)) {
+                for (ErpPurchaseOrderDO order : orders) {
+                    if (order != null && order.getId() != null && order.getNo() != null) {
+                        orderMap.put(order.getId(), order);
+                    }
+                }
+            }
+        }
+        // 转换为 VO 并填充供应商名称和订单单号
+        List<ErpFinancePayableRespVO> respList = BeanUtils.toBean(list, ErpFinancePayableRespVO.class, payable -> {
+            MapUtils.findAndThen(supplierMap, payable.getSupplierId(), supplier -> {
+                payable.setSupplierName(supplier.getName());
+            });
+            // 优先从订单表获取订单号
+            MapUtils.findAndThen(orderMap, payable.getOrderId(), order -> {
+                payable.setOrderNo(order.getNo());
+            });
+            // 如果订单号为空，尝试从remark字段提取
+            if (payable.getOrderNo() == null || payable.getOrderNo().isEmpty()) {
+                String orderNo = extractOrderNoFromRemark(payable.getRemark());
+                if (orderNo != null && !orderNo.isEmpty()) {
+                    payable.setOrderNo(orderNo);
+                }
+            }
+        });
         // 导出 Excel
-        ExcelUtils.write(response, "应付账款.xls", "数据", ErpFinancePayableRespVO.class,
-                        BeanUtils.toBean(list, ErpFinancePayableRespVO.class));
+        ExcelUtils.write(response, "应付账款.xls", "数据", ErpFinancePayableRespVO.class, respList);
     }
 
 }

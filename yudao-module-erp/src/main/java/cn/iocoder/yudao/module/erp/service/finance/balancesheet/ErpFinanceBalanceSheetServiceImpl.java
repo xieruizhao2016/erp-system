@@ -2,40 +2,40 @@ package cn.iocoder.yudao.module.erp.service.finance.balancesheet;
 
 import cn.hutool.core.collection.CollUtil;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
-import java.time.LocalDate;
 import javax.annotation.Resource;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.validation.annotation.Validated;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.context.annotation.Lazy;
 
 import java.util.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import cn.iocoder.yudao.module.erp.controller.admin.finance.balancesheet.vo.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.balancesheet.ErpFinanceBalanceSheetDO;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.finance.balancesheet.ErpFinanceBalanceSheetMapper;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 资产负债表 Service 实现类
@@ -158,7 +158,7 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
 
         // 创建新的资产负债表
         ErpFinanceBalanceSheetDO balanceSheet = new ErpFinanceBalanceSheetDO();
-        balanceSheet.setPeriodDate(periodDate);
+        balanceSheet.setPeriodDate(periodDate.atStartOfDay());
         balanceSheet.setStatus(10); // 未审核
         financeBalanceSheetMapper.insert(balanceSheet);
         return balanceSheet;

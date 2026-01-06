@@ -8,7 +8,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * ERP 库存盘点单 DO

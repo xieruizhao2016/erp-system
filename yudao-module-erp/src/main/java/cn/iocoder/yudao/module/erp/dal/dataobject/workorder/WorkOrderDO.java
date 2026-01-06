@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.*;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * ERP 工单主 DO
@@ -51,6 +51,10 @@ public class WorkOrderDO extends BaseDO {
      * 产品名称
      */
     private String productName;
+    /**
+     * 工艺路线ID
+     */
+    private Long routeId;
     /**
      * 工单数量
      */

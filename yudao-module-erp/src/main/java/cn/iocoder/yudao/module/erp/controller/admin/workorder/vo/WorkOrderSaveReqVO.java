@@ -7,7 +7,7 @@ import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Schema(description = "管理后台 - ERP 工单主新增/修改 Request VO")
 @Data
@@ -31,6 +31,9 @@ public class WorkOrderSaveReqVO {
     @NotEmpty(message = "产品名称不能为空")
     private String productName;
 
+    @Schema(description = "工艺路线ID", example = "12345")
+    private Long routeId;
+
     @Schema(description = "工单数量", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "工单数量不能为空")
     private BigDecimal quantity;
@@ -41,8 +44,7 @@ public class WorkOrderSaveReqVO {
     @Schema(description = "合格数量")
     private BigDecimal qualifiedQuantity;
 
-    @Schema(description = "工作中心ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "5867")
-    @NotNull(message = "工作中心ID不能为空")
+    @Schema(description = "工作中心ID", example = "5867")
     private Long workCenterId;
 
     @Schema(description = "主管ID", example = "8062")

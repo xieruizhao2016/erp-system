@@ -27,7 +27,12 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
 import cn.iocoder.yudao.module.erp.controller.admin.finance.prereceipt.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.prereceipt.ErpFinancePrereceiptDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpCustomerDO;
 import cn.iocoder.yudao.module.erp.service.finance.prereceipt.ErpFinancePrereceiptService;
+import cn.iocoder.yudao.module.erp.service.sale.ErpCustomerService;
+import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - 预收款")
 @RestController
@@ -37,6 +42,9 @@ public class ErpFinancePrereceiptController {
 
     @Resource
     private ErpFinancePrereceiptService financePrereceiptService;
+
+    @Resource
+    private ErpCustomerService customerService;
 
     @PostMapping("/create")
     @Operation(summary = "创建预收款")
@@ -77,7 +85,15 @@ public class ErpFinancePrereceiptController {
     @PreAuthorize("@ss.hasPermission('erp:finance-prereceipt:query')")
     public CommonResult<ErpFinancePrereceiptRespVO> getFinancePrereceipt(@RequestParam("id") Long id) {
         ErpFinancePrereceiptDO financePrereceipt = financePrereceiptService.getFinancePrereceipt(id);
-        return success(BeanUtils.toBean(financePrereceipt, ErpFinancePrereceiptRespVO.class));
+        ErpFinancePrereceiptRespVO respVO = BeanUtils.toBean(financePrereceipt, ErpFinancePrereceiptRespVO.class);
+        // 填充客户名称
+        if (respVO != null && respVO.getCustomerId() != null) {
+            ErpCustomerDO customer = customerService.getCustomer(respVO.getCustomerId());
+            if (customer != null) {
+                respVO.setCustomerName(customer.getName());
+            }
+        }
+        return success(respVO);
     }
 
     @GetMapping("/page")
@@ -85,7 +101,17 @@ public class ErpFinancePrereceiptController {
     @PreAuthorize("@ss.hasPermission('erp:finance-prereceipt:query')")
     public CommonResult<PageResult<ErpFinancePrereceiptRespVO>> getFinancePrereceiptPage(@Valid ErpFinancePrereceiptPageReqVO pageReqVO) {
         PageResult<ErpFinancePrereceiptDO> pageResult = financePrereceiptService.getFinancePrereceiptPage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, ErpFinancePrereceiptRespVO.class));
+        // 获取客户信息
+        Set<Long> customerIds = convertSet(pageResult.getList(), ErpFinancePrereceiptDO::getCustomerId, 
+                prereceipt -> prereceipt.getCustomerId() != null);
+        Map<Long, ErpCustomerDO> customerMap = CollUtil.isEmpty(customerIds) ? Collections.emptyMap() :
+                customerService.getCustomerMap(customerIds);
+        // 转换为 VO 并填充客户名称
+        return success(BeanUtils.toBean(pageResult, ErpFinancePrereceiptRespVO.class, prereceipt -> {
+            MapUtils.findAndThen(customerMap, prereceipt.getCustomerId(), customer -> {
+                prereceipt.setCustomerName(customer.getName());
+            });
+        }));
     }
 
     @GetMapping("/export-excel")
@@ -96,9 +122,19 @@ public class ErpFinancePrereceiptController {
               HttpServletResponse response) throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<ErpFinancePrereceiptDO> list = financePrereceiptService.getFinancePrereceiptPage(pageReqVO).getList();
+        // 获取客户信息
+        Set<Long> customerIds = convertSet(list, ErpFinancePrereceiptDO::getCustomerId, 
+                prereceipt -> prereceipt.getCustomerId() != null);
+        Map<Long, ErpCustomerDO> customerMap = CollUtil.isEmpty(customerIds) ? Collections.emptyMap() :
+                customerService.getCustomerMap(customerIds);
+        // 转换为 VO 并填充客户名称
+        List<ErpFinancePrereceiptRespVO> respList = BeanUtils.toBean(list, ErpFinancePrereceiptRespVO.class, prereceipt -> {
+            MapUtils.findAndThen(customerMap, prereceipt.getCustomerId(), customer -> {
+                prereceipt.setCustomerName(customer.getName());
+            });
+        });
         // 导出 Excel
-        ExcelUtils.write(response, "预收款.xls", "数据", ErpFinancePrereceiptRespVO.class,
-                        BeanUtils.toBean(list, ErpFinancePrereceiptRespVO.class));
+        ExcelUtils.write(response, "预收款.xls", "数据", ErpFinancePrereceiptRespVO.class, respList);
     }
 
 }

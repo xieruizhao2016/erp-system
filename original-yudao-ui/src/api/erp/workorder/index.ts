@@ -8,6 +8,7 @@ export interface WorkOrder {
           productionOrderId?: number; // 生产订单ID
           productId?: number; // 产品ID
           productName?: string; // 产品名称
+          routeId?: number; // 工艺路线ID
           quantity?: number; // 工单数量
           completedQuantity: number; // 完成数量
           qualifiedQuantity: number; // 合格数量

@@ -18,7 +18,7 @@
           <el-form-item label="收款时间" prop="receiptTime">
             <el-date-picker
               v-model="formData.receiptTime"
-              type="date"
+              type="datetime"
               value-format="x"
               placeholder="选择收款时间"
               class="!w-1/1"

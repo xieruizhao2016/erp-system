@@ -27,7 +27,15 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
 import cn.iocoder.yudao.module.erp.controller.admin.finance.receivable.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.receivable.ErpFinanceReceivableDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpCustomerDO;
 import cn.iocoder.yudao.module.erp.service.finance.receivable.ErpFinanceReceivableService;
+import cn.iocoder.yudao.module.erp.service.sale.ErpCustomerService;
+import cn.iocoder.yudao.module.erp.service.sale.ErpSaleOrderService;
+import cn.iocoder.yudao.module.erp.dal.dataobject.sale.ErpSaleOrderDO;
+import cn.iocoder.yudao.module.erp.dal.mysql.sale.ErpSaleOrderMapper;
+import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - 应收账款")
 @RestController
@@ -37,6 +45,15 @@ public class ErpFinanceReceivableController {
 
     @Resource
     private ErpFinanceReceivableService financeReceivableService;
+
+    @Resource
+    private ErpCustomerService customerService;
+
+    @Resource
+    private ErpSaleOrderService saleOrderService;
+
+    @Resource
+    private ErpSaleOrderMapper saleOrderMapper;
 
     @PostMapping("/create")
     @Operation(summary = "创建应收账款", description = "支持手动创建初始应收账款或没有关联订单的借贷记录。如果不提供单据号，将自动生成；如果不提供余额，将自动计算（余额=应收金额-已收金额）")
@@ -77,7 +94,53 @@ public class ErpFinanceReceivableController {
     @PreAuthorize("@ss.hasPermission('erp:finance-receivable:query')")
     public CommonResult<ErpFinanceReceivableRespVO> getFinanceReceivable(@RequestParam("id") Long id) {
         ErpFinanceReceivableDO financeReceivable = financeReceivableService.getFinanceReceivable(id);
-        return success(BeanUtils.toBean(financeReceivable, ErpFinanceReceivableRespVO.class));
+        ErpFinanceReceivableRespVO respVO = BeanUtils.toBean(financeReceivable, ErpFinanceReceivableRespVO.class);
+        // 填充客户名称
+        if (respVO != null && respVO.getCustomerId() != null) {
+            ErpCustomerDO customer = customerService.getCustomer(respVO.getCustomerId());
+            if (customer != null) {
+                respVO.setCustomerName(customer.getName());
+            }
+        }
+        // 填充订单单号
+        if (respVO != null && respVO.getOrderId() != null) {
+            ErpSaleOrderDO order = saleOrderService.getSaleOrder(respVO.getOrderId());
+            if (order != null) {
+                respVO.setOrderNo(order.getNo());
+            }
+        }
+        // 如果订单号为空，尝试从remark字段提取
+        if (respVO != null && (respVO.getOrderNo() == null || respVO.getOrderNo().isEmpty())) {
+            String orderNo = extractOrderNoFromRemark(respVO.getRemark());
+            if (orderNo != null && !orderNo.isEmpty()) {
+                respVO.setOrderNo(orderNo);
+            }
+        }
+        return success(respVO);
+    }
+
+    /**
+     * 从remark字段中提取订单号
+     * remark格式示例："自动生成自销售订单：XS20260101001" 或 "自动生成自销售订单: XSDD20260104000001"
+     */
+    private String extractOrderNoFromRemark(String remark) {
+        if (remark == null || remark.isEmpty()) {
+            return null;
+        }
+        // 匹配 "自动生成自采购订单：" 或 "自动生成自销售订单：" 后面的订单号
+        // 支持中文冒号和英文冒号，以及可能的空格
+        String pattern = "自动生成自(?:采购|销售)订单[：:](?:\\s*)([^（\\s]+)";
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+        java.util.regex.Matcher m = p.matcher(remark);
+        if (m.find()) {
+            String orderNo = m.group(1);
+            // 去除可能的尾随空格
+            if (orderNo != null) {
+                orderNo = orderNo.trim();
+            }
+            return orderNo;
+        }
+        return null;
     }
 
     @GetMapping("/page")
@@ -85,7 +148,43 @@ public class ErpFinanceReceivableController {
     @PreAuthorize("@ss.hasPermission('erp:finance-receivable:query')")
     public CommonResult<PageResult<ErpFinanceReceivableRespVO>> getFinanceReceivablePage(@Valid ErpFinanceReceivablePageReqVO pageReqVO) {
         PageResult<ErpFinanceReceivableDO> pageResult = financeReceivableService.getFinanceReceivablePage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, ErpFinanceReceivableRespVO.class));
+        // 获取客户信息
+        Set<Long> customerIds = convertSet(pageResult.getList(), ErpFinanceReceivableDO::getCustomerId, 
+                receivable -> receivable.getCustomerId() != null);
+        Map<Long, ErpCustomerDO> customerMap = CollUtil.isEmpty(customerIds) ? Collections.emptyMap() :
+                customerService.getCustomerMap(customerIds);
+        // 获取订单信息
+        Set<Long> orderIds = convertSet(pageResult.getList(), ErpFinanceReceivableDO::getOrderId, 
+                receivable -> receivable.getOrderId() != null);
+        Map<Long, ErpSaleOrderDO> orderMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(orderIds)) {
+            // 批量查询订单
+            List<ErpSaleOrderDO> orders = saleOrderMapper.selectBatchIds(orderIds);
+            if (CollUtil.isNotEmpty(orders)) {
+                for (ErpSaleOrderDO order : orders) {
+                    if (order != null && order.getId() != null && order.getNo() != null) {
+                        orderMap.put(order.getId(), order);
+                    }
+                }
+            }
+        }
+        // 转换为 VO 并填充客户名称和订单单号
+        return success(BeanUtils.toBean(pageResult, ErpFinanceReceivableRespVO.class, receivable -> {
+            MapUtils.findAndThen(customerMap, receivable.getCustomerId(), customer -> {
+                receivable.setCustomerName(customer.getName());
+            });
+            // 优先从订单表获取订单号
+            MapUtils.findAndThen(orderMap, receivable.getOrderId(), order -> {
+                receivable.setOrderNo(order.getNo());
+            });
+            // 如果订单号为空，尝试从remark字段提取
+            if (receivable.getOrderNo() == null || receivable.getOrderNo().isEmpty()) {
+                String orderNo = extractOrderNoFromRemark(receivable.getRemark());
+                if (orderNo != null && !orderNo.isEmpty()) {
+                    receivable.setOrderNo(orderNo);
+                }
+            }
+        }));
     }
 
     @GetMapping("/export-excel")
@@ -96,9 +195,45 @@ public class ErpFinanceReceivableController {
               HttpServletResponse response) throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<ErpFinanceReceivableDO> list = financeReceivableService.getFinanceReceivablePage(pageReqVO).getList();
+        // 获取客户信息
+        Set<Long> customerIds = convertSet(list, ErpFinanceReceivableDO::getCustomerId, 
+                receivable -> receivable.getCustomerId() != null);
+        Map<Long, ErpCustomerDO> customerMap = CollUtil.isEmpty(customerIds) ? Collections.emptyMap() :
+                customerService.getCustomerMap(customerIds);
+        // 获取订单信息
+        Set<Long> orderIds = convertSet(list, ErpFinanceReceivableDO::getOrderId, 
+                receivable -> receivable.getOrderId() != null);
+        Map<Long, ErpSaleOrderDO> orderMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(orderIds)) {
+            // 批量查询订单
+            List<ErpSaleOrderDO> orders = saleOrderMapper.selectBatchIds(orderIds);
+            if (CollUtil.isNotEmpty(orders)) {
+                for (ErpSaleOrderDO order : orders) {
+                    if (order != null && order.getId() != null && order.getNo() != null) {
+                        orderMap.put(order.getId(), order);
+                    }
+                }
+            }
+        }
+        // 转换为 VO 并填充客户名称和订单单号
+        List<ErpFinanceReceivableRespVO> respList = BeanUtils.toBean(list, ErpFinanceReceivableRespVO.class, receivable -> {
+            MapUtils.findAndThen(customerMap, receivable.getCustomerId(), customer -> {
+                receivable.setCustomerName(customer.getName());
+            });
+            // 优先从订单表获取订单号
+            MapUtils.findAndThen(orderMap, receivable.getOrderId(), order -> {
+                receivable.setOrderNo(order.getNo());
+            });
+            // 如果订单号为空，尝试从remark字段提取
+            if (receivable.getOrderNo() == null || receivable.getOrderNo().isEmpty()) {
+                String orderNo = extractOrderNoFromRemark(receivable.getRemark());
+                if (orderNo != null && !orderNo.isEmpty()) {
+                    receivable.setOrderNo(orderNo);
+                }
+            }
+        });
         // 导出 Excel
-        ExcelUtils.write(response, "应收账款.xls", "数据", ErpFinanceReceivableRespVO.class,
-                        BeanUtils.toBean(list, ErpFinanceReceivableRespVO.class));
+        ExcelUtils.write(response, "应收账款.xls", "数据", ErpFinanceReceivableRespVO.class, respList);
     }
 
 }

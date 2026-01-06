@@ -198,13 +198,16 @@ public class ErpSaleReturnServiceImpl implements ErpSaleReturnService {
     @Override
     public void updateSaleReturnRefundPrice(Long id, BigDecimal refundPrice) {
         ErpSaleReturnDO saleReturn = saleReturnMapper.selectById(id);
-        if (saleReturn.getRefundPrice().equals(refundPrice)) {
+        // 处理 NULL 值，使用 ObjectUtil.equal 安全比较
+        if (ObjectUtil.equal(saleReturn.getRefundPrice(), refundPrice)) {
             return;
         }
-        if (refundPrice.compareTo(saleReturn.getTotalPrice()) > 0) {
-            throw exception(SALE_RETURN_FAIL_REFUND_PRICE_EXCEED, refundPrice, saleReturn.getTotalPrice());
+        // 处理 NULL 值，如果 refundPrice 为 NULL，则视为 0
+        BigDecimal actualRefundPrice = refundPrice != null ? refundPrice : BigDecimal.ZERO;
+        if (actualRefundPrice.compareTo(saleReturn.getTotalPrice()) > 0) {
+            throw exception(SALE_RETURN_FAIL_REFUND_PRICE_EXCEED, actualRefundPrice, saleReturn.getTotalPrice());
         }
-        saleReturnMapper.updateById(new ErpSaleReturnDO().setId(id).setRefundPrice(refundPrice));
+        saleReturnMapper.updateById(new ErpSaleReturnDO().setId(id).setRefundPrice(actualRefundPrice));
     }
 
     private List<ErpSaleReturnItemDO> validateSaleReturnItems(List<ErpSaleReturnSaveReqVO.Item> list) {

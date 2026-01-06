@@ -75,6 +75,7 @@
       <el-table v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
         <el-table-column label="单据号" align="center" prop="no" min-width="150" />
         <el-table-column label="供应商" align="center" prop="supplierName" min-width="120" />
+        <el-table-column label="关联订单单号" align="center" prop="orderNo" min-width="150" />
         <el-table-column label="应付金额" align="center" prop="amount" :formatter="erpPriceTableColumnFormatter" />
         <el-table-column label="已付金额" align="center" prop="paidAmount" :formatter="erpPriceTableColumnFormatter" />
         <el-table-column label="余额" align="center" prop="balance" :formatter="erpPriceTableColumnFormatter" />
@@ -106,6 +107,7 @@
               type="danger"
               @click="handleDelete(scope.row.id)"
               v-hasPermi="['erp:finance-payable:delete']"
+              v-if="scope.row.balance === 0 || scope.row.balance === null"
             >
               删除
             </el-button>

@@ -3,7 +3,10 @@
 # 重新编译和重启后端服务脚本
 # 用于在修改后端代码后重新部署
 
-cd "$(dirname "$0")"
+# 切换到项目根目录
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT"
 
 echo "========================================="
 echo "重新编译并重启后端服务"
@@ -117,7 +120,7 @@ echo "📍 步骤5: 启动后端服务..."
 echo ""
 
 # 使用后台模式启动
-bash start-backend.sh -d
+bash "$SCRIPT_DIR/start-backend.sh" -d
 
 if [ $? -eq 0 ]; then
     echo ""

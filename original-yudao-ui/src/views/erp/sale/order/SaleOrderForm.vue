@@ -18,7 +18,7 @@
           <el-form-item label="订单时间" prop="orderTime">
             <el-date-picker
               v-model="formData.orderTime"
-              type="date"
+              type="datetime"
               value-format="x"
               placeholder="选择订单时间"
               class="!w-1/1"

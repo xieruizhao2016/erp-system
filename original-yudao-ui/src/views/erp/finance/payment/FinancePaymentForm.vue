@@ -18,7 +18,7 @@
           <el-form-item label="付款时间" prop="paymentTime">
             <el-date-picker
               v-model="formData.paymentTime"
-              type="date"
+              type="datetime"
               value-format="x"
               placeholder="选择付款时间"
               class="!w-1/1"

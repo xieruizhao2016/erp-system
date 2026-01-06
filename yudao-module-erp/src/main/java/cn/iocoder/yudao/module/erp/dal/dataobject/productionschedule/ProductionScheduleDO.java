@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.*;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * ERP 生产排程主 DO
@@ -48,11 +48,11 @@ public class ProductionScheduleDO extends BaseDO {
     /**
      * 计划开始日期
      */
-    private LocalDate startDate;
+    private LocalDateTime startDate;
     /**
      * 计划结束日期
      */
-    private LocalDate endDate;
+    private LocalDateTime endDate;
     /**
      * 状态：1-草稿，2-已发布，3-执行中，4-已完成
      */

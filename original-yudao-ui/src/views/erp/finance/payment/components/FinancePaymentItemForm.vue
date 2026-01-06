@@ -136,13 +136,14 @@ const handleOpenPurchaseIn = () => {
 }
 const handleAddPurchaseIn = (rows: PurchaseInVO[]) => {
   rows.forEach((row) => {
+    const paymentPrice = row.paymentPrice || 0
     formData.value.push({
       bizId: row.id,
       bizType: ErpBizType.PURCHASE_IN,
       bizNo: row.no,
       totalPrice: row.totalPrice,
-      paidPrice: row.paymentPrice,
-      paymentPrice: row.totalPrice - row.paymentPrice
+      paidPrice: paymentPrice,
+      paymentPrice: row.totalPrice - paymentPrice
     })
   })
 }
@@ -158,13 +159,14 @@ const handleOpenPurchaseReturn = () => {
 }
 const handleAddPurchaseReturn = (rows: PurchaseReturnVO[]) => {
   rows.forEach((row) => {
+    const refundPrice = row.refundPrice || 0
     formData.value.push({
       bizId: row.id,
       bizType: ErpBizType.PURCHASE_RETURN,
       bizNo: row.no,
       totalPrice: -row.totalPrice,
-      paidPrice: -row.refundPrice,
-      paymentPrice: -row.totalPrice + row.refundPrice
+      paidPrice: -refundPrice,
+      paymentPrice: -row.totalPrice + refundPrice
     })
   })
 }

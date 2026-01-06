@@ -27,7 +27,12 @@ import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
 
 import cn.iocoder.yudao.module.erp.controller.admin.finance.prepayment.vo.*;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.prepayment.ErpFinancePrepaymentDO;
+import cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpSupplierDO;
 import cn.iocoder.yudao.module.erp.service.prepayment.ErpFinancePrepaymentService;
+import cn.iocoder.yudao.module.erp.service.purchase.ErpSupplierService;
+import cn.hutool.core.collection.CollUtil;
+import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - 预付款")
 @RestController
@@ -37,6 +42,9 @@ public class ErpFinancePrepaymentController {
 
     @Resource
     private ErpFinancePrepaymentService financePrepaymentService;
+
+    @Resource
+    private ErpSupplierService supplierService;
 
     @PostMapping("/create")
     @Operation(summary = "创建预付款")
@@ -77,7 +85,15 @@ public class ErpFinancePrepaymentController {
     @PreAuthorize("@ss.hasPermission('erp:finance-prepayment:query')")
     public CommonResult<ErpFinancePrepaymentRespVO> getFinancePrepayment(@RequestParam("id") Long id) {
         ErpFinancePrepaymentDO financePrepayment = financePrepaymentService.getFinancePrepayment(id);
-        return success(BeanUtils.toBean(financePrepayment, ErpFinancePrepaymentRespVO.class));
+        ErpFinancePrepaymentRespVO respVO = BeanUtils.toBean(financePrepayment, ErpFinancePrepaymentRespVO.class);
+        // 填充供应商名称
+        if (respVO != null && respVO.getSupplierId() != null) {
+            ErpSupplierDO supplier = supplierService.getSupplier(respVO.getSupplierId());
+            if (supplier != null) {
+                respVO.setSupplierName(supplier.getName());
+            }
+        }
+        return success(respVO);
     }
 
     @GetMapping("/page")
@@ -85,7 +101,17 @@ public class ErpFinancePrepaymentController {
     @PreAuthorize("@ss.hasPermission('erp:finance-prepayment:query')")
     public CommonResult<PageResult<ErpFinancePrepaymentRespVO>> getFinancePrepaymentPage(@Valid ErpFinancePrepaymentPageReqVO pageReqVO) {
         PageResult<ErpFinancePrepaymentDO> pageResult = financePrepaymentService.getFinancePrepaymentPage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, ErpFinancePrepaymentRespVO.class));
+        // 获取供应商信息
+        Set<Long> supplierIds = convertSet(pageResult.getList(), ErpFinancePrepaymentDO::getSupplierId, 
+                prepayment -> prepayment.getSupplierId() != null);
+        Map<Long, ErpSupplierDO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() :
+                supplierService.getSupplierMap(supplierIds);
+        // 转换为 VO 并填充供应商名称
+        return success(BeanUtils.toBean(pageResult, ErpFinancePrepaymentRespVO.class, prepayment -> {
+            MapUtils.findAndThen(supplierMap, prepayment.getSupplierId(), supplier -> {
+                prepayment.setSupplierName(supplier.getName());
+            });
+        }));
     }
 
     @GetMapping("/export-excel")
@@ -96,9 +122,19 @@ public class ErpFinancePrepaymentController {
               HttpServletResponse response) throws IOException {
         pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         List<ErpFinancePrepaymentDO> list = financePrepaymentService.getFinancePrepaymentPage(pageReqVO).getList();
+        // 获取供应商信息
+        Set<Long> supplierIds = convertSet(list, ErpFinancePrepaymentDO::getSupplierId, 
+                prepayment -> prepayment.getSupplierId() != null);
+        Map<Long, ErpSupplierDO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() :
+                supplierService.getSupplierMap(supplierIds);
+        // 转换为 VO 并填充供应商名称
+        List<ErpFinancePrepaymentRespVO> respList = BeanUtils.toBean(list, ErpFinancePrepaymentRespVO.class, prepayment -> {
+            MapUtils.findAndThen(supplierMap, prepayment.getSupplierId(), supplier -> {
+                prepayment.setSupplierName(supplier.getName());
+            });
+        });
         // 导出 Excel
-        ExcelUtils.write(response, "预付款.xls", "数据", ErpFinancePrepaymentRespVO.class,
-                        BeanUtils.toBean(list, ErpFinancePrepaymentRespVO.class));
+        ExcelUtils.write(response, "预付款.xls", "数据", ErpFinancePrepaymentRespVO.class, respList);
     }
 
 }

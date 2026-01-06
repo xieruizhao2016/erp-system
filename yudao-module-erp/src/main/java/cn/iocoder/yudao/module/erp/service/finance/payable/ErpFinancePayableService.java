@@ -85,4 +85,12 @@ public interface ErpFinancePayableService {
      */
     void writeOff(Long supplierId, BigDecimal amount);
 
+    /**
+     * 根据订单ID更新应付账款的已付金额
+     *
+     * @param orderId 订单ID
+     * @param paidAmount 已付金额（增加量）
+     */
+    void updatePaidAmountByOrderId(Long orderId, BigDecimal paidAmount);
+
 }

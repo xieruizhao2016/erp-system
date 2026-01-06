@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static cn.iocoder.yudao.module.system.enums.DictTypeConstants.COMMON_STATUS;
 

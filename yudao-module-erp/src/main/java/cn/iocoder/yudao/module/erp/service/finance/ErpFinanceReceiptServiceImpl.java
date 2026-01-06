@@ -161,6 +161,33 @@ public class ErpFinanceReceiptServiceImpl implements ErpFinanceReceiptService {
         // 3. 审核通过后，核销应收账款
         if (approve && receipt.getReceiptPrice() != null && receipt.getReceiptPrice().compareTo(BigDecimal.ZERO) > 0) {
             financeReceivableService.writeOff(receipt.getCustomerId(), receipt.getReceiptPrice());
+            
+            // 4. 根据收款单项更新对应订单的应收账款的已收金额
+            List<ErpFinanceReceiptItemDO> receiptItems = financeReceiptItemMapper.selectListByReceiptId(id);
+            if (CollUtil.isNotEmpty(receiptItems)) {
+                for (ErpFinanceReceiptItemDO receiptItem : receiptItems) {
+                    if (receiptItem.getReceiptPrice() == null || receiptItem.getReceiptPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                        continue;
+                    }
+                    
+                    Long orderId = null;
+                    if (ObjectUtil.equal(receiptItem.getBizType(), ErpBizTypeEnum.SALE_OUT.getType())) {
+                        ErpSaleOutDO saleOut = saleOutService.getSaleOut(receiptItem.getBizId());
+                        if (saleOut != null) {
+                            orderId = saleOut.getOrderId();
+                        }
+                    } else if (ObjectUtil.equal(receiptItem.getBizType(), ErpBizTypeEnum.SALE_RETURN.getType())) {
+                        ErpSaleReturnDO saleReturn = saleReturnService.getSaleReturn(receiptItem.getBizId());
+                        if (saleReturn != null) {
+                            orderId = saleReturn.getOrderId();
+                        }
+                    }
+                    
+                    if (orderId != null) {
+                        financeReceivableService.updateReceivedAmountByOrderId(orderId, receiptItem.getReceiptPrice());
+                    }
+                }
+            }
         }
     }
 

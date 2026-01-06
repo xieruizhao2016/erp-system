@@ -93,4 +93,12 @@ public interface ErpFinanceReceivableService {
      */
     void writeOff(Long customerId, BigDecimal amount);
 
+    /**
+     * 根据订单ID更新应收账款的已收金额
+     *
+     * @param orderId 订单ID
+     * @param receivedAmount 已收金额（增加量）
+     */
+    void updateReceivedAmountByOrderId(Long orderId, BigDecimal receivedAmount);
+
 }

@@ -198,13 +198,16 @@ public class ErpSaleOutServiceImpl implements ErpSaleOutService {
     @Override
     public void updateSaleInReceiptPrice(Long id, BigDecimal receiptPrice) {
         ErpSaleOutDO saleOut = saleOutMapper.selectById(id);
-        if (saleOut.getReceiptPrice().equals(receiptPrice)) {
+        // 处理 NULL 值，使用 ObjectUtil.equal 安全比较
+        if (ObjectUtil.equal(saleOut.getReceiptPrice(), receiptPrice)) {
             return;
         }
-        if (receiptPrice.compareTo(saleOut.getTotalPrice()) > 0) {
-            throw exception(SALE_OUT_FAIL_RECEIPT_PRICE_EXCEED, receiptPrice,  saleOut.getTotalPrice());
+        // 处理 NULL 值，如果 receiptPrice 为 NULL，则视为 0
+        BigDecimal actualReceiptPrice = receiptPrice != null ? receiptPrice : BigDecimal.ZERO;
+        if (actualReceiptPrice.compareTo(saleOut.getTotalPrice()) > 0) {
+            throw exception(SALE_OUT_FAIL_RECEIPT_PRICE_EXCEED, actualReceiptPrice,  saleOut.getTotalPrice());
         }
-        saleOutMapper.updateById(new ErpSaleOutDO().setId(id).setReceiptPrice(receiptPrice));
+        saleOutMapper.updateById(new ErpSaleOutDO().setId(id).setReceiptPrice(actualReceiptPrice));
     }
 
     private List<ErpSaleOutItemDO> validateSaleOutItems(List<ErpSaleOutSaveReqVO.Item> list) {
