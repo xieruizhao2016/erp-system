@@ -104,8 +104,8 @@
             <el-input-number
               v-model="row.count"
               controls-position="right"
-              :min="0.001"
-              :precision="3"
+              :min="0.1"
+              :precision="1"
               class="!w-100%"
             />
           </el-form-item>
@@ -191,6 +191,7 @@ import { StockApi } from '@/api/erp/stock/stock'
 import { defaultProps, handleTree } from '@/utils/tree'
 import {
   erpCountInputFormatter,
+  erpNumberFormatter,
   erpPriceInputFormatter,
   erpPriceMultiply,
   getSumValue
@@ -211,6 +212,7 @@ const productList = ref<ProductVO[]>([]) // 产品列表（全部）
 const selectedCategoryId = ref<number | undefined>(undefined) // 选中的分类ID
 const productCategoryTree = ref<any[]>([]) // 产品分类树
 const productUnitList = ref<ProductUnitVO[]>([]) // 产品单位列表
+const saleOrderCountFormatter = (num: number | string | undefined) => erpNumberFormatter(num, 1)
 
 /** 获取SKU验证规则 */
 const getSkuRules = (row: any) => {
@@ -387,7 +389,7 @@ const getSummaries = (param: SummaryMethodProps) => {
     if (['count', 'totalProductPrice', 'taxPrice', 'totalPrice'].includes(column.property)) {
       const sum = getSumValue(data.map((item) => Number(item[column.property])))
       sums[index] =
-        column.property === 'count' ? erpCountInputFormatter(sum) : erpPriceInputFormatter(sum)
+        column.property === 'count' ? saleOrderCountFormatter(sum) : erpPriceInputFormatter(sum)
     } else {
       sums[index] = ''
     }

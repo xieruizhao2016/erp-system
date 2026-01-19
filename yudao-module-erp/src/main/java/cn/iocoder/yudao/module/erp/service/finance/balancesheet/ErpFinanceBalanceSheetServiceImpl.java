@@ -616,8 +616,11 @@ public class ErpFinanceBalanceSheetServiceImpl implements ErpFinanceBalanceSheet
                     trendItem.setAssetTotal(sheet.getAssetTotal() != null ? sheet.getAssetTotal() : java.math.BigDecimal.ZERO);
                     trendItem.setLiabilityTotal(sheet.getLiabilityTotal() != null ? sheet.getLiabilityTotal() : java.math.BigDecimal.ZERO);
                 } else {
-                    trendItem.setAssetTotal(java.math.BigDecimal.ZERO);
-                    trendItem.setLiabilityTotal(java.math.BigDecimal.ZERO);
+                    // 如果数据库中没有该月的记录，实时计算该月的数据
+                    java.math.BigDecimal monthAssetTotal = calculateAssets(monthDate);
+                    java.math.BigDecimal monthLiabilityTotal = calculateLiabilities(monthDate);
+                    trendItem.setAssetTotal(monthAssetTotal);
+                    trendItem.setLiabilityTotal(monthLiabilityTotal);
                 }
                 
                 monthlyTrend.add(trendItem);

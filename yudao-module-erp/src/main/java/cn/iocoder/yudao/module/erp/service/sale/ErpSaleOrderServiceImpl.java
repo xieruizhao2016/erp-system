@@ -1043,7 +1043,7 @@ public class ErpSaleOrderServiceImpl implements ErpSaleOrderService {
         prereceiptReqVO.setUsedAmount(BigDecimal.ZERO);
         prereceiptReqVO.setBalance(depositPrice);
         prereceiptReqVO.setPrereceiptDate(prereceiptDate);
-        prereceiptReqVO.setStatus(ErpAuditStatus.PROCESS.getStatus());
+        prereceiptReqVO.setStatus(ErpAuditStatus.APPROVE.getStatus());
         prereceiptReqVO.setRemark("自动生成自销售订单：" + saleOrder.getNo() + "（定金）");
         
         financePrereceiptService.createFinancePrereceipt(prereceiptReqVO);

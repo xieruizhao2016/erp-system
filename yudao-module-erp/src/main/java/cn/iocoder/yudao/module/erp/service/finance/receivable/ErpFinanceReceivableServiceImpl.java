@@ -128,7 +128,9 @@ public class ErpFinanceReceivableServiceImpl implements ErpFinanceReceivableServ
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createReceivableFromSaleOrder(ErpSaleOrderDO saleOrder) {
-        createReceivableFromSaleOrder(saleOrder, null);
+        // 从订单对象中获取订金
+        BigDecimal depositPrice = saleOrder.getDepositPrice();
+        createReceivableFromSaleOrder(saleOrder, depositPrice);
     }
 
     @Override
@@ -140,39 +142,37 @@ public class ErpFinanceReceivableServiceImpl implements ErpFinanceReceivableServ
             return; // 已存在，不重复创建
         }
 
-        // 2. 计算应收账款金额（总金额 - 定金）
-        BigDecimal receivableAmount = saleOrder.getTotalPrice();
-        if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
-            receivableAmount = saleOrder.getTotalPrice().subtract(depositPrice);
-            // 如果应收账款金额小于等于0，则不创建应收账款
-            if (receivableAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                return;
-            }
-        }
-
-        // 3. 生成单据号
+        // 2. 生成单据号
         String no = noRedisDAO.generate(ErpNoRedisDAO.FINANCE_RECEIVABLE_NO_PREFIX);
 
-        // 4. 计算到期日（默认订单日期+30天）
+        // 3. 计算到期日（默认订单日期+30天）
         LocalDate dueDate = saleOrder.getOrderTime() != null
             ? saleOrder.getOrderTime().toLocalDate().plusDays(30)
             : LocalDate.now().plusDays(30);
 
+        // 4. 计算已收金额（包括订金）
+        BigDecimal totalPrice = saleOrder.getTotalPrice() != null 
+            ? saleOrder.getTotalPrice() : BigDecimal.ZERO;
+        BigDecimal depositPriceValue = depositPrice != null 
+            ? depositPrice : BigDecimal.ZERO;
+        BigDecimal receivedAmount = depositPriceValue; // 订金计入已收金额
+        BigDecimal balance = totalPrice.subtract(receivedAmount); // 余额 = 应收金额 - 已收金额（含订金）
+
         // 5. 创建应收账款
         String remark = "自动生成自销售订单：" + saleOrder.getNo();
-        if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
-            remark += "（已扣除定金：" + depositPrice + "元）";
+        if (depositPriceValue.compareTo(BigDecimal.ZERO) > 0) {
+            remark += "（含订金：" + depositPriceValue + "元）";
         }
         
         ErpFinanceReceivableDO receivable = ErpFinanceReceivableDO.builder()
             .no(no)
             .customerId(saleOrder.getCustomerId())
             .orderId(saleOrder.getId())
-            .amount(receivableAmount)
-            .receivedAmount(BigDecimal.ZERO)
-            .balance(receivableAmount)
+            .amount(totalPrice)
+            .receivedAmount(receivedAmount)
+            .balance(balance)
             .dueDate(dueDate)
-            .status(ErpAuditStatus.PROCESS.getStatus())
+            .status(ErpAuditStatus.APPROVE.getStatus())
             .remark(remark)
             .build();
 

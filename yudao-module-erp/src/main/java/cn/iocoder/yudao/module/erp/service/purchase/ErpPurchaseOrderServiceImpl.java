@@ -22,8 +22,13 @@ import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 import cn.iocoder.yudao.module.erp.enums.ErpAuditStatus;
 import cn.iocoder.yudao.module.erp.service.finance.ErpAccountService;
 import cn.iocoder.yudao.module.erp.service.finance.payable.ErpFinancePayableService;
+import cn.iocoder.yudao.module.erp.service.prepayment.ErpFinancePrepaymentService;
+import cn.iocoder.yudao.module.erp.controller.admin.finance.prepayment.vo.ErpFinancePrepaymentSaveReqVO;
+import cn.iocoder.yudao.module.erp.dal.mysql.finance.prepayment.ErpFinancePrepaymentMapper;
+import cn.iocoder.yudao.module.erp.dal.dataobject.finance.prepayment.ErpFinancePrepaymentDO;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductUnitService;
+import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -73,6 +78,10 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
     private ErpAccountService accountService;
     @Resource
     private ErpFinancePayableService financePayableService;
+    @Resource
+    private ErpFinancePrepaymentService financePrepaymentService;
+    @Resource
+    private ErpFinancePrepaymentMapper financePrepaymentMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -99,6 +108,13 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
         // 2.2 插入订单项
         purchaseOrderItems.forEach(o -> o.setOrderId(purchaseOrder.getId()));
         purchaseOrderItemMapper.insertBatch(purchaseOrderItems);
+        
+        // 2.3 自动创建预付款记录（如果有订金）
+        BigDecimal depositPrice = createReqVO.getDepositPrice();
+        if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
+            createPrepaymentFromPurchaseOrder(purchaseOrder, depositPrice);
+        }
+        
         return purchaseOrder.getId();
     }
 
@@ -125,6 +141,25 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
         purchaseOrderMapper.updateById(updateObj);
         // 2.2 更新订单项
         updatePurchaseOrderItemList(updateReqVO.getId(), purchaseOrderItems);
+        
+        // 2.3 处理预付款（如果有订金变化）
+        BigDecimal newDepositPrice = updateReqVO.getDepositPrice();
+        BigDecimal oldDepositPrice = purchaseOrder.getDepositPrice();
+        if (newDepositPrice != null && newDepositPrice.compareTo(BigDecimal.ZERO) > 0) {
+            // 如果新订金大于0，创建或更新预付款
+            if (oldDepositPrice == null || oldDepositPrice.compareTo(BigDecimal.ZERO) == 0) {
+                // 原来没有订金，现在有订金，创建预付款
+                createPrepaymentFromPurchaseOrder(updateObj, newDepositPrice);
+            } else if (!newDepositPrice.equals(oldDepositPrice)) {
+                // 订金金额变化，需要更新预付款（这里简化处理，删除旧的，创建新的）
+                // TODO: 可以优化为直接更新预付款金额
+                deletePrepaymentByOrderId(updateObj.getId());
+                createPrepaymentFromPurchaseOrder(updateObj, newDepositPrice);
+            }
+        } else if (oldDepositPrice != null && oldDepositPrice.compareTo(BigDecimal.ZERO) > 0) {
+            // 原来有订金，现在没有订金，删除预付款
+            deletePrepaymentByOrderId(updateObj.getId());
+        }
     }
 
     private void calculateTotalPrice(ErpPurchaseOrderDO purchaseOrder, List<ErpPurchaseOrderItemDO> purchaseOrderItems) {
@@ -168,12 +203,19 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
             throw exception(approve ? PURCHASE_ORDER_APPROVE_FAIL : PURCHASE_ORDER_PROCESS_FAIL);
         }
 
-        // 3. 审核通过时，自动创建应付账款
+        // 3. 审核通过时，自动创建应付账款和预付款
         if (approve) {
             financePayableService.createPayableFromPurchaseOrder(purchaseOrder);
+            // 如果有订金，自动创建预付款（如果不存在）
+            BigDecimal depositPrice = purchaseOrder.getDepositPrice();
+            if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
+                createPrepaymentFromPurchaseOrder(purchaseOrder, depositPrice);
+            }
         } else {
             // 反审核时，删除应付账款（如果存在且未审核）
             financePayableService.deletePayableByOrderId(id);
+            // 反审核时，删除预付款（如果存在且未审核）
+            deletePrepaymentByOrderId(id);
         }
     }
 
@@ -564,7 +606,64 @@ public class ErpPurchaseOrderServiceImpl implements ErpPurchaseOrderService {
         // 2.2 插入订单项
         purchaseOrderItems.forEach(o -> o.setOrderId(purchaseOrder.getId()));
         purchaseOrderItemMapper.insertBatch(purchaseOrderItems);
+        
+        // 2.3 自动创建预付款记录（如果有订金）
+        BigDecimal depositPrice = createReqVO.getDepositPrice();
+        if (depositPrice != null && depositPrice.compareTo(BigDecimal.ZERO) > 0) {
+            createPrepaymentFromPurchaseOrder(purchaseOrder, depositPrice);
+        }
+        
         return purchaseOrder.getId();
+    }
+
+    /**
+     * 从采购订单创建预付款记录
+     *
+     * @param purchaseOrder 采购订单
+     * @param depositPrice 订金金额
+     */
+    private void createPrepaymentFromPurchaseOrder(ErpPurchaseOrderDO purchaseOrder, BigDecimal depositPrice) {
+        // 1. 检查是否已存在预付款记录
+        ErpFinancePrepaymentDO existing = financePrepaymentMapper.selectByOrderId(purchaseOrder.getId());
+        if (existing != null) {
+            return; // 已存在，不重复创建
+        }
+        
+        // 2. 生成预付款单据号
+        String no = noRedisDAO.generate(ErpNoRedisDAO.FINANCE_PREPAYMENT_NO_PREFIX);
+        
+        // 3. 设置预付日期（使用订单日期）
+        LocalDate prepayDate = purchaseOrder.getOrderTime() != null
+            ? purchaseOrder.getOrderTime().toLocalDate()
+            : LocalDate.now();
+        
+        // 4. 创建预付款记录
+        ErpFinancePrepaymentSaveReqVO prepaymentReqVO = new ErpFinancePrepaymentSaveReqVO();
+        prepaymentReqVO.setNo(no);
+        prepaymentReqVO.setSupplierId(purchaseOrder.getSupplierId());
+        prepaymentReqVO.setOrderId(purchaseOrder.getId());
+        prepaymentReqVO.setAmount(depositPrice);
+        prepaymentReqVO.setUsedAmount(BigDecimal.ZERO);
+        prepaymentReqVO.setBalance(depositPrice);
+        prepaymentReqVO.setPrepayDate(prepayDate);
+        prepaymentReqVO.setStatus(ErpAuditStatus.APPROVE.getStatus());
+        prepaymentReqVO.setRemark("自动生成自采购订单：" + purchaseOrder.getNo() + "（订金）");
+        
+        financePrepaymentService.createFinancePrepayment(prepaymentReqVO);
+    }
+
+    /**
+     * 根据订单ID删除预付款记录
+     *
+     * @param orderId 订单ID
+     */
+    private void deletePrepaymentByOrderId(Long orderId) {
+        ErpFinancePrepaymentDO prepayment = financePrepaymentMapper.selectByOrderId(orderId);
+        if (prepayment != null) {
+            // 自动生成的预付款（即使已审核）也可以删除
+            // 因为这是从采购订单自动生成的，订单更新或删除时应该同步删除
+            financePrepaymentService.deleteFinancePrepayment(prepayment.getId());
+        }
     }
 
 }

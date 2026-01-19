@@ -57,7 +57,11 @@
     <!-- 列表 -->
     <ContentWrap>
       <el-table v-loading="loading" :data="list" :stripe="true" :show-overflow-tooltip="true">
-        <el-table-column label="期间日期" align="center" prop="periodDate" width="120" />
+        <el-table-column label="期间日期" align="center" prop="periodDate" width="120">
+          <template #default="scope">
+            {{ scope.row.periodDate ? (scope.row.periodDate.length > 7 ? scope.row.periodDate.substring(0, 7) : scope.row.periodDate) : '' }}
+          </template>
+        </el-table-column>
         <el-table-column label="营业收入" align="center" prop="revenue" :formatter="erpPriceTableColumnFormatter" />
         <el-table-column label="营业成本" align="center" prop="cost" :formatter="erpPriceTableColumnFormatter" />
         <el-table-column label="毛利润" align="center" prop="grossProfit" :formatter="erpPriceTableColumnFormatter" />
@@ -77,14 +81,6 @@
         />
         <el-table-column label="操作" align="center" fixed="right" width="200">
           <template #default="scope">
-            <el-button
-              link
-              type="primary"
-              @click="openForm('update', scope.row.id)"
-              v-hasPermi="['erp:finance-profit-statement:update']"
-            >
-              编辑
-            </el-button>
             <el-button
               link
               type="success"
@@ -113,8 +109,6 @@
       />
     </ContentWrap>
 
-    <!-- 表单弹窗：添加/修改 -->
-    <ProfitStatementForm ref="formRef" @success="getList" />
   </ContentWrap>
 </template>
 
@@ -124,7 +118,6 @@ import { dateFormatter } from '@/utils/formatTime'
 import download from '@/utils/download'
 import { erpPriceTableColumnFormatter } from '@/utils'
 import { ProfitStatementApi, ProfitStatementVO } from '@/api/erp/finance/profitstatement'
-import ProfitStatementForm from './ProfitStatementForm.vue'
 
 /** ERP 利润表 列表 */
 defineOptions({ name: 'ErpFinanceProfitStatement' })
@@ -168,12 +161,6 @@ const resetQuery = () => {
   handleQuery()
 }
 
-/** 添加/修改操作 */
-const formRef = ref()
-const openForm = (type: string, id?: number) => {
-  formRef.value.open(type, id)
-}
-
 /** 删除按钮操作 */
 const handleDelete = async (id: number) => {
   try {
@@ -199,13 +186,86 @@ const handleCalculate = async () => {
 }
 
 /** 重新计算单个 */
-const handleCalculateOne = async (periodDate: string) => {
+const handleCalculateOne = async (periodDate: any) => {
   try {
+    console.log('handleCalculateOne 接收到的 periodDate:', periodDate, typeof periodDate)
+    
+    if (!periodDate) {
+      message.error('期间日期不能为空')
+      return
+    }
+    
+    // 转换为字符串并去除空格
+    let periodDateStr = String(periodDate).trim()
+    console.log('转换后的 periodDateStr:', periodDateStr, '长度:', periodDateStr.length)
+    
+    // 处理各种可能的日期格式
+    // 1. 格式为 yyyy-MM-dd（LocalDate 序列化后的格式，如 "2026-01-01"）
+    if (periodDateStr.length >= 10 && periodDateStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+      periodDateStr = periodDateStr.substring(0, 7) // 提取 "yyyy-MM"
+      console.log('从 yyyy-MM-dd 提取 yyyy-MM:', periodDateStr)
+    } 
+    // 2. 已经是 yyyy-MM 格式（如 "2026-01"）
+    else if (periodDateStr.length === 7 && periodDateStr.match(/^\d{4}-\d{2}$/)) {
+      // 直接使用
+      console.log('已经是 yyyy-MM 格式:', periodDateStr)
+    } 
+    // 3. 格式为 yyyyMM（如 "202601"）
+    else if (periodDateStr.length === 6 && periodDateStr.match(/^\d{6}$/)) {
+      periodDateStr = periodDateStr.substring(0, 4) + '-' + periodDateStr.substring(4, 6)
+      console.log('从 yyyyMM 转换为 yyyy-MM:', periodDateStr)
+    } 
+    // 4. 格式为 yyyy/MM（如 "2026/01"）
+    else if (periodDateStr.match(/^\d{4}\/\d{2}/)) {
+      periodDateStr = periodDateStr.replace(/\//g, '-').substring(0, 7)
+      console.log('从 yyyy/MM 转换为 yyyy-MM:', periodDateStr)
+    } 
+    // 5. 尝试从 Date 对象或 ISO 字符串中提取
+    else {
+      try {
+        // 尝试解析为 Date 对象
+        const date = new Date(periodDateStr)
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          periodDateStr = `${year}-${month}`
+          console.log('从 Date 对象提取 yyyy-MM:', periodDateStr)
+        } else {
+          // 如果无法解析，尝试其他方式
+          console.warn('无法解析日期格式，尝试其他方式:', periodDateStr)
+          // 如果包含日期部分，尝试提取
+          const match = periodDateStr.match(/(\d{4})[-\/](\d{2})/)
+          if (match) {
+            periodDateStr = `${match[1]}-${match[2]}`
+            console.log('从字符串中提取 yyyy-MM:', periodDateStr)
+          } else {
+            throw new Error('无法解析日期格式: ' + periodDateStr)
+          }
+        }
+      } catch (e) {
+        console.error('期间日期格式错误，无法解析:', periodDateStr, e)
+        message.error('期间日期格式错误，应为 yyyy-MM 格式，当前值: ' + periodDateStr + '，类型: ' + typeof periodDate)
+        return
+      }
+    }
+    
+    // 最终验证格式（yyyy-MM）
+    const datePattern = /^\d{4}-\d{2}$/
+    if (!datePattern.test(periodDateStr)) {
+      console.error('期间日期格式验证失败:', periodDateStr)
+      message.error('期间日期格式错误，应为 yyyy-MM 格式，当前值: ' + periodDateStr)
+      return
+    }
+    
+    console.log('最终发送的 periodDateStr:', periodDateStr)
     await message.confirm('确认要重新计算该期间的利润表吗？')
-    await ProfitStatementApi.calculateProfitStatement(periodDate)
+    await ProfitStatementApi.calculateProfitStatement(periodDateStr)
     message.success('计算成功')
     await getList()
-  } catch {}
+  } catch (error: any) {
+    console.error('计算利润表失败:', error)
+    message.error(error?.message || '计算失败，请稍后重试')
+  }
 }
 
 /** 导出按钮操作 */

@@ -31,4 +31,8 @@ public interface ErpFinancePrepaymentMapper extends BaseMapperX<ErpFinancePrepay
                 .orderByDesc(ErpFinancePrepaymentDO::getId));
     }
 
+    default ErpFinancePrepaymentDO selectByOrderId(Long orderId) {
+        return selectOne(ErpFinancePrepaymentDO::getOrderId, orderId);
+    }
+
 }

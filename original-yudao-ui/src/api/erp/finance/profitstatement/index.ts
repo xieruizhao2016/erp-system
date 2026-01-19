@@ -48,7 +48,9 @@ export const ProfitStatementApi = {
 
   // 计算利润表
   calculateProfitStatement: async (periodDate: string) => {
-    return await request.post({ url: `/erp/finance-profit-statement/calculate`, params: { periodDate } })
+    // 使用 URL 查询参数方式传递（确保参数正确传递）
+    const url = `/erp/finance-profit-statement/calculate?periodDate=${encodeURIComponent(periodDate)}`
+    return await request.post({ url })
   },
 
   // 导出利润表 Excel

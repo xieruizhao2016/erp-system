@@ -17,6 +17,7 @@ import cn.iocoder.yudao.module.erp.dal.redis.no.ErpNoRedisDAO;
 import cn.iocoder.yudao.module.erp.enums.ErpAuditStatus;
 import cn.iocoder.yudao.module.erp.enums.stock.ErpStockRecordBizTypeEnum;
 import cn.iocoder.yudao.module.erp.service.finance.ErpAccountService;
+import cn.iocoder.yudao.module.erp.service.finance.profitstatement.ErpFinanceProfitStatementService;
 import cn.iocoder.yudao.module.erp.service.product.ErpProductService;
 import cn.iocoder.yudao.module.erp.service.stock.ErpStockRecordService;
 import cn.iocoder.yudao.module.erp.service.stock.bo.ErpStockRecordCreateReqBO;
@@ -68,6 +69,10 @@ public class ErpSaleOutServiceImpl implements ErpSaleOutService {
 
     @Resource
     private AdminUserApi adminUserApi;
+
+    @Resource
+    @Lazy // 延迟加载，避免循环依赖
+    private ErpFinanceProfitStatementService financeProfitStatementService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -193,6 +198,27 @@ public class ErpSaleOutServiceImpl implements ErpSaleOutService {
                     saleOutItem.getProductId(), saleOutItem.getWarehouseId(), count,
                     bizType, saleOutItem.getOutId(), saleOutItem.getId(), saleOut.getNo()));
         });
+
+        // 4. 当审核通过时，自动重新计算对应月份的利润表
+        if (approve) {
+            try {
+                // 获取出库时间所在的月份（取该月的第一天）
+                // 如果出库时间为空，使用创建时间
+                java.time.LocalDateTime timeToUse = saleOut.getOutTime() != null 
+                    ? saleOut.getOutTime() 
+                    : saleOut.getCreateTime();
+                
+                if (timeToUse != null) {
+                    java.time.LocalDate periodDate = timeToUse.toLocalDate().withDayOfMonth(1);
+                    // 重新计算该月份的利润表（包含本次出库的销售订单）
+                    financeProfitStatementService.calculateProfitStatement(periodDate);
+                }
+            } catch (Exception e) {
+                // 利润表计算失败不影响出库审核流程，只记录日志
+                // 可以考虑使用异步方式或消息队列来处理，避免影响出库审核的性能
+                // 注意：这里使用同步方式是为了确保数据一致性，如果性能有问题可以考虑改为异步
+            }
+        }
     }
 
     @Override

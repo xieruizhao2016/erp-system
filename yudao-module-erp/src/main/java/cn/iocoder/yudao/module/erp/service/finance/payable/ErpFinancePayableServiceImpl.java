@@ -142,17 +142,26 @@ public class ErpFinancePayableServiceImpl implements ErpFinancePayableService {
             ? purchaseOrder.getOrderTime().toLocalDate().plusDays(30)
             : LocalDate.now().plusDays(30);
 
-        // 4. 创建应付账款
+        // 4. 计算已付金额（包括订金）
+        BigDecimal totalPrice = purchaseOrder.getTotalPrice() != null 
+            ? purchaseOrder.getTotalPrice() : BigDecimal.ZERO;
+        BigDecimal depositPrice = purchaseOrder.getDepositPrice() != null 
+            ? purchaseOrder.getDepositPrice() : BigDecimal.ZERO;
+        BigDecimal paidAmount = depositPrice; // 订金计入已付金额
+        BigDecimal balance = totalPrice.subtract(paidAmount); // 余额 = 应付金额 - 已付金额（含订金）
+
+        // 5. 创建应付账款
         ErpFinancePayableDO payable = ErpFinancePayableDO.builder()
             .no(no)
             .supplierId(purchaseOrder.getSupplierId())
             .orderId(purchaseOrder.getId())
-            .amount(purchaseOrder.getTotalPrice())
-            .paidAmount(BigDecimal.ZERO)
-            .balance(purchaseOrder.getTotalPrice())
+            .amount(totalPrice)
+            .paidAmount(paidAmount)
+            .balance(balance)
             .dueDate(dueDate)
-            .status(ErpAuditStatus.PROCESS.getStatus())
-            .remark("自动生成自采购订单：" + purchaseOrder.getNo())
+            .status(ErpAuditStatus.APPROVE.getStatus())
+            .remark("自动生成自采购订单：" + purchaseOrder.getNo() 
+                + (depositPrice.compareTo(BigDecimal.ZERO) > 0 ? "（含订金：" + depositPrice + "元）" : ""))
             .build();
 
         financePayableMapper.insert(payable);

@@ -1,56 +1,33 @@
 package cn.iocoder.yudao.module.erp.controller.admin.finance.profitstatement;
 
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import org.springframework.validation.annotation.Validated;
-import java.time.LocalDateTime;
 import org.springframework.security.access.prepost.PreAuthorize;
-import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.Parameter;
-import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.Operation;
-import java.time.LocalDateTime;
 
 import javax.validation.constraints.*;
-import java.time.LocalDateTime;
 import javax.validation.*;
-import java.time.LocalDateTime;
 import javax.servlet.http.*;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.time.LocalDateTime;
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import java.time.LocalDateTime;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import java.time.LocalDateTime;
 
 import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
-import java.time.LocalDateTime;
 
 import cn.iocoder.yudao.framework.apilog.core.annotation.ApiAccessLog;
-import java.time.LocalDateTime;
 import static cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum.*;
-import java.time.LocalDateTime;
 
 import cn.iocoder.yudao.module.erp.controller.admin.finance.profitstatement.vo.*;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.profitstatement.ErpFinanceProfitStatementDO;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.module.erp.service.finance.profitstatement.ErpFinanceProfitStatementService;
-import java.time.LocalDateTime;
 
 @Tag(name = "管理后台 - 利润表")
 @RestController
@@ -128,7 +105,32 @@ public class ErpFinanceProfitStatementController {
     @Operation(summary = "计算利润表")
     @PreAuthorize("@ss.hasPermission('erp:finance-profit-statement:update')")
     @ApiAccessLog(operateType = UPDATE)
-    public CommonResult<Boolean> calculateProfitStatement(@RequestParam("periodDate") java.time.LocalDate periodDate) {
+    @Parameter(name = "periodDate", description = "期间日期（格式：yyyy-MM 或 yyyy-MM-dd）", required = true)
+    public CommonResult<Boolean> calculateProfitStatement(@RequestParam(value = "periodDate", required = true) String periodDateStr) {
+        // 参数校验
+        if (periodDateStr == null || periodDateStr.trim().isEmpty()) {
+            throw new IllegalArgumentException("期间日期不能为空");
+        }
+        
+        // 将 "yyyy-MM" 格式的字符串转换为 LocalDate（取该月的第一天）
+        java.time.LocalDate periodDate;
+        try {
+            String trimmedDate = periodDateStr.trim();
+            if (trimmedDate.length() == 7 && trimmedDate.matches("\\d{4}-\\d{2}")) {
+                // 格式为 "yyyy-MM"，转换为该月第一天
+                periodDate = java.time.LocalDate.parse(trimmedDate + "-01");
+            } else if (trimmedDate.length() == 10 && trimmedDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                // 格式为 "yyyy-MM-dd"，提取年月部分
+                periodDate = java.time.LocalDate.parse(trimmedDate).withDayOfMonth(1);
+            } else {
+                // 尝试直接解析为 LocalDate
+                periodDate = java.time.LocalDate.parse(trimmedDate);
+                // 如果解析成功，取该月第一天
+                periodDate = periodDate.withDayOfMonth(1);
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("期间日期格式错误，应为 yyyy-MM 或 yyyy-MM-dd 格式: " + periodDateStr);
+        }
         financeProfitStatementService.calculateProfitStatement(periodDate);
         return success(true);
     }

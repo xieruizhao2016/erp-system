@@ -88,10 +88,9 @@ public class ErpFinancePrereceiptServiceImpl implements ErpFinancePrereceiptServ
     public void deletePrereceiptByOrderId(Long orderId) {
         ErpFinancePrereceiptDO prereceipt = financePrereceiptMapper.selectByOrderId(orderId);
         if (prereceipt != null) {
-            // 只有未审核的预收款才能删除
-            if (!ErpAuditStatus.APPROVE.getStatus().equals(prereceipt.getStatus())) {
-                financePrereceiptMapper.deleteById(prereceipt.getId());
-            }
+            // 自动生成的预收款（即使已审核）也可以删除
+            // 因为这是从销售订单自动生成的，订单更新或删除时应该同步删除
+            financePrereceiptMapper.deleteById(prereceipt.getId());
         }
     }
 

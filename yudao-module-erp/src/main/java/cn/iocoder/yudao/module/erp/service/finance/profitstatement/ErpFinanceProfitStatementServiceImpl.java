@@ -1,40 +1,25 @@
 package cn.iocoder.yudao.module.erp.service.finance.profitstatement;
 
 import cn.hutool.core.collection.CollUtil;
-import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import org.springframework.validation.annotation.Validated;
-import java.time.LocalDateTime;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
 
 import java.util.*;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.module.erp.controller.admin.finance.profitstatement.vo.*;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.module.erp.dal.dataobject.finance.profitstatement.ErpFinanceProfitStatementDO;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
-import java.time.LocalDateTime;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import java.time.LocalDateTime;
 
 import cn.iocoder.yudao.module.erp.dal.mysql.finance.profitstatement.ErpFinanceProfitStatementMapper;
-import java.time.LocalDateTime;
+import cn.iocoder.yudao.module.erp.dal.mysql.costactual.CostActualMapper;
+import cn.iocoder.yudao.module.erp.dal.dataobject.costactual.CostActualDO;
+import cn.iocoder.yudao.module.erp.controller.admin.costactual.vo.CostActualPageReqVO;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
-import java.time.LocalDateTime;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertList;
-import java.time.LocalDateTime;
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.diffList;
-import java.time.LocalDateTime;
 import static cn.iocoder.yudao.module.erp.enums.ErrorCodeConstants.*;
-import java.time.LocalDateTime;
 
 /**
  * 利润表 Service 实现类
@@ -51,6 +36,8 @@ public class ErpFinanceProfitStatementServiceImpl implements ErpFinanceProfitSta
     private cn.iocoder.yudao.module.erp.service.sale.ErpSaleOrderService saleOrderService;
     @Resource
     private cn.iocoder.yudao.module.erp.service.purchase.ErpPurchaseOrderService purchaseOrderService;
+    @Resource
+    private CostActualMapper costActualMapper;
 
     @Override
     public Long createFinanceProfitStatement(ErpFinanceProfitStatementSaveReqVO createReqVO) {
@@ -149,7 +136,7 @@ public class ErpFinanceProfitStatementServiceImpl implements ErpFinanceProfitSta
         // 创建新的利润表
         ErpFinanceProfitStatementDO profitStatement = new ErpFinanceProfitStatementDO();
         profitStatement.setPeriodDate(periodDate);
-        profitStatement.setStatus(10); // 未审核
+        profitStatement.setStatus(20); // 已审核（系统自动计算生成，默认已审核状态）
         financeProfitStatementMapper.insert(profitStatement);
         return profitStatement;
     }
@@ -206,7 +193,7 @@ public class ErpFinanceProfitStatementServiceImpl implements ErpFinanceProfitSta
                 new cn.iocoder.yudao.module.erp.controller.admin.purchase.vo.order.ErpPurchaseOrderPageReqVO();
             pageReqVO.setStatus(20); // 20表示已审核
             pageReqVO.setOrderTime(new java.time.LocalDateTime[]{startTime, endTime});
-            pageReqVO.setPageSize(10000);
+            pageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE); // 修复：使用 PAGE_SIZE_NONE 获取所有数据，避免遗漏
 
             cn.iocoder.yudao.framework.common.pojo.PageResult<cn.iocoder.yudao.module.erp.dal.dataobject.purchase.ErpPurchaseOrderDO> purchaseOrderPage = 
                 purchaseOrderService.getPurchaseOrderPage(pageReqVO);
@@ -219,8 +206,23 @@ public class ErpFinanceProfitStatementServiceImpl implements ErpFinanceProfitSta
                 }
             }
 
-            // 2. TODO: 汇总生产订单成本（如果有生产订单模块）
-            // 这里可以查询生产订单表，汇总生产成本
+            // 2. 汇总生产订单成本（从实际成本表查询）
+            String costPeriod = String.format("%04d-%02d", periodDate.getYear(), periodDate.getMonthValue());
+            CostActualPageReqVO costActualPageReqVO = new CostActualPageReqVO();
+            costActualPageReqVO.setCostPeriod(costPeriod); // 匹配成本期间（格式：YYYY-MM）
+            costActualPageReqVO.setStatus(3); // 3表示已确认状态
+            costActualPageReqVO.setPageSize(PageParam.PAGE_SIZE_NONE); // 获取所有数据
+            
+            PageResult<CostActualDO> costActualPage = costActualMapper.selectPage(costActualPageReqVO);
+            
+            if (costActualPage != null && costActualPage.getList() != null) {
+                for (CostActualDO costActual : costActualPage.getList()) {
+                    // 使用总成本（totalCost），包含材料成本、人工成本和制造费用
+                    if (costActual.getTotalCost() != null) {
+                        cost = cost.add(costActual.getTotalCost());
+                    }
+                }
+            }
 
         } catch (Exception e) {
             // 如果计算失败，返回0
@@ -232,6 +234,13 @@ public class ErpFinanceProfitStatementServiceImpl implements ErpFinanceProfitSta
 
     /**
      * 获取营业费用
+     * 
+     * 注意：当前系统中营业费用的数据源尚未明确，可能包括：
+     * 1. 付款单中的费用类型（如果付款单有费用分类字段）
+     * 2. 独立的费用表（如果存在）
+     * 3. 其他财务模块的费用数据
+     * 
+     * 目前返回0，需要根据实际业务需求实现具体的费用计算逻辑
      */
     private java.math.BigDecimal getOperatingExpense(java.time.LocalDate periodDate) {
         // TODO: 实现从费用表或其他数据源获取营业费用

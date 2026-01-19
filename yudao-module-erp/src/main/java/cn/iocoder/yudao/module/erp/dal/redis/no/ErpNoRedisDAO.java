@@ -122,6 +122,10 @@ public class ErpNoRedisDAO {
      */
     public static final String FINANCE_PRERECEIPT_NO_PREFIX = "YSK";
     /**
+     * 预付款 {@link cn.iocoder.yudao.module.erp.dal.dataobject.finance.prepayment.ErpFinancePrepaymentDO}
+     */
+    public static final String FINANCE_PREPAYMENT_NO_PREFIX = "YFK";
+    /**
      * 内部入库 {@link cn.iocoder.yudao.module.erp.dal.dataobject.stock.internalin.ErpStockInternalInDO}
      */
     public static final String STOCK_INTERNAL_IN_NO_PREFIX = "NBRK";
